@@ -26,13 +26,19 @@ class ProjectsTable
                     ->conversion('thumbnail')
                     ->label(''),
                 TextColumn::make('title')
-                    ->label('Project')
+                    ->label('Proyek')
                     ->searchable()
                     ->weight('medium'),
                 TextColumn::make('category.name')
+                    ->label('Kategori')
                     ->badge(),
+                TextColumn::make('client_name')
+                    ->label('Klien')
+                    ->searchable()
+                    ->placeholder('—')
+                    ->toggleable(),
                 TextColumn::make('location_city')
-                    ->label('City')
+                    ->label('Lokasi')
                     ->searchable(),
                 TextColumn::make('area_size')
                     ->label('Area')

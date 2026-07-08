@@ -6,12 +6,16 @@ const VIEWPORT_OFFSET = 80;
 
 /**
  * Reveals every [data-reveal] element inside `containerRef` as it enters the
- * viewport, staggered by its `data-reveal` delay (ms). Mirrors the Claude
- * Design prototype's behaviour 1:1, including the fallback that forces
- * visibility if the observer never fires (e.g. element already on-screen
- * with zero intersection ratio at mount).
+ * viewport, staggered by its `data-reveal` delay (ms).
+ *
+ * Pass `deps` whenever the revealed content can change without remounting the
+ * page (e.g. Inertia filter/pagination with preserveState) so newly rendered
+ * cards are observed again instead of staying invisible.
+ *
+ * @param {React.RefObject<HTMLElement|null>} containerRef
+ * @param {unknown[]} [deps]
  */
-export function useScrollReveal(containerRef) {
+export function useScrollReveal(containerRef, deps = []) {
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return undefined;
@@ -71,5 +75,6 @@ export function useScrollReveal(containerRef) {
             observer.disconnect();
             timers.forEach(clearTimeout);
         };
-    }, [containerRef]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- caller-controlled refresh key
+    }, [containerRef, ...deps]);
 }

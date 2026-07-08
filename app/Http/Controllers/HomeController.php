@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Filament\Pages\ManageSiteSettings;
 use App\Models\Category;
 use App\Models\Project;
 use App\Models\SiteSetting;
@@ -14,8 +15,8 @@ class HomeController extends Controller
 {
     public function __invoke(): Response
     {
-        $hero = SiteSetting::translated('hero', default: []);
-        $heroCoverImagePath = $hero['cover_image'] ?? $hero['coverImage'] ?? null;
+        $heroRaw = SiteSetting::translatedMerged('hero', ManageSiteSettings::heroDefaults());
+        $heroCoverImagePath = $heroRaw['cover_image'] ?? $heroRaw['coverImage'] ?? null;
         $heroCoverImageUrl = null;
 
         if (is_string($heroCoverImagePath) && $heroCoverImagePath !== '') {
@@ -25,17 +26,23 @@ class HomeController extends Controller
         }
 
         $hero = [
-            'location' => $hero['location'] ?? null,
-            'established' => $hero['established'] ?? null,
-            'headlineLine1' => $hero['headlineLine1'] ?? $hero['headline_line1'] ?? null,
-            'headlineAccent' => $hero['headlineAccent'] ?? $hero['headline_accent'] ?? null,
-            'headlineWord' => $hero['headlineWord'] ?? $hero['headline_word'] ?? null,
-            'lede' => $hero['lede'] ?? null,
+            'location' => $heroRaw['location'] ?? null,
+            'established' => $heroRaw['established'] ?? null,
+            'eyebrow' => $heroRaw['eyebrow'] ?? null,
+            'viewWork' => $heroRaw['view_work'] ?? null,
+            'pageTitle' => $heroRaw['page_title'] ?? null,
+            'metaDescription' => $heroRaw['meta_description'] ?? null,
+            'headlineLine1' => $heroRaw['headlineLine1'] ?? $heroRaw['headline_line1'] ?? null,
+            'headlineAccent' => $heroRaw['headlineAccent'] ?? $heroRaw['headline_accent'] ?? null,
+            'headlineWord' => $heroRaw['headlineWord'] ?? $heroRaw['headline_word'] ?? null,
+            'lede' => $heroRaw['lede'] ?? null,
             'coverImage' => $heroCoverImageUrl,
-            'coverCaption' => $hero['coverCaption'] ?? $hero['cover_caption'] ?? null,
-            'marqueeText' => $hero['marqueeText'] ?? $hero['marquee_text'] ?? null,
-            'badgeLabel' => $hero['badgeLabel'] ?? $hero['badge_label'] ?? null,
+            'coverCaption' => $heroRaw['coverCaption'] ?? $heroRaw['cover_caption'] ?? null,
+            'marqueeText' => $heroRaw['marqueeText'] ?? $heroRaw['marquee_text'] ?? null,
+            'badgeLabel' => trim((string) ($heroRaw['badgeLabel'] ?? $heroRaw['badge_label'] ?? '')) ?: null,
         ];
+
+        $home = SiteSetting::translatedMerged('home', ManageSiteSettings::homeDefaults());
 
         $featured = Project::published()
             ->with('category')
@@ -55,25 +62,43 @@ class HomeController extends Controller
         $projectCount = Project::published()->count();
         $marqueeText = $hero['marqueeText'] ?: "{$categoryNames} ✦ {$projectCount}+ Completed Projects ✦";
 
-        $testimonial = Testimonial::visible()->with('project')->latest()->first();
-
-        return Inertia::render('Home', [
-            'hero' => $hero,
-            'featured' => $featured,
-            'marqueeText' => $marqueeText,
-            'services' => collect(SiteSetting::translated('services'))
-                ->map(fn ($service) => [
-                    'number' => $service['number'],
-                    'name' => $service['name'],
-                    'description' => $service['description'],
-                ])
-                ->values(),
-            'testimonial' => $testimonial ? [
+        $testimonials = Testimonial::visible()
+            ->with('project')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (Testimonial $testimonial) => [
+                'id' => $testimonial->id,
                 'quote' => $testimonial->quote,
                 'attribution' => $testimonial->project
                     ? "{$testimonial->client_name}, {$testimonial->project->location_city}"
                     : $testimonial->client_name,
-            ] : null,
+            ])
+            ->values();
+
+        return Inertia::render('Home', [
+            'hero' => $hero,
+            'home' => [
+                'workHeading' => $home['work_heading'] ?? null,
+                'workHeadingAccent' => $home['work_heading_accent'] ?? null,
+                'workRange' => $home['work_range'] ?? null,
+                'workAllProjects' => $home['work_all_projects'] ?? null,
+                'servicesEyebrow' => $home['services_eyebrow'] ?? null,
+                'servicesViewProjects' => $home['services_view_projects'] ?? null,
+                'testimonialEyebrow' => $home['testimonial_eyebrow'] ?? null,
+            ],
+            'featured' => $featured,
+            'marqueeText' => $marqueeText,
+            'services' => collect(SiteSetting::translatedMerged('services', ManageSiteSettings::servicesDefaults()))
+                ->map(fn ($service) => [
+                    'number' => $service['number'],
+                    'name' => $service['name'],
+                    'description' => $service['description'],
+                    'detail' => $service['detail'] ?? $service['description'],
+                    'categorySlug' => $service['category_slug'] ?? null,
+                ])
+                ->values(),
+            'testimonials' => $testimonials,
         ]);
     }
 }

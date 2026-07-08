@@ -1,57 +1,69 @@
 import { useRef } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import SiteLayout from '../../Layouts/SiteLayout';
 import Placeholder from '../../Components/Placeholder';
+import Seo from '../../Components/Seo';
+import WhatsAppButton from '../../Components/WhatsAppButton';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 import { useParallax } from '../../hooks/useParallax';
 
-export default function ProjectShow({ project, gallery, next }) {
-    const { props } = usePage();
-    const { t } = props;
+export default function ProjectShow({ project, gallery, next, labels }) {
     const containerRef = useRef(null);
 
     useScrollReveal(containerRef);
     useParallax(containerRef);
 
+    const metaItems = [
+        { label: labels.category, value: project.category },
+        project.client ? { label: labels.client, value: project.client } : null,
+        { label: labels.location, value: project.location },
+        { label: labels.yearCompleted, value: project.year },
+        { label: labels.scope, value: project.scope },
+        project.area ? { label: labels.area, value: project.area } : null,
+    ].filter(Boolean);
+
+    const seoDescription = [project.description1, project.description2]
+        .filter(Boolean)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 160);
+
     return (
         <main className="px-5 pb-10 pt-36 md:px-10 md:pt-[170px]" ref={containerRef}>
-            <Head title={project.title} />
+            <Seo
+                title={project.title}
+                description={seoDescription || undefined}
+                image={project.coverImage || undefined}
+                type="article"
+            />
 
             <Link
                 href={route('projects.index')}
                 className="font-mono text-xs uppercase tracking-[0.08em] text-[rgba(27,28,26,0.55)] transition hover:text-[rgb(31,122,70)]"
                 data-reveal="0"
             >
-                ← {t.detail.allProjects}
+                ← {labels.allProjects}
             </Link>
 
             <h1 className="mb-8 mt-7 max-w-[12ch] text-[clamp(52px,7.5vw,124px)] font-semibold uppercase leading-[0.98] tracking-[-0.035em] md:mb-10" data-reveal="80">
                 {project.title}
             </h1>
 
-            <div className="mb-10 grid grid-cols-2 gap-4 border-y border-[rgba(27,28,26,0.12)] py-6 md:grid-cols-4 md:gap-6" data-reveal="160">
-                <div>
-                    <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">{t.detail.category}</div>
-                    <div className="text-[15px] font-medium">{project.category}</div>
-                </div>
-                <div>
-                    <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">{t.detail.location}</div>
-                    <div className="text-[15px] font-medium">{project.location}</div>
-                </div>
-                <div>
-                    <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">{t.detail.yearCompleted}</div>
-                    <div className="text-[15px] font-medium">{project.year}</div>
-                </div>
-                <div>
-                    <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">{t.detail.scope}</div>
-                    <div className="text-[15px] font-medium">{project.scope}</div>
-                </div>
-                {project.area && (
-                    <div>
-                        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">{t.detail.area}</div>
-                        <div className="text-[15px] font-medium">{project.area}</div>
+            <div
+                className={`mb-10 grid grid-cols-2 gap-4 border-y border-[rgba(27,28,26,0.12)] py-6 md:gap-6 ${
+                    metaItems.length > 4 ? 'md:grid-cols-3 lg:grid-cols-6' : 'md:grid-cols-4'
+                }`}
+                data-reveal="160"
+            >
+                {metaItems.map((item) => (
+                    <div key={item.label}>
+                        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">
+                            {item.label}
+                        </div>
+                        <div className="text-[15px] font-medium">{item.value}</div>
                     </div>
-                )}
+                ))}
             </div>
 
             <div className="relative mb-6 overflow-hidden rounded-sm md:mb-7" data-reveal="0">
@@ -74,11 +86,28 @@ export default function ProjectShow({ project, gallery, next }) {
 
             <div className="grid grid-cols-1 gap-8 py-10 md:grid-cols-[1fr_1.4fr] md:gap-[60px] md:py-[50px]">
                 <div className="mono-label" data-reveal="0">
-                    ( {t.detail.aboutProject} )
+                    ( {labels.aboutProject} )
                 </div>
                 <div className="max-w-[640px] text-lg leading-[1.65] text-[rgba(27,28,26,0.8)] [text-wrap:pretty] md:text-[19px]" data-reveal="100">
                     <p className="mb-5">{project.description1}</p>
-                    <p>{project.description2}</p>
+                    {project.description2 ? <p className="mb-8">{project.description2}</p> : null}
+                    {(labels.ctaLabel || labels.ctaNote) && (
+                        <div className="border-t border-[rgba(27,28,26,0.12)] pt-8">
+                            {labels.ctaNote ? (
+                                <p className="mb-5 text-base leading-relaxed text-[rgba(27,28,26,0.65)] md:text-[17px]">
+                                    {labels.ctaNote}
+                                </p>
+                            ) : null}
+                            {labels.ctaLabel ? (
+                                <WhatsAppButton
+                                    source="project-detail"
+                                    className="inline-flex items-center rounded-full border border-[rgb(27,28,26)] bg-[rgb(27,28,26)] px-6 py-3 text-[13px] font-medium uppercase tracking-[0.06em] text-[rgb(243,243,240)] transition hover:bg-[rgb(31,122,70)] hover:border-[rgb(31,122,70)]"
+                                >
+                                    {labels.ctaLabel}
+                                </WhatsAppButton>
+                            ) : null}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -107,7 +136,7 @@ export default function ProjectShow({ project, gallery, next }) {
 
             {next && (
                 <Link href={route('projects.show', next.slug)} className="group block py-20 text-center md:py-[120px]" data-reveal="0">
-                    <div className="mono-label mb-4">( {t.detail.nextProject} )</div>
+                    <div className="mono-label mb-4">( {labels.nextProject} )</div>
                     <div className="text-[clamp(44px,6vw,96px)] font-semibold uppercase tracking-[-0.03em] transition group-hover:text-[rgb(31,122,70)]">
                         {next.title} <span className="inline-block transition group-hover:translate-x-2">→</span>
                     </div>

@@ -21,6 +21,7 @@ class StoreInquiryRequest extends FormRequest
             'name' => ['required', 'string', 'max:120'],
             'contact' => ['required', 'string', 'max:150'],
             'message' => ['required', 'string', 'max:5000'],
+            'source_page' => ['nullable', 'string', 'max:500'],
             'company' => ['nullable', 'string'], // honeypot — checked (not rejected) in the controller
         ];
     }

@@ -19,9 +19,11 @@ class InquiryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInbox;
 
-    protected static ?string $navigationLabel = 'Inquiries';
+    protected static ?string $navigationLabel = 'Inbox';
 
-    protected static ?int $navigationSort = 4;
+    protected static string|\UnitEnum|null $navigationGroup = 'Lead';
+
+    protected static ?int $navigationSort = 1;
 
     public static function infolist(Schema $schema): Schema
     {

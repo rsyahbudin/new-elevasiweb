@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Filament\Pages\ManageSiteSettings;
 use App\Models\Category;
 use App\Models\Project;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -41,12 +43,25 @@ class ProjectController extends Controller
                 'count' => $category->projects_count,
             ]);
 
+        $allPublishedCount = Project::published()->count();
+        $filteredCount = Project::published()->inCategory($activeCategory)->count();
+        $labels = SiteSetting::translatedMerged('projects', ManageSiteSettings::projectsDefaults());
+
         return Inertia::render('Projects/Index', [
             'projects' => $projects,
             'filters' => $filters,
             'activeCategory' => $activeCategory,
             'meta' => [
-                'total' => Project::published()->inCategory($activeCategory)->count(),
+                'total' => $filteredCount,
+                'all' => $allPublishedCount,
+            ],
+            'labels' => [
+                'pageTitle' => $labels['index_page_title'] ?? null,
+                'pageDescription' => $labels['index_meta_description'] ?? null,
+                'heading' => $labels['index_heading'] ?? null,
+                'headingAccent' => $labels['index_heading_accent'] ?? null,
+                'allFilter' => $labels['index_all_filter'] ?? null,
+                'empty' => $labels['index_empty'] ?? null,
             ],
         ]);
     }
@@ -64,11 +79,14 @@ class ProjectController extends Controller
 
         [$description1, $description2] = array_pad(explode("\n\n", $project->description, 2), 2, '');
 
+        $labels = SiteSetting::translatedMerged('projects', ManageSiteSettings::projectsDefaults());
+
         return Inertia::render('Projects/Show', [
             'project' => [
                 'slug' => $project->slug,
                 'title' => $project->title,
                 'category' => $project->category->name,
+                'client' => $project->client_name,
                 'location' => $project->location_city,
                 'area' => $project->area_size,
                 'year' => $project->year_completed,
@@ -86,6 +104,19 @@ class ProjectController extends Controller
                 ])
                 ->values(),
             'next' => $next ? ['slug' => $next->slug, 'title' => $next->title] : null,
+            'labels' => [
+                'allProjects' => $labels['detail_all_projects'] ?? null,
+                'category' => $labels['detail_category'] ?? null,
+                'client' => $labels['detail_client'] ?? null,
+                'location' => $labels['detail_location'] ?? null,
+                'yearCompleted' => $labels['detail_year_completed'] ?? null,
+                'scope' => $labels['detail_scope'] ?? null,
+                'area' => $labels['detail_area'] ?? null,
+                'aboutProject' => $labels['detail_about_project'] ?? null,
+                'nextProject' => $labels['detail_next_project'] ?? null,
+                'ctaLabel' => $labels['detail_cta_label'] ?? null,
+                'ctaNote' => $labels['detail_cta_note'] ?? null,
+            ],
         ]);
     }
 }

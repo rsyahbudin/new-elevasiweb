@@ -21,7 +21,7 @@ class ProjectForm
     {
         return $schema
             ->components([
-                Tabs::make('Translations')
+                Tabs::make('Teks proyek')
                     ->tabs([
                         Tab::make('Bahasa Indonesia')
                             ->schema([
@@ -37,7 +37,7 @@ class ProjectForm
                                 TextInput::make('scope_of_work_id')
                                     ->label('Lingkup pekerjaan')
                                     ->required()
-                                    ->helperText('Contoh: Design + Build'),
+                                    ->helperText('Contoh: Design + Build, Interior Fit-Out'),
                                 Textarea::make('description_id')
                                     ->label('Deskripsi')
                                     ->rows(6)
@@ -51,65 +51,88 @@ class ProjectForm
                                 Textarea::make('description_en')
                                     ->label('Description')
                                     ->rows(6)
-                                    ->helperText('Leave blank to fall back to the Indonesian text on the public site.'),
+                                    ->helperText('Kosongkan jika ingin memakai teks Bahasa Indonesia di situs.'),
                             ]),
                     ])
                     ->columnSpanFull(),
 
-                Section::make('Details')
+                Section::make('Detail proyek')
+                    ->description('Sama untuk semua bahasa — tidak perlu diisi ulang per bahasa.')
                     ->columns(2)
                     ->schema([
                         TextInput::make('slug')
+                            ->label('Slug URL')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->helperText('Used in the public URL — not translated.'),
+                            ->helperText('Otomatis dari nama proyek saat dibuat. Digunakan di URL publik.'),
                         Select::make('category_id')
+                            ->label('Kategori')
                             ->relationship('category', 'id')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)
                             ->searchable()
+                            ->preload()
                             ->required(),
+                        TextInput::make('client_name')
+                            ->label('Klien')
+                            ->placeholder('Contoh: Pak Andi / PT Sejahtera')
+                            ->helperText('Opsional. Ditampilkan di halaman detail proyek.'),
                         TextInput::make('location_city')
-                            ->label('City')
-                            ->required(),
+                            ->label('Kota / lokasi')
+                            ->required()
+                            ->placeholder('Jakarta Selatan'),
                         TextInput::make('area_size')
-                            ->label('Area (optional)')
-                            ->placeholder('e.g. 240 m2')
-                            ->helperText('Optional. Recommended format: number + unit, e.g. "240 m2".'),
+                            ->label('Luas area')
+                            ->placeholder('240 m²')
+                            ->helperText('Opsional. Contoh: 240 m²'),
                         TextInput::make('year_completed')
+                            ->label('Tahun selesai')
                             ->numeric()
-                            ->required(),
+                            ->required()
+                            ->minValue(2000)
+                            ->maxValue((int) date('Y') + 2),
                         Select::make('status')
+                            ->label('Status')
                             ->options(ProjectStatus::class)
                             ->default(ProjectStatus::Draft)
-                            ->required(),
-                        DateTimePicker::make('published_at'),
+                            ->required()
+                            ->helperText('Draft = belum tampil di situs. Published = tayang publik.'),
+                        DateTimePicker::make('published_at')
+                            ->label('Tanggal publish')
+                            ->helperText('Disarankan diisi saat status Published.'),
                         TextInput::make('sort_order')
+                            ->label('Urutan tampil')
                             ->numeric()
                             ->default(0)
-                            ->required(),
+                            ->required()
+                            ->helperText('Angka lebih kecil tampil lebih dulu di daftar proyek.'),
                     ]),
 
-                Section::make('Photos')
+                Section::make('Foto')
                     ->icon(Heroicon::OutlinedPhoto)
+                    ->description('Upload sekali saja — foto dipakai bersama untuk Bahasa Indonesia dan English.')
                     ->schema([
                         TextInput::make('cover_caption')
-                            ->label('Placeholder caption')
-                            ->helperText('Shown until a real cover photo is uploaded, e.g. "exterior, dusk".'),
+                            ->label('Caption foto cover')
+                            ->helperText('Teks cadangan jika foto cover belum tersedia.'),
                         SpatieMediaLibraryFileUpload::make('cover')
+                            ->label('Foto cover')
                             ->collection('cover')
                             ->image()
+                            ->imageEditor()
                             ->rules(['dimensions:min_width=2000,min_height=1200'])
                             ->maxSize(8 * 1024)
-                            ->helperText('Recommended: 2400x1350 px (16:9), min 2000x1200 px, max 8 MB.')
+                            ->helperText('Disarankan 2400×1350 (16:9), minimal 2000×1200, max 8 MB.')
                             ->required(),
                         SpatieMediaLibraryFileUpload::make('gallery')
+                            ->label('Gallery')
                             ->collection('gallery')
                             ->image()
                             ->multiple()
                             ->reorderable()
+                            ->imageEditor()
                             ->rules(['dimensions:min_width=1400,min_height=1000'])
                             ->maxSize(15 * 1024)
-                            ->helperText('Minimum 1 photo. Recommended: 1600x1200 px (4:3), min 1400x1000 px, max 15 MB per file.'),
+                            ->helperText('Bisa banyak foto. Disarankan 1600×1200 (4:3), minimal 1400×1000, max 15 MB per file.'),
                     ]),
             ]);
     }

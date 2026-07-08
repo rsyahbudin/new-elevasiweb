@@ -10,7 +10,7 @@ return [
         'work' => 'Karya',
         'studio' => 'Studio',
         'services' => 'Layanan',
-        'contact' => 'Kontak',
+        'contact' => 'Mulai proyek',
         'cta' => 'Mulai proyek',
     ],
 
@@ -28,6 +28,7 @@ return [
 
     'services' => [
         'eyebrow' => 'Yang kami kerjakan',
+        'viewProjects' => 'Lihat proyek terkait',
     ],
 
     'testimonial' => [
@@ -54,6 +55,9 @@ return [
 
     'tentang' => [
         'eyebrow' => 'Studio',
+        'timeline' => 'Perjalanan',
+        'process' => 'Cara kami bekerja',
+        'values' => 'Nilai kami',
     ],
 
     'layanan' => [
@@ -62,14 +66,17 @@ return [
     ],
 
     'kontak' => [
-        'eyebrow' => 'Hubungi kami',
-        'heading' => 'Punya proyek?',
+        'eyebrow' => 'Mulai proyek',
+        'heading' => 'Ceritakan ruang yang ingin Anda bangun',
+        'subheading' => 'Hubungi kami langsung via WhatsApp — tim kami siap mendiskusikan proyek Anda.',
+        'whatsappCta' => 'Chat di WhatsApp',
+        'prepare' => 'Sebelum menghubungi kami',
+        'process' => 'Setelah chat pertama',
+        'serviceArea' => 'Area layanan',
+        'responseTime' => 'Waktu respons',
+        'recentWork' => 'Karya terbaru',
+        'followInstagram' => 'Ikuti di Instagram',
         'address' => 'Alamat',
-        'name' => 'Nama',
-        'contactField' => 'Email / No. WhatsApp',
-        'message' => 'Pesan',
-        'submit' => 'Kirim pesan',
-        'success' => 'Terima kasih — pesan Anda sudah kami terima.',
     ],
 
     'footer' => [

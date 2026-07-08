@@ -10,7 +10,7 @@ return [
         'work' => 'Work',
         'studio' => 'Studio',
         'services' => 'Services',
-        'contact' => 'Contact',
+        'contact' => 'Start a project',
         'cta' => 'Start a project',
     ],
 
@@ -28,6 +28,7 @@ return [
 
     'services' => [
         'eyebrow' => 'What we do',
+        'viewProjects' => 'View related projects',
     ],
 
     'testimonial' => [
@@ -54,6 +55,9 @@ return [
 
     'tentang' => [
         'eyebrow' => 'Studio',
+        'timeline' => 'Journey',
+        'process' => 'How we work',
+        'values' => 'Our values',
     ],
 
     'layanan' => [
@@ -62,14 +66,17 @@ return [
     ],
 
     'kontak' => [
-        'eyebrow' => 'Get in touch',
-        'heading' => 'Have a project in mind?',
+        'eyebrow' => 'Start a project',
+        'heading' => 'Tell us about the space you want to build',
+        'subheading' => 'Reach us directly on WhatsApp — our team is ready to discuss your project.',
+        'whatsappCta' => 'Chat on WhatsApp',
+        'prepare' => 'Before you reach out',
+        'process' => 'After the first chat',
+        'serviceArea' => 'Service area',
+        'responseTime' => 'Response time',
+        'recentWork' => 'Recent work',
+        'followInstagram' => 'Follow on Instagram',
         'address' => 'Address',
-        'name' => 'Name',
-        'contactField' => 'Email / WhatsApp number',
-        'message' => 'Message',
-        'submit' => 'Send message',
-        'success' => 'Thanks — we\'ve received your message.',
     ],
 
     'footer' => [

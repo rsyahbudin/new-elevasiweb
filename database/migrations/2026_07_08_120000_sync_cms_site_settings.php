@@ -1,30 +1,24 @@
 <?php
 
-namespace Database\Seeders;
-
 use App\Filament\Pages\ManageSiteSettings;
 use App\Models\SiteSetting;
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Cache;
 
-class SiteSettingSeeder extends Seeder
+return new class extends Migration
 {
-    public function run(): void
+    public function up(): void
     {
-        $defaults = [
-            'hero' => ManageSiteSettings::heroDefaults(),
-            'services' => ManageSiteSettings::servicesDefaults(),
-            'tentang' => ManageSiteSettings::tentangDefaults(),
-            'contact' => ManageSiteSettings::contactDefaults(),
+        $keys = [
             'navigation' => ManageSiteSettings::navigationDefaults(),
             'footer' => ManageSiteSettings::footerDefaults(),
             'home' => ManageSiteSettings::homeDefaults(),
             'projects' => ManageSiteSettings::projectsDefaults(),
-            'brand' => ['accent' => '#1F7A46'],
         ];
 
-        foreach ($defaults as $key => $value) {
+        foreach ($keys as $key => $defaults) {
             $existing = SiteSetting::query()->where('key', $key)->value('value');
-            $merged = array_replace_recursive($value, is_array($existing) ? $existing : []);
+            $merged = array_replace_recursive($defaults, is_array($existing) ? $existing : []);
 
             if ($key === 'navigation') {
                 $merged['contact'] = ManageSiteSettings::navigationDefaults()['contact'];
@@ -32,5 +26,14 @@ class SiteSettingSeeder extends Seeder
 
             SiteSetting::updateOrCreate(['key' => $key], ['value' => $merged]);
         }
+
+        foreach (array_keys($keys) as $key) {
+            Cache::forget("site_settings.{$key}");
+        }
     }
-}
+
+    public function down(): void
+    {
+        // Non-destructive sync migration.
+    }
+};

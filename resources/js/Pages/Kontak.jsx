@@ -1,129 +1,172 @@
 import { useRef } from 'react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import SiteLayout from '../Layouts/SiteLayout';
+import Placeholder from '../Components/Placeholder';
+import ProcessSteps from '../Components/ProcessSteps';
+import Seo from '../Components/Seo';
+import WhatsAppButton from '../Components/WhatsAppButton';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
-export default function Kontak({ settings }) {
+export default function Kontak({ content, recentProjects }) {
     const { props } = usePage();
-    const { t } = props;
+    const { settings } = props;
     const containerRef = useRef(null);
     useScrollReveal(containerRef);
 
-    const { data, setData, post, processing, errors, wasSuccessful, reset } = useForm({
-        name: '',
-        contact: '',
-        message: '',
-        company: '', // honeypot — left blank by humans, filled by bots
-    });
-
-    const submit = (e) => {
-        e.preventDefault();
-        post(route('kontak.store'), {
-            preserveScroll: true,
-            onSuccess: () => reset('name', 'contact', 'message'),
-        });
-    };
-
-    const fieldClass =
-        'w-full rounded border border-[rgba(27,28,26,0.2)] bg-transparent px-4 py-3.5 text-[15px] transition focus:border-[rgb(31,122,70)] focus:outline-none';
+    const labels = content.labels ?? {};
+    const prepareItems = content.prepareItems ?? [];
+    const processSteps = content.processSteps ?? [];
 
     return (
-        <main className="px-5 pb-10 pt-36 md:px-10 md:pt-[170px]" ref={containerRef}>
-            <Head title={t.nav.contact} />
+        <main className="px-5 pb-16 pt-36 md:px-10 md:pb-24 md:pt-[170px]" ref={containerRef}>
+            <Seo
+                title={content.pageTitle}
+                description={content.subheading || undefined}
+                image={content.pageImage || undefined}
+            />
 
-            <div className="mb-14 border-b border-[rgba(27,28,26,0.12)] pb-8" data-reveal="0">
-                <span className="mono-label">( {t.kontak.eyebrow} )</span>
-                <h1 className="m-0 mt-5 max-w-[12ch] text-[clamp(56px,8vw,120px)] font-semibold uppercase leading-[0.95] tracking-[-0.035em]">
-                    {t.kontak.heading}
-                </h1>
-            </div>
-
-            <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-[60px]">
-                <div data-reveal="0">
-                    <div className="mb-8 transition hover:translate-x-1">
-                        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">WhatsApp</div>
-                        <div className="text-base font-medium">
-                            <a href={settings.whatsappUrl} target="_blank" rel="noopener noreferrer">
-                                {settings.whatsappDisplay}
-                            </a>
-                        </div>
-                    </div>
-                    <div className="mb-8 transition hover:translate-x-1" data-reveal="60">
-                        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">Email</div>
-                        <div className="text-base font-medium">
-                            <a href={`mailto:${settings.email}`}>{settings.email}</a>
-                        </div>
-                    </div>
-                    <div className="mb-8 transition hover:translate-x-1" data-reveal="120">
-                        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">{t.kontak.address}</div>
-                        <div className="text-base font-medium">{settings.address}</div>
-                    </div>
-                </div>
-
-                <form onSubmit={submit} data-reveal="100">
-                    <div className="absolute left-[-9999px] h-px w-px overflow-hidden" aria-hidden="true">
-                        <label htmlFor="company">Company</label>
-                        <input
-                            type="text"
-                            id="company"
-                            name="company"
-                            tabIndex={-1}
-                            autoComplete="off"
-                            value={data.company}
-                            onChange={(e) => setData('company', e.target.value)}
-                        />
-                    </div>
-
-                    <div className="mb-5">
-                        <label htmlFor="name" className="mb-2 block text-xs uppercase tracking-[0.06em] text-[rgba(27,28,26,0.55)]">{t.kontak.name}</label>
-                        <input
-                            type="text"
-                            id="name"
-                            className={fieldClass}
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            required
-                        />
-                        {errors.name && <div className="mt-1.5 text-[13px] text-[#b3261e]">{errors.name}</div>}
-                    </div>
-
-                    <div className="mb-5">
-                        <label htmlFor="contact" className="mb-2 block text-xs uppercase tracking-[0.06em] text-[rgba(27,28,26,0.55)]">{t.kontak.contactField}</label>
-                        <input
-                            type="text"
-                            id="contact"
-                            className={fieldClass}
-                            value={data.contact}
-                            onChange={(e) => setData('contact', e.target.value)}
-                            required
-                        />
-                        {errors.contact && <div className="mt-1.5 text-[13px] text-[#b3261e]">{errors.contact}</div>}
-                    </div>
-
-                    <div className="mb-5">
-                        <label htmlFor="message" className="mb-2 block text-xs uppercase tracking-[0.06em] text-[rgba(27,28,26,0.55)]">{t.kontak.message}</label>
-                        <textarea
-                            id="message"
-                            className={fieldClass}
-                            rows={5}
-                            value={data.message}
-                            onChange={(e) => setData('message', e.target.value)}
-                            required
-                        />
-                        {errors.message && <div className="mt-1.5 text-[13px] text-[#b3261e]">{errors.message}</div>}
-                    </div>
-
-                    <button
-                        type="submit"
-                        className="rounded-full bg-[rgb(27,28,26)] px-9 py-4 text-sm font-semibold uppercase tracking-[0.06em] text-[rgb(243,243,240)] transition hover:bg-[rgb(31,122,70)] disabled:cursor-not-allowed disabled:opacity-50"
-                        disabled={processing}
+            <section className="relative overflow-hidden rounded-sm bg-[rgb(27,28,26)] px-6 py-14 text-[rgb(243,243,240)] md:px-12 md:py-20" data-reveal="0">
+                <div className="relative z-10 max-w-[900px]">
+                    <span className="mono-label text-[rgba(243,243,240,0.45)]">( {content.eyebrow} )</span>
+                    <h1 className="m-0 mt-5 max-w-[14ch] text-[clamp(40px,7vw,96px)] font-semibold uppercase leading-[0.95] tracking-[-0.035em]">
+                        {content.heading}
+                    </h1>
+                    <p className="mt-6 max-w-[480px] text-base leading-relaxed text-[rgba(243,243,240,0.65)] md:text-[17px]">
+                        {content.subheading}
+                    </p>
+                    <WhatsAppButton
+                        source="/kontak-hero"
+                        className="mt-10 inline-flex w-full max-w-sm items-center justify-center gap-3 rounded-full bg-[rgb(31,122,70)] px-9 py-4 text-sm font-semibold uppercase tracking-[0.06em] text-[rgb(243,243,240)] transition hover:scale-[1.02] hover:bg-[rgb(243,243,240)] hover:text-[rgb(27,28,26)] sm:w-auto sm:max-w-none"
                     >
-                        {t.kontak.submit}
-                    </button>
+                        {content.ctaLabel}
+                    </WhatsAppButton>
+                </div>
+                <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[rgba(31,122,70,0.15)] blur-3xl" />
+            </section>
 
-                    {wasSuccessful && <div className="mt-4 text-[15px] text-[rgb(31,122,70)]">{t.kontak.success}</div>}
-                </form>
-            </div>
+            {(content.responseTime || content.serviceArea) && (
+                <section className="mt-10 grid grid-cols-1 gap-6 border-b border-[rgba(27,28,26,0.12)] pb-12 md:mt-14 md:grid-cols-2 md:gap-10 md:pb-16">
+                    {content.responseTime && (
+                        <div data-reveal="60">
+                            <div className="mono-label mb-3">( {labels.responseTime} )</div>
+                            <p className="m-0 text-[17px] leading-[1.6] text-[rgba(27,28,26,0.75)]">{content.responseTime}</p>
+                        </div>
+                    )}
+                    {content.serviceArea && (
+                        <div data-reveal="120">
+                            <div className="mono-label mb-3">( {labels.serviceArea} )</div>
+                            <p className="m-0 text-[17px] leading-[1.6] text-[rgba(27,28,26,0.75)]">{content.serviceArea}</p>
+                        </div>
+                    )}
+                </section>
+            )}
+
+            {prepareItems.length > 0 && (
+                <section className="mt-12 md:mt-16">
+                    <div className="mono-label mb-8" data-reveal="0">( {labels.prepare} )</div>
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-x-16 md:gap-y-10">
+                        {prepareItems.map((item, i) => (
+                            <div key={item.title} className="group border-t border-[rgba(27,28,26,0.12)] pt-6" data-reveal={i * 60}>
+                                <div className="mb-2 font-mono text-[13px] text-[rgb(31,122,70)]">{String(i + 1).padStart(2, '0')}</div>
+                                <h2 className="m-0 text-xl font-semibold uppercase tracking-[-0.01em] transition group-hover:text-[rgb(31,122,70)] md:text-2xl">
+                                    {item.title}
+                                </h2>
+                                <p className="mt-3 text-[15px] leading-[1.6] text-[rgba(27,28,26,0.6)]">{item.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {content.pageImage && (
+                <section className="mt-14 md:mt-20" data-reveal="0">
+                    <div className="relative overflow-hidden rounded-sm">
+                        <img
+                            src={content.pageImage}
+                            alt={content.heading}
+                            className="aspect-[16/9] w-full object-cover md:aspect-[21/9]"
+                            loading="lazy"
+                        />
+                    </div>
+                </section>
+            )}
+
+            {processSteps.length > 0 && (
+                <section className="mt-14 md:mt-20">
+                    <div className="mono-label mb-8 md:mb-10" data-reveal="0">( {labels.process} )</div>
+                    <ProcessSteps steps={processSteps} />
+                </section>
+            )}
+
+            {recentProjects.length > 0 && (
+                <section className="mt-14 md:mt-20">
+                    <div className="mb-8 flex flex-wrap items-end justify-between gap-4" data-reveal="0">
+                        <span className="mono-label">( {labels.recentWork} )</span>
+                        {settings.instagramUrl && (
+                            <a
+                                href={settings.instagramUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-semibold uppercase tracking-[0.06em] transition hover:text-[rgb(31,122,70)]"
+                            >
+                                {labels.followInstagram} ↗
+                            </a>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+                        {recentProjects.map((project, i) => (
+                            <Link
+                                key={project.slug}
+                                href={route('projects.show', project.slug)}
+                                className="group overflow-hidden rounded-sm"
+                                data-reveal={i * 50}
+                            >
+                                {project.coverImage ? (
+                                    <img
+                                        src={project.coverImage}
+                                        alt={project.caption}
+                                        className="aspect-[4/5] w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                                        loading="lazy"
+                                    />
+                                ) : (
+                                    <Placeholder
+                                        caption={project.caption}
+                                        className="aspect-[4/5] transition duration-500 group-hover:scale-[1.03]"
+                                    />
+                                )}
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            <section className="mt-14 flex flex-col gap-10 border-t border-[rgba(27,28,26,0.12)] pt-12 md:mt-20 md:flex-row md:justify-between md:gap-20 md:pt-16">
+                <div data-reveal="0">
+                    <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">{labels.address}</div>
+                    <div className="text-base font-medium">{settings.address}</div>
+                </div>
+                {settings.instagramUrl && (
+                    <div data-reveal="60">
+                        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">{labels.instagram}</div>
+                        <a
+                            href={settings.instagramUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-base font-medium transition hover:text-[rgb(31,122,70)]"
+                        >
+                            {labels.instagram} ↗
+                        </a>
+                    </div>
+                )}
+                <div data-reveal="120">
+                    <WhatsAppButton
+                        source="/kontak-footer"
+                        className="inline-flex w-full max-w-sm items-center justify-center rounded-full border border-[rgba(27,28,26,0.3)] px-7 py-3.5 text-sm font-semibold uppercase tracking-[0.06em] transition hover:bg-[rgb(27,28,26)] hover:text-[rgb(243,243,240)] sm:w-auto sm:max-w-none"
+                    >
+                        {content.ctaLabel}
+                    </WhatsAppButton>
+                </div>
+            </section>
         </main>
     );
 }

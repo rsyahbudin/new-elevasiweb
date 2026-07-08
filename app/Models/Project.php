@@ -24,7 +24,7 @@ class Project extends Model implements HasMedia
     public array $translatable = ['title', 'description', 'scope_of_work'];
 
     protected $fillable = [
-        'title', 'slug', 'category_id', 'location_city', 'area_size', 'year_completed',
+        'title', 'slug', 'category_id', 'client_name', 'location_city', 'area_size', 'year_completed',
         'scope_of_work', 'description', 'cover_caption', 'status', 'published_at', 'sort_order',
     ];
 

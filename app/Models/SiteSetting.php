@@ -21,7 +21,19 @@ class SiteSetting extends Model
     {
         return Cache::rememberForever(
             "site_settings.{$key}",
-            fn () => static::where('key', $key)->value('value') ?? $default,
+            function () use ($key, $default) {
+                $stored = static::where('key', $key)->value('value');
+
+                if (! is_array($stored)) {
+                    return $default;
+                }
+
+                if (! is_array($default)) {
+                    return $stored;
+                }
+
+                return array_replace_recursive($default, $stored);
+            },
         );
     }
 
@@ -33,6 +45,19 @@ class SiteSetting extends Model
     public static function translated(string $key, ?string $locale = null, mixed $default = null): mixed
     {
         return static::resolveLocale(static::get($key, $default), $locale ?? App::getLocale());
+    }
+
+    /**
+     * Merge stored settings with defaults, then apply locale resolution.
+     *
+     * @param  array<string, mixed>  $defaults
+     */
+    public static function translatedMerged(string $key, array $defaults, ?string $locale = null): mixed
+    {
+        $stored = static::get($key, $defaults);
+        $merged = array_replace_recursive($defaults, is_array($stored) ? $stored : []);
+
+        return static::resolveLocale($merged, $locale ?? App::getLocale());
     }
 
     protected static function resolveLocale(mixed $value, string $locale): mixed
