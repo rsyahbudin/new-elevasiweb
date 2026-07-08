@@ -1,0 +1,97 @@
+@import "tailwindcss";
+@import '@fontsource-variable/archivo';
+@import '@fontsource/instrument-serif/400.css';
+@import '@fontsource/instrument-serif/400-italic.css';
+
+@theme {
+    --color-ink: rgb(27 28 26);
+    --color-paper: rgb(243 243 240);
+    --color-accent: rgb(31 122 70);
+}
+
+@layer base {
+    body {
+        @apply bg-paper text-ink antialiased;
+        font-family: 'Archivo Variable', 'Archivo', Helvetica, sans-serif;
+    }
+
+    a {
+        @apply text-ink no-underline transition-colors hover:text-accent;
+    }
+
+    button {
+        font-family: inherit;
+    }
+
+    ::selection {
+        @apply bg-accent text-paper;
+    }
+}
+
+@layer components {
+    .serif-italic {
+        font-family: 'Instrument Serif', serif;
+        font-style: italic;
+        font-weight: 400;
+        text-transform: none;
+    }
+
+    .mono-label {
+        @apply font-mono text-xs uppercase tracking-[0.08em] text-[rgba(27,28,26,0.5)];
+    }
+
+    .placeholder {
+        @apply relative overflow-hidden rounded-[2px] bg-[rgb(236,236,232)];
+    }
+
+    .placeholder-fill {
+        @apply absolute inset-[-10%] flex items-center justify-center;
+        background: repeating-linear-gradient(
+            45deg,
+            rgb(228 228 223),
+            rgb(228 228 223) 14px,
+            rgb(236 236 232) 14px,
+            rgb(236 236 232) 28px
+        );
+    }
+
+    .placeholder-caption {
+        @apply rounded-[2px] bg-[rgba(243,243,240,0.9)] px-3.5 py-2 font-mono text-[13px] text-[rgba(27,28,26,0.45)];
+    }
+
+    .placeholder-caption--sm {
+        @apply px-3 py-1.5 text-xs;
+    }
+
+    .placeholder-caption--xs {
+        @apply px-2.5 py-1 text-[11px];
+    }
+}
+
+[data-reveal] {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-reveal].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-reveal] {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
+
+@keyframes marq {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
