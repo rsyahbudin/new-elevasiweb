@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { useForm, usePage } from '@inertiajs/react';
+import { trackEvent } from '../lib/analytics';
 
 export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
     const titleId = useId();
@@ -62,6 +63,10 @@ export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy 
         post(route('kontak.store'), {
             preserveScroll: true,
             onSuccess: () => {
+                trackEvent('generate_lead', {
+                    event_category: 'conversion',
+                    event_label: sourcePage || url || '/',
+                });
                 reset();
                 onClose();
             },

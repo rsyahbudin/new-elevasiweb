@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import GoogleAnalytics from '../Components/GoogleAnalytics';
 import WhatsAppButton from '../Components/WhatsAppButton';
 import { WhatsAppInquiryProvider } from '../contexts/WhatsAppInquiryContext';
 import logo from '../../images/elevasi-logo.gif';
@@ -50,6 +51,7 @@ export default function SiteLayout({ children }) {
 
     return (
         <WhatsAppInquiryProvider copy={cms.inquiry} onOpen={closeMobileNav}>
+            <GoogleAnalytics />
             <header className="pointer-events-none fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4 md:px-6 md:pt-5">
                 <div className="pointer-events-auto mx-auto flex max-w-5xl items-center gap-2.5 rounded-full border border-[rgba(27,28,26,0.1)] bg-[rgba(243,243,240,0.82)] px-3 py-2.5 shadow-[0_12px_40px_rgba(27,28,26,0.07)] backdrop-blur-xl sm:gap-3 sm:px-3.5 md:gap-6 md:px-5 md:py-2.5">
                     <button

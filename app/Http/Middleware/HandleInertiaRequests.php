@@ -61,6 +61,12 @@ class HandleInertiaRequests extends Middleware
             ?? $seoDefaults[$locale]
             ?? $seoDefaults['id'];
 
+        $analytics = SiteSetting::get('analytics', ManageSiteSettings::analyticsDefaults()) ?? [];
+        $gaMeasurementId = trim((string) (
+            config('services.google_analytics.measurement_id')
+            ?: ($analytics['ga_measurement_id'] ?? '')
+        ));
+
         return [
             ...parent::share($request),
             'locale' => $locale,
@@ -128,6 +134,7 @@ class HandleInertiaRequests extends Middleware
                 'email' => $contact['email'] ?? null,
                 'address' => $contact['address'] ?? null,
                 'instagramUrl' => $contact['instagram_url'] ?? null,
+                'gaMeasurementId' => $gaMeasurementId !== '' ? $gaMeasurementId : null,
             ],
         ];
     }

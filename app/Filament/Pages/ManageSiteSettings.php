@@ -49,7 +49,8 @@ class ManageSiteSettings extends Page implements HasForms
             'footer' => array_replace_recursive(self::footerDefaults(), SiteSetting::get('footer', self::footerDefaults()) ?? []),
             'home' => array_replace_recursive(self::homeDefaults(), SiteSetting::get('home', self::homeDefaults()) ?? []),
             'projects' => array_replace_recursive(self::projectsDefaults(), SiteSetting::get('projects', self::projectsDefaults()) ?? []),
-            'brand' => SiteSetting::get('brand', ['accent' => '#1F7A46']),
+            'brand' => array_replace_recursive(self::brandDefaults(), SiteSetting::get('brand', self::brandDefaults()) ?? []),
+            'analytics' => array_replace_recursive(self::analyticsDefaults(), SiteSetting::get('analytics', self::analyticsDefaults()) ?? []),
         ]);
     }
 
@@ -429,6 +430,18 @@ class ManageSiteSettings extends Page implements HasForms
                             ->schema([
                                 ColorPicker::make('brand.accent')->label('Accent color'),
                             ]),
+                        Tab::make('Analytics')
+                            ->schema([
+                                Section::make('Google Analytics 4')
+                                    ->description('Isi Measurement ID dari Google Analytics. Kosongkan untuk menonaktifkan tracking di situs publik.')
+                                    ->schema([
+                                        TextInput::make('analytics.ga_measurement_id')
+                                            ->label('Measurement ID')
+                                            ->placeholder('G-XXXXXXXXXX')
+                                            ->helperText('Dari Google Analytics → Admin → Data streams → Web → Measurement ID. Format: G-XXXXXXXXXX. Bisa juga diisi via .env GA_MEASUREMENT_ID.')
+                                            ->rules(['nullable', 'regex:/^G-[A-Z0-9]+$/i']),
+                                    ]),
+                            ]),
                     ]),
             ])
             ->statePath('data');
@@ -438,7 +451,7 @@ class ManageSiteSettings extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        foreach (['hero', 'services', 'tentang', 'contact', 'navigation', 'footer', 'home', 'projects', 'brand'] as $key) {
+        foreach (['hero', 'services', 'tentang', 'contact', 'navigation', 'footer', 'home', 'projects', 'brand', 'analytics'] as $key) {
             SiteSetting::updateOrCreate(['key' => $key], ['value' => $data[$key] ?? []]);
         }
 
@@ -446,6 +459,20 @@ class ManageSiteSettings extends Page implements HasForms
             ->title('Settings saved')
             ->success()
             ->send();
+    }
+
+    public static function brandDefaults(): array
+    {
+        return [
+            'accent' => '#1F7A46',
+        ];
+    }
+
+    public static function analyticsDefaults(): array
+    {
+        return [
+            'ga_measurement_id' => '',
+        ];
     }
 
     public static function heroDefaults(): array
