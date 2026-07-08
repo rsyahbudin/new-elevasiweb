@@ -6,6 +6,8 @@
         <meta name="theme-color" content="#F3F3F0">
 
         <title inertia>{{ config('app.name') }}</title>
+        <link rel="icon" type="image/gif" href="{{ Vite::asset('resources/images/elevasi-logo.gif') }}">
+        <link rel="apple-touch-icon" href="{{ Vite::asset('resources/images/elevasi-logo.gif') }}">
 
         @routes
         @viteReactRefresh

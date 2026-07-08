@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 
-const FALLBACK_MS = 2500;
+const FALLBACK_MS = 1200;
 const OBSERVER_THRESHOLD = 0.12;
+const VIEWPORT_OFFSET = 80;
 
 /**
  * Reveals every [data-reveal] element inside `containerRef` as it enters the
@@ -17,13 +18,33 @@ export function useScrollReveal(containerRef) {
 
         const elements = Array.from(container.querySelectorAll('[data-reveal]'));
         if (elements.length === 0) return undefined;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (prefersReducedMotion) {
+            elements.forEach((el) => el.classList.add('is-visible'));
+            return undefined;
+        }
 
         const timers = [];
+        const revealed = new WeakSet();
+
+        const reveal = (el) => {
+            if (revealed.has(el)) return;
+            revealed.add(el);
+
+            const delay = parseInt(el.dataset.reveal, 10) || 0;
+            timers.push(
+                setTimeout(() => {
+                    el.classList.add('is-visible');
+                }, delay),
+            );
+        };
+
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (!entry.isIntersecting) return;
-                    entry.target.classList.add('is-visible');
+                    reveal(entry.target);
                     observer.unobserve(entry.target);
                 });
             },
@@ -31,13 +52,17 @@ export function useScrollReveal(containerRef) {
         );
 
         elements.forEach((el) => {
-            const delay = parseInt(el.dataset.reveal, 10) || 0;
-            el.style.transitionDelay = `${delay}ms`;
+            el.classList.remove('is-visible');
             observer.observe(el);
+
+            const rect = el.getBoundingClientRect();
+            if (rect.top <= window.innerHeight - VIEWPORT_OFFSET && rect.bottom >= VIEWPORT_OFFSET) {
+                reveal(el);
+            }
 
             timers.push(
                 setTimeout(() => {
-                    el.classList.add('is-visible');
+                    reveal(el);
                 }, FALLBACK_MS),
             );
         });

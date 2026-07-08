@@ -4,6 +4,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { createLocaleAwareRoute } from './route';
 
+document.documentElement.classList.add('js');
+
 createInertiaApp({
     title: (title) => (title ? `${title} — Elevasi Design & Build` : 'Elevasi Design & Build'),
     resolve: (name) =>

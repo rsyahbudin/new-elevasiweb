@@ -21,17 +21,17 @@ export default function SiteLayout({ children }) {
 
     return (
         <>
-            <header className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-[rgba(27,28,26,0.08)] bg-[rgba(243,243,240,0.85)] px-4 py-3 backdrop-blur-md md:px-10 md:py-[18px]">
+            <header className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-[rgba(27,28,26,0.08)] bg-[rgba(243,243,240,0.85)] px-4 py-3 backdrop-blur-md md:px-10 md:py-4">
                 <button
                     type="button"
                     onClick={goHome}
-                    className="flex items-center bg-transparent p-0 border-0 cursor-pointer"
+                    className="flex shrink-0 items-center bg-transparent p-0 border-0 cursor-pointer"
                     aria-label="Go to home page"
                 >
                     <img
                         src={logo}
                         alt="Elevasi Design & Build"
-                        className="h-12 w-auto md:h-14"
+                        className="h-14 w-auto md:h-20 lg:h-24"
                     />
                 </button>
 
@@ -129,12 +129,6 @@ export default function SiteLayout({ children }) {
                             className="whitespace-nowrap rounded-full bg-[rgb(31,122,70)] px-8 py-4 text-sm font-semibold uppercase tracking-[0.06em] transition hover:bg-[rgb(243,243,240)] hover:text-[rgb(27,28,26)]"
                         >
                             {t.footer.whatsapp} ↗
-                        </a>
-                        <a
-                            href={`mailto:${settings.email}`}
-                            className="whitespace-nowrap rounded-full border border-[rgba(243,243,240,0.3)] px-8 py-4 text-sm font-semibold uppercase tracking-[0.06em] transition hover:bg-[rgb(243,243,240)] hover:text-[rgb(27,28,26)]"
-                        >
-                            {settings.email}
                         </a>
                     </div>
                 </div>

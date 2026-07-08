@@ -24,18 +24,23 @@ export default function Kontak({ settings }) {
         });
     };
 
+    const fieldClass =
+        'w-full rounded border border-[rgba(27,28,26,0.2)] bg-transparent px-4 py-3.5 text-[15px] transition focus:border-[rgb(31,122,70)] focus:outline-none';
+
     return (
         <main className="px-5 pb-10 pt-36 md:px-10 md:pt-[170px]" ref={containerRef}>
             <Head title={t.nav.contact} />
 
             <div className="mb-14 border-b border-[rgba(27,28,26,0.12)] pb-8" data-reveal="0">
                 <span className="mono-label">( {t.kontak.eyebrow} )</span>
-                <h1 className="m-0 mt-5 text-[clamp(56px,8vw,120px)] font-semibold uppercase leading-[0.95] tracking-[-0.035em]">{t.kontak.heading}</h1>
+                <h1 className="m-0 mt-5 max-w-[12ch] text-[clamp(56px,8vw,120px)] font-semibold uppercase leading-[0.95] tracking-[-0.035em]">
+                    {t.kontak.heading}
+                </h1>
             </div>
 
             <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-[60px]">
                 <div data-reveal="0">
-                    <div className="mb-8">
+                    <div className="mb-8 transition hover:translate-x-1">
                         <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">WhatsApp</div>
                         <div className="text-base font-medium">
                             <a href={settings.whatsappUrl} target="_blank" rel="noopener noreferrer">
@@ -43,13 +48,13 @@ export default function Kontak({ settings }) {
                             </a>
                         </div>
                     </div>
-                    <div className="mb-8">
+                    <div className="mb-8 transition hover:translate-x-1" data-reveal="60">
                         <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">Email</div>
                         <div className="text-base font-medium">
                             <a href={`mailto:${settings.email}`}>{settings.email}</a>
                         </div>
                     </div>
-                    <div className="mb-8">
+                    <div className="mb-8 transition hover:translate-x-1" data-reveal="120">
                         <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.45)]">{t.kontak.address}</div>
                         <div className="text-base font-medium">{settings.address}</div>
                     </div>
@@ -74,7 +79,7 @@ export default function Kontak({ settings }) {
                         <input
                             type="text"
                             id="name"
-                            className="w-full rounded border border-[rgba(27,28,26,0.2)] bg-transparent px-4 py-3.5 text-[15px] focus:border-[rgb(31,122,70)] focus:outline-none"
+                            className={fieldClass}
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             required
@@ -87,7 +92,7 @@ export default function Kontak({ settings }) {
                         <input
                             type="text"
                             id="contact"
-                            className="w-full rounded border border-[rgba(27,28,26,0.2)] bg-transparent px-4 py-3.5 text-[15px] focus:border-[rgb(31,122,70)] focus:outline-none"
+                            className={fieldClass}
                             value={data.contact}
                             onChange={(e) => setData('contact', e.target.value)}
                             required
@@ -99,7 +104,7 @@ export default function Kontak({ settings }) {
                         <label htmlFor="message" className="mb-2 block text-xs uppercase tracking-[0.06em] text-[rgba(27,28,26,0.55)]">{t.kontak.message}</label>
                         <textarea
                             id="message"
-                            className="w-full rounded border border-[rgba(27,28,26,0.2)] bg-transparent px-4 py-3.5 text-[15px] focus:border-[rgb(31,122,70)] focus:outline-none"
+                            className={fieldClass}
                             rows={5}
                             value={data.message}
                             onChange={(e) => setData('message', e.target.value)}
@@ -108,7 +113,11 @@ export default function Kontak({ settings }) {
                         {errors.message && <div className="mt-1.5 text-[13px] text-[#b3261e]">{errors.message}</div>}
                     </div>
 
-                    <button type="submit" className="rounded-full bg-[rgb(27,28,26)] px-9 py-4 text-sm font-semibold uppercase tracking-[0.06em] text-[rgb(243,243,240)] transition hover:bg-[rgb(31,122,70)] disabled:cursor-not-allowed disabled:opacity-50" disabled={processing}>
+                    <button
+                        type="submit"
+                        className="rounded-full bg-[rgb(27,28,26)] px-9 py-4 text-sm font-semibold uppercase tracking-[0.06em] text-[rgb(243,243,240)] transition hover:bg-[rgb(31,122,70)] disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={processing}
+                    >
                         {t.kontak.submit}
                     </button>
 

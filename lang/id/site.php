@@ -45,6 +45,7 @@ return [
         'allProjects' => 'Semua proyek',
         'category' => 'Kategori',
         'location' => 'Lokasi',
+        'area' => 'Luas area',
         'yearCompleted' => 'Tahun selesai',
         'scope' => 'Lingkup pekerjaan',
         'aboutProject' => 'Tentang proyek',

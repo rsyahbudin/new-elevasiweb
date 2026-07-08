@@ -6,6 +6,8 @@
         <meta name="theme-color" content="#F3F3F0">
 
         <title inertia><?php echo e(config('app.name')); ?></title>
+        <link rel="icon" type="image/gif" href="<?php echo e(Vite::asset('resources/images/elevasi-logo.gif')); ?>">
+        <link rel="apple-touch-icon" href="<?php echo e(Vite::asset('resources/images/elevasi-logo.gif')); ?>">
 
         <?php echo app('Tighten\Ziggy\BladeRouteGenerator')->generate(); ?>
         <?php echo app('Illuminate\Foundation\Vite')->reactRefresh(); ?>

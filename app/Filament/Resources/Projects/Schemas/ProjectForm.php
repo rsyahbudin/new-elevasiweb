@@ -71,6 +71,10 @@ class ProjectForm
                         TextInput::make('location_city')
                             ->label('City')
                             ->required(),
+                        TextInput::make('area_size')
+                            ->label('Area (optional)')
+                            ->placeholder('e.g. 240 m2')
+                            ->helperText('Optional. Recommended format: number + unit, e.g. "240 m2".'),
                         TextInput::make('year_completed')
                             ->numeric()
                             ->required(),
@@ -94,14 +98,18 @@ class ProjectForm
                         SpatieMediaLibraryFileUpload::make('cover')
                             ->collection('cover')
                             ->image()
+                            ->rules(['dimensions:min_width=2000,min_height=1200'])
+                            ->maxSize(8 * 1024)
+                            ->helperText('Recommended: 2400x1350 px (16:9), min 2000x1200 px, max 8 MB.')
                             ->required(),
                         SpatieMediaLibraryFileUpload::make('gallery')
                             ->collection('gallery')
                             ->image()
                             ->multiple()
                             ->reorderable()
+                            ->rules(['dimensions:min_width=1400,min_height=1000'])
                             ->maxSize(15 * 1024)
-                            ->helperText('Minimum 1 photo. Max 15 MB per file.'),
+                            ->helperText('Minimum 1 photo. Recommended: 1600x1200 px (4:3), min 1400x1000 px, max 15 MB per file.'),
                     ]),
             ]);
     }

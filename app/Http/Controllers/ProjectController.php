@@ -26,8 +26,10 @@ class ProjectController extends Controller
                 'title' => $project->title,
                 'category' => $project->category->name,
                 'location' => $project->location_city,
+                'area' => $project->area_size,
                 'year' => $project->year_completed,
                 'caption' => $project->cover_caption ?? $project->title,
+                'coverImage' => $project->getFirstMediaUrl('cover', 'medium') ?: null,
             ]);
 
         $filters = Category::query()
@@ -60,15 +62,6 @@ class ProjectController extends Controller
         $nextId = $allPublishedIds[($currentPosition + 1) % count($allPublishedIds)];
         $next = $nextId === $project->id ? null : Project::find($nextId);
 
-        $galleryLabels = [
-            'interior, main space',
-            'material detail',
-            'section through courtyard',
-            'stair detail',
-            'evening exterior',
-            'joinery close-up',
-        ];
-
         [$description1, $description2] = array_pad(explode("\n\n", $project->description, 2), 2, '');
 
         return Inertia::render('Projects/Show', [
@@ -77,15 +70,21 @@ class ProjectController extends Controller
                 'title' => $project->title,
                 'category' => $project->category->name,
                 'location' => $project->location_city,
+                'area' => $project->area_size,
                 'year' => $project->year_completed,
                 'scope' => $project->scope_of_work,
                 'coverCaption' => $project->cover_caption ?? $project->title,
+                'coverImage' => $project->getFirstMediaUrl('cover', 'large') ?: null,
                 'description1' => $description1,
                 'description2' => $description2,
             ],
-            'gallery' => collect($galleryLabels)->map(fn (string $label) => [
-                'label' => "{$label} — {$project->title}",
-            ])->values(),
+            'gallery' => $project->getMedia('gallery')
+                ->map(fn ($media, int $index) => [
+                    'label' => $media->getCustomProperty('caption')
+                        ?: "{$project->title} — image ".($index + 1),
+                    'url' => $media->getAvailableUrl(['large', 'medium']),
+                ])
+                ->values(),
             'next' => $next ? ['slug' => $next->slug, 'title' => $next->title] : null,
         ]);
     }

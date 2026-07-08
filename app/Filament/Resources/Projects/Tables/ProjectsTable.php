@@ -34,6 +34,9 @@ class ProjectsTable
                 TextColumn::make('location_city')
                     ->label('City')
                     ->searchable(),
+                TextColumn::make('area_size')
+                    ->label('Area')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('year_completed')
                     ->numeric()
                     ->sortable(),

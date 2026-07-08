@@ -45,6 +45,7 @@ return [
         'allProjects' => 'All projects',
         'category' => 'Category',
         'location' => 'Location',
+        'area' => 'Area',
         'yearCompleted' => 'Year completed',
         'scope' => 'Scope',
         'aboutProject' => 'About the project',

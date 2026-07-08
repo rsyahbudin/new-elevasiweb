@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\SiteSetting;
 use BackedEnum;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -64,6 +65,17 @@ class ManageSiteSettings extends Page implements HasForms
                                 TextInput::make('hero.headline_word.en')->label('Headline last word (EN)'),
                                 Textarea::make('hero.lede.id')->label('Lede (ID)')->required()->rows(3),
                                 Textarea::make('hero.lede.en')->label('Lede (EN)')->rows(3),
+                                Textarea::make('hero.marquee_text.id')->label('Marquee text (ID)')->rows(2),
+                                Textarea::make('hero.marquee_text.en')->label('Marquee text (EN)')->rows(2),
+                                TextInput::make('hero.badge_label.id')->label('Hero badge label (ID)'),
+                                TextInput::make('hero.badge_label.en')->label('Hero badge label (EN)'),
+                                FileUpload::make('hero.cover_image')
+                                    ->label('Hero cover image')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('site-settings/hero')
+                                    ->visibility('public')
+                                    ->imageEditor(),
                                 TextInput::make('hero.cover_caption')->label('Cover photo caption'),
                             ]),
 
@@ -157,6 +169,15 @@ class ManageSiteSettings extends Page implements HasForms
                 'id' => 'Elevasi adalah kontraktor design-build yang mengerjakan arsitektur residensial dan komersial — dari sketsa pertama hingga serah terima, dalam satu atap.',
                 'en' => 'Elevasi is a design-build contractor delivering residential and commercial architecture — from first sketch to final handover, under one roof.',
             ],
+            'marquee_text' => [
+                'id' => 'Residensial ✦ Komersial ✦ Interior ✦ Renovasi',
+                'en' => 'Residential ✦ Commercial ✦ Interior ✦ Renovation',
+            ],
+            'badge_label' => [
+                'id' => 'Proyek signature Elevasi',
+                'en' => 'Elevasi signature project',
+            ],
+            'cover_image' => null,
             'cover_caption' => 'hero photo — flagship project, exterior at dusk',
         ];
     }
