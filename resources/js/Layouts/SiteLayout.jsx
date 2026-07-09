@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import GoogleAnalytics from '../Components/GoogleAnalytics';
 import SplashScreen from '../Components/SplashScreen';
 import WhatsAppButton from '../Components/WhatsAppButton';
+import { usePageTransition } from '../hooks/usePageTransition';
 import { WhatsAppInquiryProvider } from '../contexts/WhatsAppInquiryContext';
 import logo from '../../images/elevasi-logo.gif';
 
@@ -23,6 +24,7 @@ export default function SiteLayout({ children }) {
     const { props } = usePage();
     const { locale, altLocaleUrl, settings, cms, url } = props;
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+    const pageRef = usePageTransition();
 
     const isProjectsArea = url.startsWith('/proyek') || url.startsWith('/en/proyek');
     const isStudioArea = url === '/tentang' || url === '/en/tentang';
@@ -31,7 +33,7 @@ export default function SiteLayout({ children }) {
     const homeUrl = locale === 'en' ? '/en' : '/';
     const goHome = () => {
         closeMobileNav();
-        window.location.assign(homeUrl);
+        router.visit(homeUrl);
     };
 
     const navLinkClass = (active) =>
@@ -80,18 +82,18 @@ export default function SiteLayout({ children }) {
 
                     <div className="ml-auto flex shrink-0 items-center gap-1.5 md:gap-3">
                         <span className="hidden gap-0.5 rounded-full border border-[rgba(27,28,26,0.12)] bg-[rgba(255,255,255,0.35)] p-0.5 text-[10px] text-[rgba(27,28,26,0.45)] md:inline-flex">
-                            <a
+                            <Link
                                 href={locale === 'en' ? url : altLocaleUrl}
                                 className={`inline-block rounded-full px-2 py-1 ${locale === 'en' ? 'bg-[rgb(27,28,26)] text-[rgb(243,243,240)]' : ''}`}
                             >
                                 EN
-                            </a>
-                            <a
+                            </Link>
+                            <Link
                                 href={locale === 'id' ? url : altLocaleUrl}
                                 className={`inline-block rounded-full px-2 py-1 ${locale === 'id' ? 'bg-[rgb(27,28,26)] text-[rgb(243,243,240)]' : ''}`}
                             >
                                 ID
-                            </a>
+                            </Link>
                         </span>
 
                         <div className="hidden md:contents">
@@ -147,20 +149,20 @@ export default function SiteLayout({ children }) {
 
                     <div className="flex items-center justify-between">
                         <span className="inline-flex gap-0.5 rounded-full border border-[rgba(27,28,26,0.15)] p-0.5 text-xs">
-                            <a
+                            <Link
                                 href={locale === 'en' ? url : altLocaleUrl}
                                 className={`rounded-full px-3 py-1.5 ${locale === 'en' ? 'bg-[rgb(27,28,26)] text-[rgb(243,243,240)]' : ''}`}
                                 onClick={closeMobileNav}
                             >
                                 EN
-                            </a>
-                            <a
+                            </Link>
+                            <Link
                                 href={locale === 'id' ? url : altLocaleUrl}
                                 className={`rounded-full px-3 py-1.5 ${locale === 'id' ? 'bg-[rgb(27,28,26)] text-[rgb(243,243,240)]' : ''}`}
                                 onClick={closeMobileNav}
                             >
                                 ID
-                            </a>
+                            </Link>
                         </span>
                         <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.4)]">
                             Elevasi
@@ -169,7 +171,9 @@ export default function SiteLayout({ children }) {
                 </div>
             </div>
 
-            {children}
+            <main id="page-content" ref={pageRef}>
+                {children}
+            </main>
 
             <footer className={`mt-10 overflow-hidden rounded-t-3xl bg-[rgb(27,28,26)] text-[rgb(243,243,240)] ${isContactPage ? 'pt-10' : ''}`}>
                 {!isContactPage && (

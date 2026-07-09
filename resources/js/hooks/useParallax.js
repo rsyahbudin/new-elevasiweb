@@ -1,51 +1,62 @@
 import { useEffect } from 'react';
-
-const OFFSCREEN_MARGIN = 100;
-const DEFAULT_SPEED = 0.08;
+import { loadGsap, prefersReducedMotion } from '../lib/gsap';
 
 /**
- * Drives a lightweight parallax offset (translateY only, GPU-composited) on
- * every [data-parallax] element inside `containerRef`, batched behind a
- * single rAF per scroll event. Disabled under prefers-reduced-motion per
- * PRD US-2 (non-essential animation).
+ * Smooth scrub parallax on [data-parallax] elements (value = intensity, default 0.08).
  */
 export function useParallax(containerRef) {
     useEffect(() => {
         const container = containerRef.current;
-        if (!container) return undefined;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+        if (!container || prefersReducedMotion()) {
+            return undefined;
+        }
 
         const elements = Array.from(container.querySelectorAll('[data-parallax]'));
-        if (elements.length === 0) return undefined;
+        if (elements.length === 0) {
+            return undefined;
+        }
 
-        let raf = null;
+        let ctx;
+        let cancelled = false;
 
-        const apply = () => {
-            raf = null;
-            const vh = window.innerHeight;
+        (async () => {
+            const gsap = await loadGsap();
 
-            elements.forEach((el) => {
-                const host = el.parentElement;
-                const rect = host.getBoundingClientRect();
-                if (rect.bottom < -OFFSCREEN_MARGIN || rect.top > vh + OFFSCREEN_MARGIN) return;
+            if (cancelled) {
+                return;
+            }
 
-                const speed = parseFloat(el.dataset.parallax) || DEFAULT_SPEED;
-                const offset = (rect.top + rect.height / 2 - vh / 2) * speed;
-                el.style.transform = `translateY(${offset.toFixed(1)}px)`;
-            });
-        };
+            ctx = gsap.context(() => {
+                elements.forEach((el) => {
+                    const host = el.parentElement;
+                    if (!host) {
+                        return;
+                    }
 
-        const onScroll = () => {
-            if (raf) return;
-            raf = requestAnimationFrame(apply);
-        };
+                    const speed = parseFloat(el.dataset.parallax) || 0.08;
+                    const travel = Math.max(24, Math.round(speed * 320));
 
-        window.addEventListener('scroll', onScroll, { passive: true });
-        apply();
+                    gsap.fromTo(
+                        el,
+                        { y: -travel / 2 },
+                        {
+                            y: travel / 2,
+                            ease: 'none',
+                            scrollTrigger: {
+                                trigger: host,
+                                start: 'top bottom',
+                                end: 'bottom top',
+                                scrub: 0.65,
+                            },
+                        },
+                    );
+                });
+            }, container);
+        })();
 
         return () => {
-            window.removeEventListener('scroll', onScroll);
-            if (raf) cancelAnimationFrame(raf);
+            cancelled = true;
+            ctx?.revert();
         };
     }, [containerRef]);
 }

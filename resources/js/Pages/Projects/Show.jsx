@@ -66,7 +66,7 @@ export default function ProjectShow({ project, gallery, next, labels }) {
                 ))}
             </div>
 
-            <div className="relative mb-6 overflow-hidden rounded-sm md:mb-7" data-reveal="0">
+            <div className="relative mb-6 overflow-hidden rounded-sm md:mb-7" data-reveal="0" data-reveal-variant="clip">
                 {project.coverImage ? (
                     <img
                         src={project.coverImage}

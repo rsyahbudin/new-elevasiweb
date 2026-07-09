@@ -1,79 +1,80 @@
 import { useEffect } from 'react';
-
-const FALLBACK_MS = 1200;
-const OBSERVER_THRESHOLD = 0.12;
-const VIEWPORT_OFFSET = 80;
+import { loadGsap, prefersReducedMotion } from '../lib/gsap';
 
 /**
- * Reveals every [data-reveal] element inside `containerRef` as it enters the
- * viewport, staggered by its `data-reveal` delay (ms).
- *
- * Pass `deps` whenever the revealed content can change without remounting the
- * page (e.g. Inertia filter/pagination with preserveState) so newly rendered
- * cards are observed again instead of staying invisible.
- *
- * @param {React.RefObject<HTMLElement|null>} containerRef
- * @param {unknown[]} [deps]
+ * Scroll-triggered reveal for every [data-reveal] inside `containerRef`.
+ * `data-reveal` = delay in ms. Optional `data-reveal-variant`: up | scale | clip.
  */
 export function useScrollReveal(containerRef, deps = []) {
     useEffect(() => {
         const container = containerRef.current;
-        if (!container) return undefined;
-
-        const elements = Array.from(container.querySelectorAll('[data-reveal]'));
-        if (elements.length === 0) return undefined;
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        if (prefersReducedMotion) {
-            elements.forEach((el) => el.classList.add('is-visible'));
+        if (!container) {
             return undefined;
         }
 
-        const timers = [];
-        const revealed = new WeakSet();
+        const elements = Array.from(container.querySelectorAll('[data-reveal]'));
+        if (elements.length === 0) {
+            return undefined;
+        }
 
-        const reveal = (el) => {
-            if (revealed.has(el)) return;
-            revealed.add(el);
+        if (prefersReducedMotion()) {
+            elements.forEach((el) => {
+                el.style.opacity = '1';
+                el.style.transform = 'none';
+                el.style.clipPath = 'none';
+            });
+            return undefined;
+        }
 
-            const delay = parseInt(el.dataset.reveal, 10) || 0;
-            timers.push(
-                setTimeout(() => {
-                    el.classList.add('is-visible');
-                }, delay),
-            );
-        };
+        let ctx;
+        let cancelled = false;
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (!entry.isIntersecting) return;
-                    reveal(entry.target);
-                    observer.unobserve(entry.target);
-                });
-            },
-            { threshold: OBSERVER_THRESHOLD },
-        );
+        (async () => {
+            const gsap = await loadGsap();
 
-        elements.forEach((el) => {
-            el.classList.remove('is-visible');
-            observer.observe(el);
-
-            const rect = el.getBoundingClientRect();
-            if (rect.top <= window.innerHeight - VIEWPORT_OFFSET && rect.bottom >= VIEWPORT_OFFSET) {
-                reveal(el);
+            if (cancelled || !containerRef.current) {
+                return;
             }
 
-            timers.push(
-                setTimeout(() => {
-                    reveal(el);
-                }, FALLBACK_MS),
-            );
-        });
+            ctx = gsap.context(() => {
+                elements.forEach((el) => {
+                    const delay = (parseInt(el.dataset.reveal, 10) || 0) / 1000;
+                    const variant = el.dataset.revealVariant || 'up';
+                    const from = { opacity: 0 };
+                    const to = {
+                        opacity: 1,
+                        duration: 1.05,
+                        delay,
+                        ease: 'power3.out',
+                    };
+
+                    if (variant === 'scale') {
+                        from.scale = 0.94;
+                        to.scale = 1;
+                    } else if (variant === 'clip') {
+                        from.clipPath = 'inset(100% 0 0 0)';
+                        to.clipPath = 'inset(0% 0 0 0)';
+                        to.duration = 1.2;
+                    } else {
+                        from.y = 32;
+                        to.y = 0;
+                    }
+
+                    gsap.fromTo(el, from, {
+                        ...to,
+                        scrollTrigger: {
+                            trigger: el,
+                            start: 'top 88%',
+                            once: true,
+                        },
+                    });
+                });
+            }, container);
+        })();
 
         return () => {
-            observer.disconnect();
-            timers.forEach(clearTimeout);
+            cancelled = true;
+            ctx?.revert();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- caller-controlled refresh key
     }, [containerRef, ...deps]);

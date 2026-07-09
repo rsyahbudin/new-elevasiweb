@@ -1,10 +1,47 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import logoWhite from '../../images/Logo-Elevasi-White.png';
+import { loadGsap } from '../lib/gsap';
 import { waitForSiteReady } from '../lib/waitForSiteReady';
 
 function prefersReducedMotion() {
     return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Once per tab session — skips Inertia navigations; refresh always replays.
+let splashPlayed = false;
+
+const SPLASH_STORAGE_KEY = 'elevasi-splash-seen';
+
+function shouldPlaySplash() {
+    if (prefersReducedMotion()) {
+        return false;
+    }
+
+    if (splashPlayed) {
+        return false;
+    }
+
+    const nav = performance.getEntriesByType('navigation')[0];
+    if (nav?.type === 'reload') {
+        return true;
+    }
+
+    try {
+        return !sessionStorage.getItem(SPLASH_STORAGE_KEY);
+    } catch {
+        return true;
+    }
+}
+
+function markSplashPlayed() {
+    splashPlayed = true;
+
+    try {
+        sessionStorage.setItem(SPLASH_STORAGE_KEY, '1');
+    } catch {
+        // Ignore private browsing storage errors.
+    }
 }
 
 export default function SplashScreen() {
@@ -14,10 +51,10 @@ export default function SplashScreen() {
     const services = splash.services ?? [];
 
     const rootRef = useRef(null);
-    const [visible, setVisible] = useState(true);
+    const [visible, setVisible] = useState(() => shouldPlaySplash());
 
     useEffect(() => {
-        if (prefersReducedMotion()) {
+        if (!shouldPlaySplash()) {
             setVisible(false);
             return undefined;
         }
@@ -27,9 +64,12 @@ export default function SplashScreen() {
         let cancelled = false;
         let enterTimeline;
         let exitTimeline;
+        let failsafeTimer;
         const abort = new AbortController();
 
         const finish = () => {
+            markSplashPlayed();
+            window.clearTimeout(failsafeTimer);
             setVisible(false);
             document.body.classList.remove('overflow-hidden');
         };
@@ -70,8 +110,15 @@ export default function SplashScreen() {
                 );
         };
 
+        failsafeTimer = window.setTimeout(() => {
+            if (!cancelled) {
+                finish();
+            }
+        }, 12000);
+
         (async () => {
-            const { gsap } = await import('gsap');
+            try {
+            const gsap = await loadGsap();
 
             if (cancelled || !rootRef.current) {
                 return;
@@ -165,10 +212,15 @@ export default function SplashScreen() {
             animateProgress(1);
             loadDone = true;
             maybeExit();
+            } catch (error) {
+                console.error('SplashScreen animation failed:', error);
+                finish();
+            }
         })();
 
         return () => {
             cancelled = true;
+            window.clearTimeout(failsafeTimer);
             abort.abort();
             enterTimeline?.kill();
             exitTimeline?.kill();

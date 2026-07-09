@@ -38,7 +38,7 @@ function Hero({ hero }) {
             </section>
 
             <section className="px-5 md:px-10">
-                <div data-reveal="0" className="relative overflow-hidden rounded-sm">
+                <div data-reveal="0" data-reveal-variant="clip" className="relative overflow-hidden rounded-sm">
                     {hero.coverImage ? (
                         <div className="relative h-[62vh] overflow-hidden md:h-[76vh]">
                             <img
