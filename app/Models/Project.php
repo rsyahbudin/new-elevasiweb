@@ -112,4 +112,68 @@ class Project extends Model implements HasMedia
             ->format('webp')
             ->queued();
     }
+
+    /**
+     * @return array{src: string, srcSet: string|null}|null
+     */
+    public function coverImageSources(string $size = 'medium'): ?array
+    {
+        $media = $this->getFirstMedia('cover');
+
+        if (! $media) {
+            return null;
+        }
+
+        $urls = [];
+
+        foreach (['thumbnail' => 480, 'medium' => 1024, 'large' => 1920] as $name => $width) {
+            if ($media->hasGeneratedConversion($name)) {
+                $urls[$name] = ['url' => $media->getUrl($name), 'width' => $width];
+            }
+        }
+
+        if ($urls === []) {
+            $fallback = $media->getUrl();
+
+            return $fallback ? ['src' => $fallback, 'srcSet' => null] : null;
+        }
+
+        $src = $urls[$size]['url'] ?? $urls['medium']['url'] ?? $urls['thumbnail']['url'] ?? $media->getUrl();
+        $srcSet = collect($urls)
+            ->map(fn (array $item) => "{$item['url']} {$item['width']}w")
+            ->implode(', ');
+
+        return [
+            'src' => $src,
+            'srcSet' => $srcSet !== '' ? $srcSet : null,
+        ];
+    }
+
+    /**
+     * @return array{url: string, srcSet: string|null}
+     */
+    public static function mediaImageSources(Media $media, string $size = 'large'): array
+    {
+        $urls = [];
+
+        foreach (['thumbnail' => 480, 'medium' => 1024, 'large' => 1920] as $name => $width) {
+            if ($media->hasGeneratedConversion($name)) {
+                $urls[$name] = ['url' => $media->getUrl($name), 'width' => $width];
+            }
+        }
+
+        $url = $urls[$size]['url']
+            ?? $urls['medium']['url']
+            ?? $urls['thumbnail']['url']
+            ?? $media->getAvailableUrl(['large', 'medium']);
+
+        $srcSet = collect($urls)
+            ->map(fn (array $item) => "{$item['url']} {$item['width']}w")
+            ->implode(', ');
+
+        return [
+            'url' => $url,
+            'srcSet' => $srcSet !== '' ? $srcSet : null,
+        ];
+    }
 }

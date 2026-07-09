@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Actions\Images\OptimizeStoredImage;
 use App\Models\SiteSetting;
 use BackedEnum;
 use Filament\Forms\Components\ColorPicker;
@@ -450,9 +451,40 @@ class ManageSiteSettings extends Page implements HasForms
     public function save(): void
     {
         $data = $this->form->getState();
+        $optimizer = app(OptimizeStoredImage::class);
+
+        $imageFields = [
+            ['key' => 'hero', 'field' => 'cover_image'],
+            ['key' => 'contact', 'field' => 'page_image'],
+            ['key' => 'footer', 'field' => 'cta_image'],
+        ];
+
+        foreach ($imageFields as ['key' => $key, 'field' => $field]) {
+            $defaults = match ($key) {
+                'hero' => self::heroDefaults(),
+                'contact' => self::contactDefaults(),
+                'footer' => self::footerDefaults(),
+                default => [],
+            };
+
+            $old = SiteSetting::get($key, $defaults)[$field] ?? null;
+            $new = $data[$key][$field] ?? null;
+
+            if (is_string($old) && $old !== '' && $old !== $new) {
+                $optimizer->purge($old);
+            }
+        }
 
         foreach (['hero', 'services', 'tentang', 'contact', 'navigation', 'footer', 'home', 'projects', 'brand', 'analytics'] as $key) {
             SiteSetting::updateOrCreate(['key' => $key], ['value' => $data[$key] ?? []]);
+        }
+
+        foreach ($imageFields as ['key' => $key, 'field' => $field]) {
+            $path = $data[$key][$field] ?? null;
+
+            if (is_string($path) && $path !== '') {
+                $optimizer->ensure($path);
+            }
         }
 
         Notification::make()

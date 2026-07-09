@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Link, router } from '@inertiajs/react';
 import SiteLayout from '../../Layouts/SiteLayout';
 import Placeholder from '../../Components/Placeholder';
+import OptimizedImage from '../../Components/OptimizedImage';
 import Seo from '../../Components/Seo';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 import { useParallax } from '../../hooks/useParallax';
@@ -87,11 +88,13 @@ export default function ProjectsIndex({ projects, filters, activeCategory, meta,
                     >
                         <div className="overflow-hidden rounded-[2px]">
                             {project.coverImage ? (
-                                <img
+                                <OptimizedImage
                                     src={project.coverImage}
+                                    srcSet={project.coverSrcSet}
+                                    sizes="(min-width: 768px) 33vw, 100vw"
                                     alt={project.caption || project.title}
                                     className="aspect-[4/3] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
-                                    loading="lazy"
+                                    loading={i < 3 ? 'eager' : 'lazy'}
                                 />
                             ) : (
                                 <Placeholder

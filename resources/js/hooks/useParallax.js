@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { whenIdle } from '../lib/defer';
 import { loadGsap, prefersReducedMotion } from '../lib/gsap';
 
 /**
@@ -20,6 +21,7 @@ export function useParallax(containerRef) {
         let cancelled = false;
 
         (async () => {
+            await whenIdle();
             const gsap = await loadGsap();
 
             if (cancelled) {

@@ -24,16 +24,21 @@ class ProjectController extends Controller
             ->inCategory($activeCategory)
             ->paginate(self::PER_PAGE)
             ->withQueryString()
-            ->through(fn (Project $project) => [
-                'slug' => $project->slug,
-                'title' => $project->title,
-                'category' => $project->category->name,
-                'location' => $project->location_city,
-                'area' => $project->area_size,
-                'year' => $project->year_completed,
-                'caption' => $project->cover_caption ?? $project->title,
-                'coverImage' => $project->getFirstMediaUrl('cover', 'medium') ?: null,
-            ]);
+            ->through(function (Project $project) {
+                $cover = $project->coverImageSources('medium');
+
+                return [
+                    'slug' => $project->slug,
+                    'title' => $project->title,
+                    'category' => $project->category->name,
+                    'location' => $project->location_city,
+                    'area' => $project->area_size,
+                    'year' => $project->year_completed,
+                    'caption' => $project->cover_caption ?? $project->title,
+                    'coverImage' => $cover['src'] ?? null,
+                    'coverSrcSet' => $cover['srcSet'] ?? null,
+                ];
+            });
 
         $filters = Category::query()
             ->withCount(['projects' => fn ($query) => $query->published()])
@@ -82,6 +87,8 @@ class ProjectController extends Controller
 
         $labels = SiteSetting::translatedMerged('projects', ManageSiteSettings::projectsDefaults());
 
+        $cover = $project->coverImageSources('large');
+
         return Inertia::render('Projects/Show', [
             'project' => [
                 'slug' => $project->slug,
@@ -93,16 +100,22 @@ class ProjectController extends Controller
                 'year' => $project->year_completed,
                 'scope' => $project->scope_of_work,
                 'coverCaption' => $project->cover_caption ?? $project->title,
-                'coverImage' => $project->getFirstMediaUrl('cover', 'large') ?: null,
+                'coverImage' => $cover['src'] ?? null,
+                'coverSrcSet' => $cover['srcSet'] ?? null,
                 'description1' => $description1,
                 'description2' => $description2,
             ],
             'gallery' => $project->getMedia('gallery')
-                ->map(fn ($media, int $index) => [
-                    'label' => $media->getCustomProperty('caption')
-                        ?: "{$project->title} — image ".($index + 1),
-                    'url' => $media->getAvailableUrl(['large', 'medium']),
-                ])
+                ->map(function ($media, int $index) use ($project) {
+                    $sources = Project::mediaImageSources($media, 'large');
+
+                    return [
+                        'label' => $media->getCustomProperty('caption')
+                            ?: "{$project->title} — image ".($index + 1),
+                        'url' => $sources['url'],
+                        'srcSet' => $sources['srcSet'],
+                    ];
+                })
                 ->values(),
             'next' => $next ? ['slug' => $next->slug, 'title' => $next->title] : null,
             'labels' => [

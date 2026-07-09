@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Link } from '@inertiajs/react';
 import SiteLayout from '../../Layouts/SiteLayout';
 import Placeholder from '../../Components/Placeholder';
+import OptimizedImage from '../../Components/OptimizedImage';
 import Seo from '../../Components/Seo';
 import WhatsAppButton from '../../Components/WhatsAppButton';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
@@ -36,6 +37,7 @@ export default function ProjectShow({ project, gallery, next, labels }) {
                 description={seoDescription || undefined}
                 image={project.coverImage || undefined}
                 type="article"
+                preloadImage={Boolean(project.coverImage)}
             />
 
             <Link
@@ -68,11 +70,14 @@ export default function ProjectShow({ project, gallery, next, labels }) {
 
             <div className="relative mb-6 overflow-hidden rounded-sm md:mb-7" data-reveal="0" data-reveal-variant="clip">
                 {project.coverImage ? (
-                    <img
+                    <OptimizedImage
                         src={project.coverImage}
+                        srcSet={project.coverSrcSet}
+                        sizes="100vw"
                         alt={project.coverCaption || project.title}
                         className="h-[56vh] w-full object-cover md:h-[74vh]"
                         loading="eager"
+                        fetchPriority="high"
                     />
                 ) : (
                     <Placeholder
@@ -115,8 +120,10 @@ export default function ProjectShow({ project, gallery, next, labels }) {
                 {gallery.map((g, i) => (
                     <div key={g.label} className="group overflow-hidden rounded-[2px]" data-reveal={(i % 2) * 90} style={{ gridColumn: i === 0 ? '1 / -1' : 'auto' }}>
                         {g.url ? (
-                            <img
+                            <OptimizedImage
                                 src={g.url}
+                                srcSet={g.srcSet}
+                                sizes={i === 0 ? '100vw' : '(min-width: 768px) 50vw, 100vw'}
                                 alt={g.label}
                                 className="aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
                                 style={{ '--ratio': i === 0 ? '16 / 8' : '4 / 3' }}

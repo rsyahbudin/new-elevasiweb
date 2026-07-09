@@ -21,6 +21,7 @@ export default function Seo({
     image,
     type = 'website',
     noIndex = false,
+    preloadImage = false,
 }) {
     const { props } = usePage();
     const { locale, url, altLocaleUrl, seo: siteSeo } = props;
@@ -53,6 +54,10 @@ export default function Seo({
             <link head-key="hreflang-id" rel="alternate" hrefLang="id" href={alternateId} />
             <link head-key="hreflang-en" rel="alternate" hrefLang="en" href={alternateEn} />
             <link head-key="hreflang-default" rel="alternate" hrefLang="x-default" href={alternateId} />
+
+            {preloadImage && image ? (
+                <link head-key="preload-lcp" rel="preload" as="image" href={absoluteUrl(image, appUrl)} />
+            ) : null}
 
             <meta head-key="og:type" property="og:type" content={type} />
             <meta head-key="og:site_name" property="og:site_name" content={siteName} />

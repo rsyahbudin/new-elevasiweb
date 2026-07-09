@@ -10,34 +10,37 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$APP_DIR"
 
-echo "==> [1/8] Pull latest code"
+echo "==> [1/9] Pull latest code"
 git pull --ff-only
 
-echo "==> [2/8] Composer install"
+echo "==> [2/9] Composer install"
 composer install --no-dev --optimize-autoloader --no-interaction
 
-echo "==> [3/8] NPM install + build (client + SSR)"
+echo "==> [3/9] NPM install + build (client + SSR)"
 npm ci --ignore-scripts
 npm run build
 
-echo "==> [4/8] Migrate database"
+echo "==> [4/9] Migrate database"
 php artisan migrate --force
 
-echo "==> [5/8] Storage link"
+echo "==> [5/9] Optimize CMS images (WebP)"
+php artisan images:optimize-cms
+
+echo "==> [6/9] Storage link"
 php artisan storage:link || true
 
-echo "==> [6/8] Cache config/routes/views"
+echo "==> [7/9] Cache config/routes/views"
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache || true
 php artisan filament:optimize || true
 
-echo "==> [7/8] Restart Supervisor processes"
+echo "==> [8/9] Restart Supervisor processes"
 sudo supervisorctl restart elevasi-ssr:* || sudo supervisorctl restart elevasi-ssr || true
 sudo supervisorctl restart elevasi-worker:* || sudo supervisorctl restart elevasi-worker || true
 
-echo "==> [8/8] Health checks"
+echo "==> [9/9] Health checks"
 php artisan inertia:check-ssr || echo "WARN: SSR belum jalan — cek supervisor / bootstrap/ssr/ssr.js"
 php artisan about --only=environment
 

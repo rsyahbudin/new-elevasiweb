@@ -1,98 +1,118 @@
 {
   "\u0000rolldown/runtime.js": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
-  "resources/images/Logo-Elevasi-White.gif": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+  "resources/images/Logo-Elevasi-White.png": [
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/images/elevasi-logo.gif": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Components/GoogleAnalytics.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
+    "/build/assets/elevasi-logo-CfvkopY_.gif"
+  ],
+  "resources/js/Components/OptimizedImage.jsx": [
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Components/Placeholder.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Components/ProcessSteps.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Components/Seo.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Components/SplashScreen.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Components/WhatsAppButton.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Components/WhatsAppInquiryDialog.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Layouts/SiteLayout.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Pages/Home.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Pages/Kontak.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Pages/Layanan.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Pages/Projects/Index.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Pages/Projects/Show.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/Pages/Tentang.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/contexts/WhatsAppInquiryContext.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/hooks/useCountUp.js": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
+    "/build/assets/elevasi-logo-CfvkopY_.gif"
+  ],
+  "resources/js/hooks/usePageTransition.js": [
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/hooks/useParallax.js": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/hooks/useScrollReveal.js": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/lib/analytics.js": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
+    "/build/assets/elevasi-logo-CfvkopY_.gif"
+  ],
+  "resources/js/lib/defer.js": [
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
+    "/build/assets/elevasi-logo-CfvkopY_.gif"
+  ],
+  "resources/js/lib/gsap.js": [
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
+    "/build/assets/elevasi-logo-CfvkopY_.gif"
+  ],
+  "resources/js/lib/waitForSiteReady.js": [
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/route.js": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
   "resources/js/ssr.jsx": [
-    "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif",
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ]
 }

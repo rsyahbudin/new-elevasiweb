@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import SiteLayout from '../Layouts/SiteLayout';
 import Placeholder from '../Components/Placeholder';
+import OptimizedImage from '../Components/OptimizedImage';
 import ProcessSteps from '../Components/ProcessSteps';
 import Seo from '../Components/Seo';
 import WhatsAppButton from '../Components/WhatsAppButton';
@@ -81,10 +82,12 @@ export default function Kontak({ content, recentProjects }) {
             {content.pageImage && (
                 <section className="mt-14 md:mt-20" data-reveal="0">
                     <div className="relative overflow-hidden rounded-sm">
-                        <img
+                        <OptimizedImage
                             src={content.pageImage}
+                            srcSet={content.pageImageSrcSet}
                             alt={content.heading}
                             className="aspect-[16/9] w-full object-cover md:aspect-[21/9]"
+                            sizes="100vw"
                             loading="lazy"
                         />
                     </div>
@@ -122,8 +125,10 @@ export default function Kontak({ content, recentProjects }) {
                                 data-reveal={i * 50}
                             >
                                 {project.coverImage ? (
-                                    <img
+                                    <OptimizedImage
                                         src={project.coverImage}
+                                        srcSet={project.coverSrcSet}
+                                        sizes="(min-width: 768px) 33vw, 50vw"
                                         alt={project.caption}
                                         className="aspect-[4/5] w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                                         loading="lazy"

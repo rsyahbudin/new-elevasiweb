@@ -8,7 +8,7 @@ use App\Models\Category;
 use App\Models\Project;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
-use Illuminate\Support\Facades\Storage;
+use App\Support\StoredImageSources;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,13 +18,10 @@ class HomeController extends Controller
     {
         $heroRaw = SiteSetting::translatedMerged('hero', ManageSiteSettings::heroDefaults());
         $heroCoverImagePath = $heroRaw['cover_image'] ?? $heroRaw['coverImage'] ?? null;
-        $heroCoverImageUrl = null;
-
-        if (is_string($heroCoverImagePath) && $heroCoverImagePath !== '') {
-            $heroCoverImageUrl = str_starts_with($heroCoverImagePath, 'http')
-                ? $heroCoverImagePath
-                : Storage::disk('public')->url($heroCoverImagePath);
-        }
+        $heroCoverSources = StoredImageSources::resolve(
+            is_string($heroCoverImagePath) ? $heroCoverImagePath : null,
+            'large',
+        );
 
         $hero = [
             'location' => $heroRaw['location'] ?? null,
@@ -37,7 +34,8 @@ class HomeController extends Controller
             'headlineAccent' => $heroRaw['headlineAccent'] ?? $heroRaw['headline_accent'] ?? null,
             'headlineWord' => $heroRaw['headlineWord'] ?? $heroRaw['headline_word'] ?? null,
             'lede' => $heroRaw['lede'] ?? null,
-            'coverImage' => $heroCoverImageUrl,
+            'coverImage' => $heroCoverSources['src'] ?? null,
+            'coverSrcSet' => $heroCoverSources['srcSet'] ?? null,
             'coverCaption' => $heroRaw['coverCaption'] ?? $heroRaw['cover_caption'] ?? null,
             'marqueeText' => $heroRaw['marqueeText'] ?? $heroRaw['marquee_text'] ?? null,
             'badgeLabel' => trim((string) ($heroRaw['badgeLabel'] ?? $heroRaw['badge_label'] ?? '')) ?: null,
@@ -54,15 +52,20 @@ class HomeController extends Controller
         $featured = ($hasHomeSelection ? $publishedQuery->forHome() : $publishedQuery->ordered())
             ->limit(6)
             ->get()
-            ->map(fn (Project $project) => [
-                'slug' => $project->slug,
-                'title' => $project->title,
-                'category' => $project->category->name,
-                'location' => $project->location_city,
-                'year' => $project->year_completed,
-                'caption' => $project->cover_caption ?? $project->title,
-                'coverImage' => $project->getFirstMediaUrl('cover', 'medium') ?: null,
-            ]);
+            ->map(function (Project $project) {
+                $cover = $project->coverImageSources('medium');
+
+                return [
+                    'slug' => $project->slug,
+                    'title' => $project->title,
+                    'category' => $project->category->name,
+                    'location' => $project->location_city,
+                    'year' => $project->year_completed,
+                    'caption' => $project->cover_caption ?? $project->title,
+                    'coverImage' => $cover['src'] ?? null,
+                    'coverSrcSet' => $cover['srcSet'] ?? null,
+                ];
+            });
 
         $categoryNames = Category::query()->get()->map->name->implode(' ✦ ');
         $projectCount = Project::published()->count();

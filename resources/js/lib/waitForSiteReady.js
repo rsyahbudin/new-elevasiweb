@@ -1,4 +1,4 @@
-function waitForImage(img) {
+function waitForImage(img, timeoutMs = 3500) {
     if (!img) {
         return Promise.resolve();
     }
@@ -8,7 +8,12 @@ function waitForImage(img) {
     }
 
     return new Promise((resolve) => {
-        const done = () => resolve();
+        const done = () => {
+            window.clearTimeout(timer);
+            resolve();
+        };
+
+        const timer = window.setTimeout(done, timeoutMs);
         img.addEventListener('load', done, { once: true });
         img.addEventListener('error', done, { once: true });
     });
@@ -37,7 +42,7 @@ function delay(ms, signal) {
 function getCriticalImages() {
     const seen = new Set();
 
-    return [...document.querySelectorAll('img[loading="eager"], header img, [data-splash-logo]')]
+    return [...document.querySelectorAll('[data-splash-logo], img[loading="eager"][fetchpriority="high"]')]
         .filter((img) => {
             if (!img || seen.has(img)) {
                 return false;
@@ -79,7 +84,7 @@ export async function waitForSiteReady({
     report(0.24);
 
     try {
-        await Promise.race([document.fonts.ready, delay(remaining(), signal)]);
+        await Promise.race([document.fonts.ready, delay(Math.min(2000, remaining()), signal)]);
     } catch {
         // Font loading is best-effort; splash should not block on failure.
     }
@@ -88,7 +93,10 @@ export async function waitForSiteReady({
 
     const images = getCriticalImages();
 
-    await Promise.race([Promise.all(images.map(waitForImage)), delay(remaining(), signal)]);
+    await Promise.race([
+        Promise.all(images.map((img) => waitForImage(img, Math.min(3500, remaining())))),
+        delay(Math.min(4000, remaining()), signal),
+    ]);
 
     report(0.82);
 

@@ -4,9 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Filament\Pages\ManageSiteSettings;
 use App\Models\SiteSetting;
+use App\Support\StoredImageSources;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
 
@@ -33,23 +33,18 @@ class HandleInertiaRequests extends Middleware
         $footer = SiteSetting::translatedMerged('footer', ManageSiteSettings::footerDefaults(), $locale);
         $whatsappNumber = preg_replace('/\D/', '', $contact['whatsapp_number'] ?? '');
         $footerCtaImagePath = is_array($footerRaw) ? ($footerRaw['cta_image'] ?? null) : null;
-        $footerCtaImageUrl = null;
-
-        if (is_string($footerCtaImagePath) && $footerCtaImagePath !== '') {
-            $footerCtaImageUrl = str_starts_with($footerCtaImagePath, 'http')
-                ? $footerCtaImagePath
-                : Storage::disk('public')->url($footerCtaImagePath);
-        }
+        $footerCtaSources = StoredImageSources::resolve(
+            is_string($footerCtaImagePath) ? $footerCtaImagePath : null,
+            'medium',
+        );
 
         $heroRaw = SiteSetting::get('hero', ManageSiteSettings::heroDefaults());
         $heroCoverPath = is_array($heroRaw) ? ($heroRaw['cover_image'] ?? null) : null;
-        $defaultOgImage = null;
-
-        if (is_string($heroCoverPath) && $heroCoverPath !== '') {
-            $defaultOgImage = str_starts_with($heroCoverPath, 'http')
-                ? $heroCoverPath
-                : Storage::disk('public')->url($heroCoverPath);
-        }
+        $heroCoverSources = StoredImageSources::resolve(
+            is_string($heroCoverPath) ? $heroCoverPath : null,
+            'large',
+        );
+        $defaultOgImage = $heroCoverSources['src'] ?? null;
 
         $seoDefaults = [
             'id' => 'Elevasi Design & Build — kontraktor profesional di Jakarta untuk desain 3D, RAB, konstruksi, interior, dan furniture. Satu tim dari konsep hingga serah terima.',
@@ -122,7 +117,8 @@ class HandleInertiaRequests extends Middleware
                     'copyright' => $footer['copyright'] ?? '',
                     'instagramLabel' => $footer['instagram_label'] ?? 'Instagram',
                     'whatsappLabel' => $footer['whatsapp_label'] ?? 'WhatsApp',
-                    'ctaImage' => $footerCtaImageUrl,
+                    'ctaImage' => $footerCtaSources['src'] ?? null,
+                    'ctaImageSrcSet' => $footerCtaSources['srcSet'] ?? null,
                 ],
                 'inquiry' => [
                     'title' => $contact['inquiry_dialog_title'] ?? '',

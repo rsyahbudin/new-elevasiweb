@@ -1,5 +1,8 @@
 # Deploy Elevasi Design & Build (Hostinger VPS)
 
+**Panduan lengkap (Bahasa Indonesia):** [`PANDUAN-DEPLOY-VPS.md`](./PANDUAN-DEPLOY-VPS.md)  
+**Deploy otomatis (GitHub Actions):** [`GITHUB-ACTIONS.md`](./GITHUB-ACTIONS.md)
+
 ## VPS vs shared Hostinger?
 
 | | **VPS Hostinger** (disarankan) | **Shared hosting Hostinger** |

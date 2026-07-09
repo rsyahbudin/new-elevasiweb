@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { whenIdle } from '../lib/defer';
 import { loadGsap, prefersReducedMotion } from '../lib/gsap';
 
 /**
@@ -30,6 +31,7 @@ export function useScrollReveal(containerRef, deps = []) {
         let cancelled = false;
 
         (async () => {
+            await whenIdle();
             const gsap = await loadGsap();
 
             if (cancelled || !containerRef.current) {

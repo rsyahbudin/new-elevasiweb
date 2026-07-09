@@ -5,6 +5,7 @@ import SplashScreen from '../Components/SplashScreen';
 import WhatsAppButton from '../Components/WhatsAppButton';
 import { usePageTransition } from '../hooks/usePageTransition';
 import { WhatsAppInquiryProvider } from '../contexts/WhatsAppInquiryContext';
+import OptimizedImage from '../Components/OptimizedImage';
 import logo from '../../images/elevasi-logo.gif';
 
 function NavCta({ cms, className, onClick }) {
@@ -64,10 +65,12 @@ export default function SiteLayout({ children }) {
                         className="flex min-w-0 shrink-0 items-center bg-transparent p-0 border-0 cursor-pointer"
                         aria-label="Go to home page"
                     >
-                        <img
+                        <OptimizedImage
                             src={logo}
                             alt="Elevasi Design & Build"
                             className="h-12 w-auto sm:h-[52px] md:h-14"
+                            loading="eager"
+                            fetchPriority="low"
                         />
                     </button>
 
@@ -180,10 +183,12 @@ export default function SiteLayout({ children }) {
                     <div className="relative px-5 pb-20 pt-20 text-center md:px-10 md:pb-[100px] md:pt-[110px]">
                         {cms.footer.ctaImage && (
                             <>
-                                <img
+                                <OptimizedImage
                                     src={cms.footer.ctaImage}
+                                    srcSet={cms.footer.ctaImageSrcSet}
                                     alt=""
                                     className="absolute inset-0 h-full w-full object-cover"
+                                    sizes="100vw"
                                     loading="lazy"
                                     aria-hidden="true"
                                 />

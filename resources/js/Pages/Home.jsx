@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from '@inertiajs/react';
 import SiteLayout from '../Layouts/SiteLayout';
 import Placeholder from '../Components/Placeholder';
+import OptimizedImage from '../Components/OptimizedImage';
 import Seo from '../Components/Seo';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useParallax } from '../hooks/useParallax';
@@ -41,12 +42,15 @@ function Hero({ hero }) {
                 <div data-reveal="0" data-reveal-variant="clip" className="relative overflow-hidden rounded-sm">
                     {hero.coverImage ? (
                         <div className="relative h-[62vh] overflow-hidden md:h-[76vh]">
-                            <img
+                            <OptimizedImage
                                 src={hero.coverImage}
+                                srcSet={hero.coverSrcSet}
                                 alt={hero.coverCaption || 'Hero cover image'}
                                 className="h-full w-full object-cover"
                                 data-parallax="0.12"
                                 loading="eager"
+                                fetchPriority="high"
+                                sizes="100vw"
                             />
                         </div>
                     ) : (
@@ -110,8 +114,10 @@ function FeaturedWork({ featured, home }) {
                     >
                         {project.coverImage ? (
                             <div className="overflow-hidden rounded-[2px]">
-                                <img
+                                <OptimizedImage
                                     src={project.coverImage}
+                                    srcSet={project.coverSrcSet}
+                                    sizes="(min-width: 768px) 50vw, 100vw"
                                     alt={project.caption || project.title}
                                     className="aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
                                     style={{ '--ratio': i % 3 === 0 ? '4 / 4.6' : '4 / 3' }}
@@ -365,6 +371,7 @@ export default function Home({ hero, home, featured, marqueeText, services, test
                 title={hero.pageTitle}
                 description={hero.metaDescription}
                 image={hero.coverImage}
+                preloadImage
             />
             <Hero hero={hero} />
             <Marquee text={marqueeText} />

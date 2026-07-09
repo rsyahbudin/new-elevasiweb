@@ -8,8 +8,8 @@ use App\Filament\Pages\ManageSiteSettings;
 use App\Http\Requests\StoreInquiryRequest;
 use App\Models\Project;
 use App\Models\SiteSetting;
+use App\Support\StoredImageSources;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -21,25 +21,27 @@ class KontakController extends Controller
         $contact = SiteSetting::translatedMerged('contact', ManageSiteSettings::contactDefaults());
 
         $pageImagePath = $contact['page_image'] ?? null;
-        $pageImageUrl = null;
-
-        if (is_string($pageImagePath) && $pageImagePath !== '') {
-            $pageImageUrl = str_starts_with($pageImagePath, 'http')
-                ? $pageImagePath
-                : Storage::disk('public')->url($pageImagePath);
-        }
+        $pageImageSources = StoredImageSources::resolve(
+            is_string($pageImagePath) ? $pageImagePath : null,
+            'large',
+        );
 
         $recentProjects = Project::published()
             ->ordered()
             ->with('category')
             ->limit(6)
             ->get()
-            ->map(fn (Project $project) => [
-                'slug' => $project->slug,
-                'title' => $project->title,
-                'coverImage' => $project->getFirstMediaUrl('cover', 'medium') ?: null,
-                'caption' => $project->cover_caption ?? $project->title,
-            ]);
+            ->map(function (Project $project) {
+                $cover = $project->coverImageSources('medium');
+
+                return [
+                    'slug' => $project->slug,
+                    'title' => $project->title,
+                    'coverImage' => $cover['src'] ?? null,
+                    'coverSrcSet' => $cover['srcSet'] ?? null,
+                    'caption' => $project->cover_caption ?? $project->title,
+                ];
+            });
 
         return Inertia::render('Kontak', [
             'content' => [
@@ -52,7 +54,8 @@ class KontakController extends Controller
                 'responseTime' => $contact['response_time'] ?? null,
                 'prepareItems' => $contact['prepare_items'] ?? [],
                 'processSteps' => $contact['process_steps'] ?? [],
-                'pageImage' => $pageImageUrl,
+                'pageImage' => $pageImageSources['src'] ?? null,
+                'pageImageSrcSet' => $pageImageSources['srcSet'] ?? null,
                 'labels' => [
                     'responseTime' => $contact['section_response_time_label'] ?? null,
                     'serviceArea' => $contact['section_service_area_label'] ?? null,

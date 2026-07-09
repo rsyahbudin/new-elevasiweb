@@ -80,82 +80,366 @@ function GoogleAnalytics() {
 	return null;
 }
 //#endregion
-//#region resources/images/Logo-Elevasi-White.gif
-var Logo_Elevasi_White_default = "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif";
+//#region resources/images/Logo-Elevasi-White.png
+var Logo_Elevasi_White_default = "/build/assets/Logo-Elevasi-White-BKeJgjJT.png";
+//#endregion
+//#region resources/js/lib/gsap.js
+var gsapInstance = null;
+function prefersReducedMotion$1() {
+	return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+async function loadGsap() {
+	if (gsapInstance) return gsapInstance;
+	const { gsap } = await import("gsap");
+	const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+	gsap.registerPlugin(ScrollTrigger);
+	gsapInstance = gsap;
+	return gsapInstance;
+}
+async function refreshScrollTriggers() {
+	if (prefersReducedMotion$1()) return;
+	await loadGsap();
+	const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+	ScrollTrigger.refresh();
+}
+//#endregion
+//#region resources/js/lib/waitForSiteReady.js
+function waitForImage(img, timeoutMs = 3500) {
+	if (!img) return Promise.resolve();
+	if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+	return new Promise((resolve) => {
+		const done = () => {
+			window.clearTimeout(timer);
+			resolve();
+		};
+		const timer = window.setTimeout(done, timeoutMs);
+		img.addEventListener("load", done, { once: true });
+		img.addEventListener("error", done, { once: true });
+	});
+}
+function delay(ms, signal) {
+	return new Promise((resolve) => {
+		if (signal?.aborted) {
+			resolve();
+			return;
+		}
+		const timer = window.setTimeout(resolve, ms);
+		signal?.addEventListener("abort", () => {
+			window.clearTimeout(timer);
+			resolve();
+		}, { once: true });
+	});
+}
+function getCriticalImages() {
+	const seen = /* @__PURE__ */ new Set();
+	return [...document.querySelectorAll("[data-splash-logo], img[loading=\"eager\"][fetchpriority=\"high\"]")].filter((img) => {
+		if (!img || seen.has(img)) return false;
+		seen.add(img);
+		return true;
+	});
+}
+/**
+* Waits for document, fonts, and above-the-fold images while reporting 0–1 progress.
+*/
+async function waitForSiteReady({ onProgress, signal, minDuration = 2400, maxDuration = 9e3 } = {}) {
+	const start = performance.now();
+	let current = 0;
+	const report = (value) => {
+		current = Math.max(current, Math.min(1, value));
+		onProgress?.(current);
+	};
+	const remaining = () => Math.max(0, maxDuration - (performance.now() - start));
+	report(.06);
+	if (document.readyState !== "complete") await Promise.race([new Promise((resolve) => window.addEventListener("load", resolve, { once: true })), delay(remaining(), signal)]);
+	report(.24);
+	try {
+		await Promise.race([document.fonts.ready, delay(Math.min(2e3, remaining()), signal)]);
+	} catch {}
+	report(.48);
+	const images = getCriticalImages();
+	await Promise.race([Promise.all(images.map((img) => waitForImage(img, Math.min(3500, remaining())))), delay(Math.min(4e3, remaining()), signal)]);
+	report(.82);
+	const elapsed = performance.now() - start;
+	if (elapsed < minDuration) {
+		const hold = minDuration - elapsed;
+		const steps = 6;
+		const stepMs = hold / steps;
+		for (let i = 1; i <= steps; i += 1) {
+			await delay(stepMs, signal);
+			report(.82 + .18 * i / steps);
+		}
+	} else report(1);
+	report(1);
+	return { elapsed: performance.now() - start };
+}
 //#endregion
 //#region resources/js/Components/SplashScreen.jsx
-var ENTER_MS = 2400;
 function prefersReducedMotion() {
 	return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
-function exitAnimationClass(isExiting) {
-	return isExiting ? "[animation-play-state:running]" : "[animation-play-state:paused]";
+var splashPlayed = false;
+var SPLASH_STORAGE_KEY = "elevasi-splash-seen";
+function shouldPlaySplash() {
+	if (prefersReducedMotion()) return false;
+	if (splashPlayed) return false;
+	if (performance.getEntriesByType("navigation")[0]?.type === "reload") return true;
+	try {
+		return !sessionStorage.getItem(SPLASH_STORAGE_KEY);
+	} catch {
+		return true;
+	}
+}
+function markSplashPlayed() {
+	splashPlayed = true;
+	try {
+		sessionStorage.setItem(SPLASH_STORAGE_KEY, "1");
+	} catch {}
 }
 function SplashScreen() {
-	const [visible, setVisible] = useState(false);
-	const [phase, setPhase] = useState("enter");
-	const isExiting = phase === "exit";
+	const { cms } = usePage().props;
+	const splash = cms?.splash ?? {};
+	const location = splash.location ?? "Jakarta, Indonesia";
+	const services = splash.services ?? [];
+	const rootRef = useRef(null);
+	const [visible, setVisible] = useState(() => shouldPlaySplash());
 	useEffect(() => {
-		if (prefersReducedMotion()) return;
-		setVisible(true);
+		if (!shouldPlaySplash()) {
+			setVisible(false);
+			return;
+		}
 		document.body.classList.add("overflow-hidden");
-		const exitTimer = window.setTimeout(() => setPhase("exit"), ENTER_MS);
-		const hideTimer = window.setTimeout(() => {
+		let cancelled = false;
+		let enterTimeline;
+		let exitTimeline;
+		let failsafeTimer;
+		const abort = new AbortController();
+		const finish = () => {
+			markSplashPlayed();
+			window.clearTimeout(failsafeTimer);
 			setVisible(false);
 			document.body.classList.remove("overflow-hidden");
-		}, 3300);
+		};
+		const playExit = (gsap, { backdrop, leftCurtain, rightCurtain, content }) => {
+			if (cancelled || exitTimeline) return;
+			exitTimeline = gsap.timeline({ onComplete: finish }).to(content, {
+				opacity: 0,
+				y: -8,
+				scale: .98,
+				duration: .65,
+				ease: "power2.in"
+			}).call(() => {
+				gsap.set(backdrop, { autoAlpha: 0 });
+				gsap.set([leftCurtain, rightCurtain], {
+					xPercent: 0,
+					autoAlpha: 1
+				});
+			}).to(leftCurtain, {
+				xPercent: -100,
+				duration: 1,
+				ease: "power4.inOut",
+				force3D: true
+			}).to(rightCurtain, {
+				xPercent: 100,
+				duration: 1,
+				ease: "power4.inOut",
+				force3D: true
+			}, "<");
+		};
+		failsafeTimer = window.setTimeout(() => {
+			if (!cancelled) finish();
+		}, 12e3);
+		(async () => {
+			try {
+				const gsap = await loadGsap();
+				if (cancelled || !rootRef.current) return;
+				const root = rootRef.current;
+				const backdrop = root.querySelector("[data-splash-backdrop]");
+				const leftCurtain = root.querySelector("[data-splash-curtain=\"left\"]");
+				const rightCurtain = root.querySelector("[data-splash-curtain=\"right\"]");
+				const content = root.querySelector("[data-splash-content]");
+				const logo = root.querySelector("[data-splash-logo]");
+				const locationEl = root.querySelector("[data-splash-location]");
+				const servicesEl = root.querySelector("[data-splash-services]");
+				const progress = root.querySelector("[data-splash-progress]");
+				const loading = root.querySelector("[data-splash-loading]");
+				gsap.set([
+					logo,
+					locationEl,
+					loading,
+					servicesEl
+				].filter(Boolean), { opacity: 0 });
+				gsap.set(progress, {
+					scaleX: 0,
+					transformOrigin: "left center"
+				});
+				gsap.set(backdrop, { autoAlpha: 1 });
+				gsap.set([leftCurtain, rightCurtain], {
+					xPercent: 0,
+					autoAlpha: 0
+				});
+				gsap.set(content, {
+					opacity: 1,
+					y: 0,
+					scale: 1
+				});
+				const animateProgress = gsap.quickTo(progress, "scaleX", {
+					duration: .55,
+					ease: "power2.out"
+				});
+				let enterDone = false;
+				let loadDone = false;
+				const maybeExit = () => {
+					if (!enterDone || !loadDone || cancelled) return;
+					window.setTimeout(() => {
+						playExit(gsap, {
+							backdrop,
+							leftCurtain,
+							rightCurtain,
+							content
+						});
+					}, 280);
+				};
+				enterTimeline = gsap.timeline({
+					defaults: { ease: "power3.out" },
+					onComplete: () => {
+						enterDone = true;
+						maybeExit();
+					}
+				}).fromTo(logo, {
+					y: 24,
+					scale: .92,
+					opacity: 0
+				}, {
+					y: 0,
+					scale: 1,
+					opacity: 1,
+					duration: 1.1
+				}, .15);
+				if (servicesEl) enterTimeline.fromTo(servicesEl, {
+					y: 6,
+					opacity: 0
+				}, {
+					y: 0,
+					opacity: 1,
+					duration: .55
+				}, .62);
+				enterTimeline.fromTo(locationEl, {
+					y: 8,
+					opacity: 0
+				}, {
+					y: 0,
+					opacity: 1,
+					duration: .65
+				}, servicesEl ? .88 : .72).fromTo(loading, { opacity: 0 }, {
+					opacity: 1,
+					duration: .45
+				}, servicesEl ? 1.02 : .86);
+				await waitForSiteReady({
+					signal: abort.signal,
+					minDuration: 2400,
+					maxDuration: 9e3,
+					onProgress: (value) => {
+						if (cancelled) return;
+						animateProgress(value);
+					}
+				});
+				if (cancelled) return;
+				animateProgress(1);
+				loadDone = true;
+				maybeExit();
+			} catch (error) {
+				console.error("SplashScreen animation failed:", error);
+				finish();
+			}
+		})();
 		return () => {
-			window.clearTimeout(exitTimer);
-			window.clearTimeout(hideTimer);
+			cancelled = true;
+			window.clearTimeout(failsafeTimer);
+			abort.abort();
+			enterTimeline?.kill();
+			exitTimeline?.kill();
 			document.body.classList.remove("overflow-hidden");
 		};
 	}, []);
 	if (!visible) return null;
 	return /* @__PURE__ */ jsxs("div", {
-		className: `fixed inset-0 z-[200] grid min-h-[100dvh] place-items-center px-5 motion-reduce:hidden sm:px-6 ${isExiting ? "pointer-events-none" : "pointer-events-auto"}`,
+		ref: rootRef,
+		className: "fixed inset-0 z-[200] overflow-hidden motion-reduce:hidden",
 		"aria-hidden": "true",
 		role: "presentation",
 		children: [
-			/* @__PURE__ */ jsx("div", { className: `absolute inset-0 bg-ink will-change-transform [clip-path:inset(0_50%_0_0)] motion-safe:animate-splash-panel-left-exit ${exitAnimationClass(isExiting)}` }),
-			/* @__PURE__ */ jsx("div", { className: `absolute inset-0 bg-ink will-change-transform [clip-path:inset(0_0_0_50%)] motion-safe:animate-splash-panel-right-exit ${exitAnimationClass(isExiting)}` }),
-			/* @__PURE__ */ jsxs("div", {
-				className: `relative z-[2] flex w-[min(76vw,220px)] flex-col items-center text-center text-paper motion-safe:animate-splash-content-exit sm:w-[min(72vw,280px)] md:w-80 ${exitAnimationClass(isExiting)}`,
-				children: [
-					/* @__PURE__ */ jsx("div", {
-						className: "mb-2 w-full overflow-hidden sm:mb-2.5",
-						children: /* @__PURE__ */ jsx("img", {
-							src: Logo_Elevasi_White_default,
-							alt: "Elevasi Design & Build",
-							className: "h-auto w-full motion-safe:animate-splash-logo-in"
+			/* @__PURE__ */ jsx("div", {
+				"data-splash-backdrop": true,
+				className: "absolute inset-0 bg-ink"
+			}),
+			/* @__PURE__ */ jsx("div", {
+				"data-splash-curtain": "left",
+				className: "invisible absolute inset-y-0 left-0 z-[1] w-1/2 bg-ink opacity-0 will-change-transform"
+			}),
+			/* @__PURE__ */ jsx("div", {
+				"data-splash-curtain": "right",
+				className: "invisible absolute inset-y-0 right-0 z-[1] w-1/2 bg-ink opacity-0 will-change-transform"
+			}),
+			/* @__PURE__ */ jsx("div", {
+				"data-splash-content": true,
+				className: "relative z-[2] grid min-h-[100dvh] place-items-center px-5 text-paper sm:px-6",
+				children: /* @__PURE__ */ jsxs("div", {
+					className: "flex w-[min(88vw,300px)] flex-col items-center gap-3 text-center sm:w-[min(84vw,360px)] sm:gap-3.5 md:w-[22rem]",
+					children: [
+						/* @__PURE__ */ jsx("div", {
+							className: "w-full",
+							children: /* @__PURE__ */ jsx("img", {
+								"data-splash-logo": true,
+								src: Logo_Elevasi_White_default,
+								alt: "Elevasi Design & Build",
+								className: "block h-auto w-full opacity-0 will-change-transform"
+							})
+						}),
+						services.length > 0 && /* @__PURE__ */ jsx("p", {
+							"data-splash-services": true,
+							className: "text-[9px] uppercase leading-relaxed tracking-[0.12em] text-[rgba(243,243,240,0.75)] opacity-0 sm:text-[10px] sm:tracking-[0.14em]",
+							children: services.map((service, index) => /* @__PURE__ */ jsxs("span", { children: [index > 0 && /* @__PURE__ */ jsx("span", {
+								className: "mx-1.5 text-[rgba(243,243,240,0.35)] sm:mx-2",
+								children: "·"
+							}), service.name] }, service.number ?? index))
+						}),
+						/* @__PURE__ */ jsx("p", {
+							"data-splash-location": true,
+							className: "font-mono text-[9px] uppercase tracking-[0.16em] text-accent opacity-0 sm:text-[10px]",
+							children: location
+						}),
+						/* @__PURE__ */ jsxs("div", {
+							className: "flex w-full flex-col items-center gap-1",
+							children: [/* @__PURE__ */ jsx("div", {
+								className: "h-px w-full overflow-hidden rounded-full bg-[rgba(243,243,240,0.12)]",
+								children: /* @__PURE__ */ jsx("div", {
+									"data-splash-progress": true,
+									className: "h-full w-full origin-left scale-x-0 rounded-full bg-accent will-change-transform"
+								})
+							}), /* @__PURE__ */ jsx("span", {
+								"data-splash-loading": true,
+								className: "font-mono text-[9px] uppercase tracking-[0.12em] text-[rgba(243,243,240,0.45)] opacity-0 sm:text-[10px]",
+								children: "Loading"
+							})]
 						})
-					}),
-					/* @__PURE__ */ jsx("p", {
-						className: "mb-4 font-mono text-[9px] uppercase tracking-[0.16em] text-accent motion-safe:animate-splash-fade-up sm:mb-5 sm:text-[10px]",
-						children: "Jakarta, Indonesia"
-					}),
-					/* @__PURE__ */ jsxs("div", {
-						className: "grid w-full gap-2",
-						children: [/* @__PURE__ */ jsx("div", {
-							className: "h-px overflow-hidden bg-[rgba(243,243,240,0.15)]",
-							children: /* @__PURE__ */ jsx("div", { className: "h-full w-full origin-left scale-x-0 bg-accent motion-safe:animate-splash-progress" })
-						}), /* @__PURE__ */ jsx("span", {
-							className: "font-mono text-[9px] uppercase tracking-[0.14em] text-[rgba(243,243,240,0.4)] motion-safe:animate-splash-fade-in sm:text-[10px]",
-							children: "Loading"
-						})]
-					})
-				]
+					]
+				})
 			})
 		]
 	});
 }
 //#endregion
 //#region resources/js/Components/WhatsAppInquiryDialog.jsx
+var fieldClass = "w-full rounded-xl border border-[rgba(27,28,26,0.1)] bg-[rgba(255,255,255,0.88)] px-4 py-3.5 text-base outline-none transition-[border-color,box-shadow,background-color] duration-300 focus:border-[rgb(31,122,70)] focus:bg-white focus:shadow-[0_0_0_3px_rgba(31,122,70,0.12)]";
 function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 	const titleId = useId();
 	const descriptionId = useId();
 	const firstFieldRef = useRef(null);
+	const backdropRef = useRef(null);
 	const panelRef = useRef(null);
+	const rootRef = useRef(null);
 	const { url } = usePage().props;
+	const [isRendered, setIsRendered] = useState(open);
 	const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
 		name: "",
 		contact: "",
@@ -164,6 +448,9 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 		source_page: sourcePage || url || "/"
 	});
 	useEffect(() => {
+		if (open) setIsRendered(true);
+	}, [open]);
+	useEffect(() => {
 		setData("source_page", sourcePage || url || "/");
 	}, [
 		sourcePage,
@@ -171,13 +458,13 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 		setData
 	]);
 	useEffect(() => {
-		if (!open) return;
+		if (!isRendered || !open) return;
 		const previousOverflow = document.body.style.overflow;
 		document.body.style.overflow = "hidden";
 		const isDesktop = window.matchMedia("(min-width: 640px)").matches;
 		const timer = window.setTimeout(() => {
 			if (isDesktop) firstFieldRef.current?.focus();
-		}, 80);
+		}, 520);
 		const onKeyDown = (event) => {
 			if (event.key === "Escape") onClose();
 		};
@@ -187,7 +474,96 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 			window.clearTimeout(timer);
 			window.removeEventListener("keydown", onKeyDown);
 		};
-	}, [open, onClose]);
+	}, [
+		open,
+		isRendered,
+		onClose
+	]);
+	useEffect(() => {
+		if (!isRendered) return;
+		if (prefersReducedMotion$1()) {
+			if (!open) setIsRendered(false);
+			return;
+		}
+		let cancelled = false;
+		let ctx;
+		(async () => {
+			const gsap = await loadGsap();
+			if (cancelled) return;
+			const backdrop = backdropRef.current;
+			const panel = panelRef.current;
+			const root = rootRef.current;
+			const isMobile = window.matchMedia("(max-width: 639px)").matches;
+			if (!backdrop || !panel || !root) return;
+			const parts = root.querySelectorAll("[data-dialog-part]");
+			if (open) {
+				gsap.set(backdrop, { autoAlpha: 0 });
+				gsap.set(panel, {
+					autoAlpha: 1,
+					yPercent: isMobile ? 100 : 0,
+					y: isMobile ? 0 : 28,
+					scale: isMobile ? 1 : .94
+				});
+				gsap.set(parts, {
+					y: 18,
+					autoAlpha: 0
+				});
+				ctx = gsap.context(() => {
+					const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+					tl.to(backdrop, {
+						autoAlpha: 1,
+						duration: .55,
+						ease: "power2.out"
+					});
+					if (isMobile) tl.to(panel, {
+						yPercent: 0,
+						duration: .88,
+						ease: "power4.out"
+					}, "-=0.42");
+					else tl.to(panel, {
+						y: 0,
+						scale: 1,
+						autoAlpha: 1,
+						duration: .78,
+						ease: "power4.out"
+					}, "-=0.42");
+					tl.to(parts, {
+						y: 0,
+						autoAlpha: 1,
+						duration: .62,
+						stagger: .07,
+						ease: "power3.out"
+					}, "-=0.48");
+				}, root);
+			} else ctx = gsap.context(() => {
+				const onDone = () => {
+					if (!cancelled) setIsRendered(false);
+				};
+				if (isMobile) {
+					const tl = gsap.timeline({ onComplete: onDone });
+					tl.to(panel, {
+						yPercent: 100,
+						duration: .5,
+						ease: "power3.in"
+					});
+					tl.to(backdrop, {
+						autoAlpha: 0,
+						duration: .32,
+						ease: "power2.in"
+					}, "-=0.24");
+				} else gsap.to([backdrop, panel], {
+					autoAlpha: 0,
+					duration: .26,
+					ease: "power2.out",
+					onComplete: onDone
+				});
+			}, root);
+		})();
+		return () => {
+			cancelled = true;
+			ctx?.revert();
+		};
+	}, [open, isRendered]);
 	const handleClose = () => {
 		clearErrors();
 		reset();
@@ -207,12 +583,14 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 			}
 		});
 	};
-	if (!open) return null;
+	if (!isRendered) return null;
 	return /* @__PURE__ */ jsxs("div", {
+		ref: rootRef,
 		className: "fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-6",
 		children: [/* @__PURE__ */ jsx("button", {
+			ref: backdropRef,
 			type: "button",
-			className: "absolute inset-0 bg-[rgba(27,28,26,0.6)] backdrop-blur-[2px] sm:backdrop-blur-sm",
+			className: "absolute inset-0 bg-[rgba(27,28,26,0.42)] backdrop-blur-md",
 			"aria-label": copy.cancel,
 			onClick: handleClose
 		}), /* @__PURE__ */ jsxs("div", {
@@ -221,17 +599,19 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 			"aria-modal": "true",
 			"aria-labelledby": titleId,
 			"aria-describedby": descriptionId,
-			className: "relative z-10 flex max-h-[min(92dvh,760px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[20px] border border-b-0 border-[rgba(27,28,26,0.1)] bg-[rgb(243,243,240)] shadow-[0_-12px_48px_rgba(27,28,26,0.18)] sm:max-h-[min(88vh,760px)] sm:rounded-sm sm:border-b sm:shadow-[0_24px_80px_rgba(27,28,26,0.18)]",
+			className: "relative z-10 flex max-h-[min(92dvh,760px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-[rgba(27,28,26,0.08)] bg-[rgb(243,243,240)] shadow-[0_-20px_60px_rgba(27,28,26,0.16)] sm:max-h-[min(88vh,760px)] sm:rounded-2xl sm:shadow-[0_32px_90px_rgba(27,28,26,0.16)]",
 			children: [
 				/* @__PURE__ */ jsx("div", {
-					className: "flex shrink-0 items-center justify-center pt-3 sm:hidden",
+					className: "flex shrink-0 items-center justify-center pt-3.5 sm:hidden",
+					"data-dialog-part": true,
 					children: /* @__PURE__ */ jsx("span", {
-						className: "h-1 w-10 rounded-full bg-[rgba(27,28,26,0.14)]",
+						className: "h-1 w-12 rounded-full bg-[rgba(27,28,26,0.12)]",
 						"aria-hidden": "true"
 					})
 				}),
 				/* @__PURE__ */ jsxs("div", {
-					className: "flex shrink-0 items-start justify-between gap-4 border-b border-[rgba(27,28,26,0.08)] px-5 pb-4 pt-2 sm:px-8 sm:pb-5 sm:pt-6",
+					"data-dialog-part": true,
+					className: "flex shrink-0 items-start justify-between gap-4 px-5 pb-5 pt-1 sm:px-8 sm:pb-6 sm:pt-7",
 					children: [/* @__PURE__ */ jsxs("div", {
 						className: "min-w-0 flex-1",
 						children: [
@@ -241,19 +621,19 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 							}),
 							/* @__PURE__ */ jsx("h2", {
 								id: titleId,
-								className: "m-0 mt-2 text-[clamp(22px,5.5vw,32px)] font-semibold uppercase leading-[1.05] tracking-[-0.02em] [text-wrap:balance]",
+								className: "m-0 mt-2.5 text-[clamp(22px,5.5vw,30px)] font-semibold uppercase leading-[1.08] tracking-[-0.02em] [text-wrap:balance]",
 								children: copy.title
 							}),
 							/* @__PURE__ */ jsx("p", {
 								id: descriptionId,
-								className: "mt-2 text-[15px] leading-[1.6] text-[rgba(27,28,26,0.62)] sm:mt-3 sm:text-[15px]",
+								className: "mt-2.5 text-[15px] leading-[1.65] text-[rgba(27,28,26,0.58)] sm:mt-3",
 								children: copy.description
 							})
 						]
 					}), /* @__PURE__ */ jsx("button", {
 						type: "button",
 						onClick: handleClose,
-						className: "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(27,28,26,0.12)] bg-white text-xl leading-none text-[rgba(27,28,26,0.55)] transition hover:border-[rgba(27,28,26,0.2)] hover:text-[rgb(27,28,26)]",
+						className: "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[rgba(27,28,26,0.05)] text-lg leading-none text-[rgba(27,28,26,0.45)] transition duration-300 hover:bg-[rgba(27,28,26,0.1)] hover:text-[rgb(27,28,26)]",
 						"aria-label": copy.cancel,
 						children: "×"
 					})]
@@ -262,7 +642,7 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 					onSubmit: submit,
 					className: "flex min-h-0 flex-1 flex-col",
 					children: [/* @__PURE__ */ jsxs("div", {
-						className: "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-8 sm:py-5",
+						className: "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-2 sm:px-8 sm:pb-3",
 						children: [/* @__PURE__ */ jsx("input", {
 							type: "text",
 							name: "company",
@@ -274,84 +654,94 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 						}), /* @__PURE__ */ jsxs("div", {
 							className: "space-y-4",
 							children: [
-								/* @__PURE__ */ jsxs("div", { children: [
-									/* @__PURE__ */ jsx("label", {
-										htmlFor: "inquiry-name",
-										className: "mb-2 block font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.5)]",
-										children: copy.nameLabel
-									}),
-									/* @__PURE__ */ jsx("input", {
-										ref: firstFieldRef,
-										id: "inquiry-name",
-										type: "text",
-										value: data.name,
-										onChange: (event) => setData("name", event.target.value),
-										className: "w-full rounded-sm border border-[rgba(27,28,26,0.15)] bg-white px-4 py-3.5 text-base outline-none transition focus:border-[rgb(31,122,70)]",
-										autoComplete: "name",
-										required: true
-									}),
-									errors.name && /* @__PURE__ */ jsx("p", {
-										className: "mt-1.5 text-sm text-red-700",
-										children: errors.name
-									})
-								] }),
-								/* @__PURE__ */ jsxs("div", { children: [
-									/* @__PURE__ */ jsx("label", {
-										htmlFor: "inquiry-contact",
-										className: "mb-2 block font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.5)]",
-										children: copy.contactLabel
-									}),
-									/* @__PURE__ */ jsx("input", {
-										id: "inquiry-contact",
-										type: "tel",
-										value: data.contact,
-										onChange: (event) => setData("contact", event.target.value),
-										className: "w-full rounded-sm border border-[rgba(27,28,26,0.15)] bg-white px-4 py-3.5 text-base outline-none transition focus:border-[rgb(31,122,70)]",
-										autoComplete: "tel",
-										inputMode: "tel",
-										placeholder: copy.contactPlaceholder,
-										required: true
-									}),
-									errors.contact && /* @__PURE__ */ jsx("p", {
-										className: "mt-1.5 text-sm text-red-700",
-										children: errors.contact
-									})
-								] }),
-								/* @__PURE__ */ jsxs("div", { children: [
-									/* @__PURE__ */ jsx("label", {
-										htmlFor: "inquiry-message",
-										className: "mb-2 block font-mono text-[11px] uppercase tracking-[0.08em] text-[rgba(27,28,26,0.5)]",
-										children: copy.messageLabel
-									}),
-									/* @__PURE__ */ jsx("textarea", {
-										id: "inquiry-message",
-										value: data.message,
-										onChange: (event) => setData("message", event.target.value),
-										rows: 4,
-										className: "min-h-[112px] w-full resize-y rounded-sm border border-[rgba(27,28,26,0.15)] bg-white px-4 py-3.5 text-base leading-[1.6] outline-none transition focus:border-[rgb(31,122,70)]",
-										placeholder: copy.messagePlaceholder,
-										required: true
-									}),
-									errors.message && /* @__PURE__ */ jsx("p", {
-										className: "mt-1.5 text-sm text-red-700",
-										children: errors.message
-									})
-								] })
+								/* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-name",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: copy.nameLabel
+										}),
+										/* @__PURE__ */ jsx("input", {
+											ref: firstFieldRef,
+											id: "inquiry-name",
+											type: "text",
+											value: data.name,
+											onChange: (event) => setData("name", event.target.value),
+											className: fieldClass,
+											autoComplete: "name",
+											required: true
+										}),
+										errors.name && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.name
+										})
+									]
+								}),
+								/* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-contact",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: copy.contactLabel
+										}),
+										/* @__PURE__ */ jsx("input", {
+											id: "inquiry-contact",
+											type: "tel",
+											value: data.contact,
+											onChange: (event) => setData("contact", event.target.value),
+											className: fieldClass,
+											autoComplete: "tel",
+											inputMode: "tel",
+											placeholder: copy.contactPlaceholder,
+											required: true
+										}),
+										errors.contact && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.contact
+										})
+									]
+								}),
+								/* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-message",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: copy.messageLabel
+										}),
+										/* @__PURE__ */ jsx("textarea", {
+											id: "inquiry-message",
+											value: data.message,
+											onChange: (event) => setData("message", event.target.value),
+											rows: 4,
+											className: `${fieldClass} min-h-[112px] resize-y leading-[1.6]`,
+											placeholder: copy.messagePlaceholder,
+											required: true
+										}),
+										errors.message && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.message
+										})
+									]
+								})
 							]
 						})]
 					}), /* @__PURE__ */ jsx("div", {
-						className: "shrink-0 border-t border-[rgba(27,28,26,0.08)] bg-[rgb(243,243,240)] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-5",
+						"data-dialog-part": true,
+						className: "shrink-0 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-5",
 						children: /* @__PURE__ */ jsxs("div", {
-							className: "flex flex-col gap-3 sm:flex-row-reverse sm:justify-start",
+							className: "flex flex-col gap-2.5 sm:flex-row-reverse sm:justify-start",
 							children: [/* @__PURE__ */ jsx("button", {
 								type: "submit",
-								className: "inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-[rgb(31,122,70)] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.06em] text-[rgb(243,243,240)] transition hover:bg-[rgb(27,28,26)] disabled:opacity-60 sm:w-auto",
+								className: "inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-[rgb(31,122,70)] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.06em] text-[rgb(243,243,240)] transition duration-300 hover:bg-[rgb(27,28,26)] disabled:opacity-60 sm:w-auto",
 								disabled: processing,
 								children: processing ? copy.submitting : `${copy.submit} ↗`
 							}), /* @__PURE__ */ jsx("button", {
 								type: "button",
 								onClick: handleClose,
-								className: "inline-flex min-h-[48px] w-full items-center justify-center rounded-full border border-[rgba(27,28,26,0.2)] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.06em] transition hover:bg-[rgb(236,236,232)] sm:w-auto",
+								className: "inline-flex min-h-[48px] w-full items-center justify-center rounded-full border border-[rgba(27,28,26,0.14)] bg-[rgba(255,255,255,0.45)] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.06em] text-[rgba(27,28,26,0.72)] transition duration-300 hover:border-[rgba(27,28,26,0.22)] hover:bg-white sm:w-auto",
 								disabled: processing,
 								children: copy.cancel
 							})]
@@ -413,6 +803,99 @@ function WhatsAppButton({ children, className = "", source, showArrow = true, di
 	});
 }
 //#endregion
+//#region resources/js/hooks/usePageTransition.js
+var exitHandlerBound = false;
+function shouldAnimateVisit(visit) {
+	if (!visit) return false;
+	if (visit.prefetch) return false;
+	if (Array.isArray(visit.only) && visit.only.length > 0) return false;
+	return true;
+}
+function bindExitTransition() {
+	if (exitHandlerBound || typeof window === "undefined") return;
+	exitHandlerBound = true;
+	router.on("before", (event) => {
+		if (prefersReducedMotion$1() || !shouldAnimateVisit(event.detail.visit)) return;
+		const page = document.getElementById("page-content");
+		if (!page) return;
+		event.pause();
+		loadGsap().then((gsap) => {
+			gsap.to(page, {
+				autoAlpha: 0,
+				y: -20,
+				duration: .42,
+				ease: "power2.in",
+				onComplete: () => event.resume()
+			});
+		});
+	});
+	router.on("finish", () => {
+		refreshScrollTriggers();
+	});
+}
+function usePageTransition() {
+	const pageRef = useRef(null);
+	const { url } = usePage();
+	const isFirstRender = useRef(true);
+	useEffect(() => {
+		bindExitTransition();
+	}, []);
+	useEffect(() => {
+		if (prefersReducedMotion$1()) return;
+		const page = pageRef.current;
+		if (!page) return;
+		let ctx;
+		(async () => {
+			const gsap = await loadGsap();
+			if (!pageRef.current) return;
+			if (isFirstRender.current) {
+				isFirstRender.current = false;
+				gsap.set(page, {
+					autoAlpha: 1,
+					y: 0
+				});
+				refreshScrollTriggers();
+				return;
+			}
+			ctx = gsap.context(() => {
+				gsap.fromTo(page, {
+					autoAlpha: 0,
+					y: 28
+				}, {
+					autoAlpha: 1,
+					y: 0,
+					duration: .95,
+					ease: "power3.out",
+					onComplete: () => refreshScrollTriggers()
+				});
+			}, page);
+		})();
+		return () => {
+			ctx?.revert();
+		};
+	}, [url]);
+	return pageRef;
+}
+//#endregion
+//#region resources/js/Components/OptimizedImage.jsx
+/**
+* Image defaults tuned for performance: async decode, lazy by default, optional srcset.
+*/
+function OptimizedImage({ src, srcSet, sizes, alt = "", loading = "lazy", fetchPriority, className, ...rest }) {
+	if (!src) return null;
+	return /* @__PURE__ */ jsx("img", {
+		src,
+		srcSet: srcSet || void 0,
+		sizes: srcSet && sizes ? sizes : void 0,
+		alt,
+		loading,
+		fetchPriority,
+		decoding: "async",
+		className,
+		...rest
+	});
+}
+//#endregion
 //#region resources/images/elevasi-logo.gif
 var elevasi_logo_default = "/build/assets/elevasi-logo-CfvkopY_.gif";
 //#endregion
@@ -430,6 +913,7 @@ function SiteLayout({ children }) {
 	const { props } = usePage();
 	const { locale, altLocaleUrl, settings, cms, url } = props;
 	const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+	const pageRef = usePageTransition();
 	const isProjectsArea = url.startsWith("/proyek") || url.startsWith("/en/proyek");
 	const isStudioArea = url === "/tentang" || url === "/en/tentang";
 	const isContactPage = url === "/kontak" || url === "/en/kontak";
@@ -437,7 +921,7 @@ function SiteLayout({ children }) {
 	const homeUrl = locale === "en" ? "/en" : "/";
 	const goHome = () => {
 		closeMobileNav();
-		window.location.assign(homeUrl);
+		router.visit(homeUrl);
 	};
 	const navLinkClass = (active) => `text-xs font-medium uppercase tracking-[0.08em] transition ${active ? "text-[rgb(31,122,70)]" : "text-[rgb(27,28,26)] hover:text-[rgb(31,122,70)]"}`;
 	useEffect(() => {
@@ -465,10 +949,12 @@ function SiteLayout({ children }) {
 							onClick: goHome,
 							className: "flex min-w-0 shrink-0 items-center bg-transparent p-0 border-0 cursor-pointer",
 							"aria-label": "Go to home page",
-							children: /* @__PURE__ */ jsx("img", {
+							children: /* @__PURE__ */ jsx(OptimizedImage, {
 								src: elevasi_logo_default,
 								alt: "Elevasi Design & Build",
-								className: "h-12 w-auto sm:h-[52px] md:h-14"
+								className: "h-12 w-auto sm:h-[52px] md:h-14",
+								loading: "eager",
+								fetchPriority: "low"
 							})
 						}),
 						/* @__PURE__ */ jsxs("nav", {
@@ -488,11 +974,11 @@ function SiteLayout({ children }) {
 							children: [
 								/* @__PURE__ */ jsxs("span", {
 									className: "hidden gap-0.5 rounded-full border border-[rgba(27,28,26,0.12)] bg-[rgba(255,255,255,0.35)] p-0.5 text-[10px] text-[rgba(27,28,26,0.45)] md:inline-flex",
-									children: [/* @__PURE__ */ jsx("a", {
+									children: [/* @__PURE__ */ jsx(Link, {
 										href: locale === "en" ? url : altLocaleUrl,
 										className: `inline-block rounded-full px-2 py-1 ${locale === "en" ? "bg-[rgb(27,28,26)] text-[rgb(243,243,240)]" : ""}`,
 										children: "EN"
-									}), /* @__PURE__ */ jsx("a", {
+									}), /* @__PURE__ */ jsx(Link, {
 										href: locale === "id" ? url : altLocaleUrl,
 										className: `inline-block rounded-full px-2 py-1 ${locale === "id" ? "bg-[rgb(27,28,26)] text-[rgb(243,243,240)]" : ""}`,
 										children: "ID"
@@ -549,12 +1035,12 @@ function SiteLayout({ children }) {
 						className: "flex items-center justify-between",
 						children: [/* @__PURE__ */ jsxs("span", {
 							className: "inline-flex gap-0.5 rounded-full border border-[rgba(27,28,26,0.15)] p-0.5 text-xs",
-							children: [/* @__PURE__ */ jsx("a", {
+							children: [/* @__PURE__ */ jsx(Link, {
 								href: locale === "en" ? url : altLocaleUrl,
 								className: `rounded-full px-3 py-1.5 ${locale === "en" ? "bg-[rgb(27,28,26)] text-[rgb(243,243,240)]" : ""}`,
 								onClick: closeMobileNav,
 								children: "EN"
-							}), /* @__PURE__ */ jsx("a", {
+							}), /* @__PURE__ */ jsx(Link, {
 								href: locale === "id" ? url : altLocaleUrl,
 								className: `rounded-full px-3 py-1.5 ${locale === "id" ? "bg-[rgb(27,28,26)] text-[rgb(243,243,240)]" : ""}`,
 								onClick: closeMobileNav,
@@ -567,15 +1053,21 @@ function SiteLayout({ children }) {
 					})]
 				})]
 			}),
-			children,
+			/* @__PURE__ */ jsx("main", {
+				id: "page-content",
+				ref: pageRef,
+				children
+			}),
 			/* @__PURE__ */ jsxs("footer", {
 				className: `mt-10 overflow-hidden rounded-t-3xl bg-[rgb(27,28,26)] text-[rgb(243,243,240)] ${isContactPage ? "pt-10" : ""}`,
 				children: [!isContactPage && /* @__PURE__ */ jsxs("div", {
 					className: "relative px-5 pb-20 pt-20 text-center md:px-10 md:pb-[100px] md:pt-[110px]",
-					children: [cms.footer.ctaImage && /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx("img", {
+					children: [cms.footer.ctaImage && /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(OptimizedImage, {
 						src: cms.footer.ctaImage,
+						srcSet: cms.footer.ctaImageSrcSet,
 						alt: "",
 						className: "absolute inset-0 h-full w-full object-cover",
+						sizes: "100vw",
 						loading: "lazy",
 						"aria-hidden": "true"
 					}), /* @__PURE__ */ jsx("div", {
@@ -677,7 +1169,7 @@ function absoluteUrl(path, appUrl) {
 	const normalized = path === "/" ? "/" : `/${String(path).replace(/^\/+/, "")}`;
 	return `${base}${normalized === "/" ? "/" : normalized}`;
 }
-function Seo({ title, description, image, type = "website", noIndex = false }) {
+function Seo({ title, description, image, type = "website", noIndex = false, preloadImage = false }) {
 	const { props } = usePage();
 	const { locale, url, altLocaleUrl, seo: siteSeo } = props;
 	const appUrl = siteSeo?.appUrl || "";
@@ -732,6 +1224,12 @@ function Seo({ title, description, image, type = "website", noIndex = false }) {
 				hrefLang: "x-default",
 				href: alternateId
 			}),
+			preloadImage && image ? /* @__PURE__ */ jsx("link", {
+				"head-key": "preload-lcp",
+				rel: "preload",
+				as: "image",
+				href: absoluteUrl(image, appUrl)
+			}) : null,
 			/* @__PURE__ */ jsx("meta", {
 				"head-key": "og:type",
 				property: "og:type",
@@ -800,101 +1298,127 @@ function Seo({ title, description, image, type = "website", noIndex = false }) {
 	});
 }
 //#endregion
-//#region resources/js/hooks/useScrollReveal.js
-var FALLBACK_MS = 1200;
-var OBSERVER_THRESHOLD = .12;
-var VIEWPORT_OFFSET = 80;
+//#region resources/js/lib/defer.js
 /**
-* Reveals every [data-reveal] element inside `containerRef` as it enters the
-* viewport, staggered by its `data-reveal` delay (ms).
-*
-* Pass `deps` whenever the revealed content can change without remounting the
-* page (e.g. Inertia filter/pagination with preserveState) so newly rendered
-* cards are observed again instead of staying invisible.
-*
-* @param {React.RefObject<HTMLElement|null>} containerRef
-* @param {unknown[]} [deps]
+* Defers non-critical work until the browser is idle so LCP / first paint stay fast.
+*/
+function whenIdle(timeout = 1800) {
+	return new Promise((resolve) => {
+		if (typeof window === "undefined") {
+			resolve();
+			return;
+		}
+		if ("requestIdleCallback" in window) {
+			window.requestIdleCallback(() => resolve(), { timeout });
+			return;
+		}
+		window.setTimeout(resolve, 1);
+	});
+}
+//#endregion
+//#region resources/js/hooks/useScrollReveal.js
+/**
+* Scroll-triggered reveal for every [data-reveal] inside `containerRef`.
+* `data-reveal` = delay in ms. Optional `data-reveal-variant`: up | scale | clip.
 */
 function useScrollReveal(containerRef, deps = []) {
 	useEffect(() => {
 		const container = containerRef.current;
-		if (!container) return void 0;
+		if (!container) return;
 		const elements = Array.from(container.querySelectorAll("[data-reveal]"));
-		if (elements.length === 0) return void 0;
-		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-			elements.forEach((el) => el.classList.add("is-visible"));
+		if (elements.length === 0) return;
+		if (prefersReducedMotion$1()) {
+			elements.forEach((el) => {
+				el.style.opacity = "1";
+				el.style.transform = "none";
+				el.style.clipPath = "none";
+			});
 			return;
 		}
-		const timers = [];
-		const revealed = /* @__PURE__ */ new WeakSet();
-		const reveal = (el) => {
-			if (revealed.has(el)) return;
-			revealed.add(el);
-			const delay = parseInt(el.dataset.reveal, 10) || 0;
-			timers.push(setTimeout(() => {
-				el.classList.add("is-visible");
-			}, delay));
-		};
-		const observer = new IntersectionObserver((entries) => {
-			entries.forEach((entry) => {
-				if (!entry.isIntersecting) return;
-				reveal(entry.target);
-				observer.unobserve(entry.target);
-			});
-		}, { threshold: OBSERVER_THRESHOLD });
-		elements.forEach((el) => {
-			el.classList.remove("is-visible");
-			observer.observe(el);
-			const rect = el.getBoundingClientRect();
-			if (rect.top <= window.innerHeight - VIEWPORT_OFFSET && rect.bottom >= VIEWPORT_OFFSET) reveal(el);
-			timers.push(setTimeout(() => {
-				reveal(el);
-			}, FALLBACK_MS));
-		});
+		let ctx;
+		let cancelled = false;
+		(async () => {
+			await whenIdle();
+			const gsap = await loadGsap();
+			if (cancelled || !containerRef.current) return;
+			ctx = gsap.context(() => {
+				elements.forEach((el) => {
+					const delay = (parseInt(el.dataset.reveal, 10) || 0) / 1e3;
+					const variant = el.dataset.revealVariant || "up";
+					const from = { opacity: 0 };
+					const to = {
+						opacity: 1,
+						duration: 1.05,
+						delay,
+						ease: "power3.out"
+					};
+					if (variant === "scale") {
+						from.scale = .94;
+						to.scale = 1;
+					} else if (variant === "clip") {
+						from.clipPath = "inset(100% 0 0 0)";
+						to.clipPath = "inset(0% 0 0 0)";
+						to.duration = 1.2;
+					} else {
+						from.y = 32;
+						to.y = 0;
+					}
+					gsap.fromTo(el, from, {
+						...to,
+						scrollTrigger: {
+							trigger: el,
+							start: "top 88%",
+							once: true
+						}
+					});
+				});
+			}, container);
+		})();
 		return () => {
-			observer.disconnect();
-			timers.forEach(clearTimeout);
+			cancelled = true;
+			ctx?.revert();
 		};
 	}, [containerRef, ...deps]);
 }
 //#endregion
 //#region resources/js/hooks/useParallax.js
-var OFFSCREEN_MARGIN = 100;
-var DEFAULT_SPEED = .08;
 /**
-* Drives a lightweight parallax offset (translateY only, GPU-composited) on
-* every [data-parallax] element inside `containerRef`, batched behind a
-* single rAF per scroll event. Disabled under prefers-reduced-motion per
-* PRD US-2 (non-essential animation).
+* Smooth scrub parallax on [data-parallax] elements (value = intensity, default 0.08).
 */
 function useParallax(containerRef) {
 	useEffect(() => {
 		const container = containerRef.current;
-		if (!container) return void 0;
-		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return void 0;
+		if (!container || prefersReducedMotion$1()) return;
 		const elements = Array.from(container.querySelectorAll("[data-parallax]"));
-		if (elements.length === 0) return void 0;
-		let raf = null;
-		const apply = () => {
-			raf = null;
-			const vh = window.innerHeight;
-			elements.forEach((el) => {
-				const rect = el.parentElement.getBoundingClientRect();
-				if (rect.bottom < -100 || rect.top > vh + OFFSCREEN_MARGIN) return;
-				const speed = parseFloat(el.dataset.parallax) || DEFAULT_SPEED;
-				const offset = (rect.top + rect.height / 2 - vh / 2) * speed;
-				el.style.transform = `translateY(${offset.toFixed(1)}px)`;
-			});
-		};
-		const onScroll = () => {
-			if (raf) return;
-			raf = requestAnimationFrame(apply);
-		};
-		window.addEventListener("scroll", onScroll, { passive: true });
-		apply();
+		if (elements.length === 0) return;
+		let ctx;
+		let cancelled = false;
+		(async () => {
+			await whenIdle();
+			const gsap = await loadGsap();
+			if (cancelled) return;
+			ctx = gsap.context(() => {
+				elements.forEach((el) => {
+					const host = el.parentElement;
+					if (!host) return;
+					const speed = parseFloat(el.dataset.parallax) || .08;
+					const travel = Math.max(24, Math.round(speed * 320));
+					gsap.fromTo(el, { y: -travel / 2 }, {
+						y: travel / 2,
+						ease: "none",
+						scrollTrigger: {
+							trigger: host,
+							start: "top bottom",
+							end: "bottom top",
+							scrub: .65
+						}
+					});
+				});
+			}, container);
+		})();
 		return () => {
-			window.removeEventListener("scroll", onScroll);
-			if (raf) cancelAnimationFrame(raf);
+			cancelled = true;
+			ctx?.revert();
 		};
 	}, [containerRef]);
 }
@@ -952,16 +1476,20 @@ function Hero({ hero }) {
 		className: "px-5 md:px-10",
 		children: /* @__PURE__ */ jsxs("div", {
 			"data-reveal": "0",
+			"data-reveal-variant": "clip",
 			className: "relative overflow-hidden rounded-sm",
 			children: [
 				hero.coverImage ? /* @__PURE__ */ jsx("div", {
 					className: "relative h-[62vh] overflow-hidden md:h-[76vh]",
-					children: /* @__PURE__ */ jsx("img", {
+					children: /* @__PURE__ */ jsx(OptimizedImage, {
 						src: hero.coverImage,
+						srcSet: hero.coverSrcSet,
 						alt: hero.coverCaption || "Hero cover image",
 						className: "h-full w-full object-cover",
 						"data-parallax": "0.12",
-						loading: "eager"
+						loading: "eager",
+						fetchPriority: "high",
+						sizes: "100vw"
 					})
 				}) : /* @__PURE__ */ jsx(Placeholder, {
 					caption: hero.coverCaption,
@@ -1036,8 +1564,10 @@ function FeaturedWork({ featured, home }) {
 					children: [
 						project.coverImage ? /* @__PURE__ */ jsx("div", {
 							className: "overflow-hidden rounded-[2px]",
-							children: /* @__PURE__ */ jsx("img", {
+							children: /* @__PURE__ */ jsx(OptimizedImage, {
 								src: project.coverImage,
+								srcSet: project.coverSrcSet,
+								sizes: "(min-width: 768px) 50vw, 100vw",
 								alt: project.caption || project.title,
 								className: "aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]",
 								style: { "--ratio": i % 3 === 0 ? "4 / 4.6" : "4 / 3" },
@@ -1262,7 +1792,8 @@ function Home({ hero, home, featured, marqueeText, services, testimonials }) {
 			/* @__PURE__ */ jsx(Seo, {
 				title: hero.pageTitle,
 				description: hero.metaDescription,
-				image: hero.coverImage
+				image: hero.coverImage,
+				preloadImage: true
 			}),
 			/* @__PURE__ */ jsx(Hero, { hero }),
 			/* @__PURE__ */ jsx(Marquee, { text: marqueeText }),
@@ -1425,10 +1956,12 @@ function Kontak({ content, recentProjects }) {
 				"data-reveal": "0",
 				children: /* @__PURE__ */ jsx("div", {
 					className: "relative overflow-hidden rounded-sm",
-					children: /* @__PURE__ */ jsx("img", {
+					children: /* @__PURE__ */ jsx(OptimizedImage, {
 						src: content.pageImage,
+						srcSet: content.pageImageSrcSet,
 						alt: content.heading,
 						className: "aspect-[16/9] w-full object-cover md:aspect-[21/9]",
+						sizes: "100vw",
 						loading: "lazy"
 					})
 				})
@@ -1470,8 +2003,10 @@ function Kontak({ content, recentProjects }) {
 						href: route("projects.show", project.slug),
 						className: "group overflow-hidden rounded-sm",
 						"data-reveal": i * 50,
-						children: project.coverImage ? /* @__PURE__ */ jsx("img", {
+						children: project.coverImage ? /* @__PURE__ */ jsx(OptimizedImage, {
 							src: project.coverImage,
+							srcSet: project.coverSrcSet,
+							sizes: "(min-width: 768px) 33vw, 50vw",
 							alt: project.caption,
 							className: "aspect-[4/5] w-full object-cover transition duration-500 group-hover:scale-[1.03]",
 							loading: "lazy"
@@ -1676,11 +2211,13 @@ function ProjectsIndex({ projects, filters, activeCategory, meta, labels }) {
 					children: [
 						/* @__PURE__ */ jsx("div", {
 							className: "overflow-hidden rounded-[2px]",
-							children: project.coverImage ? /* @__PURE__ */ jsx("img", {
+							children: project.coverImage ? /* @__PURE__ */ jsx(OptimizedImage, {
 								src: project.coverImage,
+								srcSet: project.coverSrcSet,
+								sizes: "(min-width: 768px) 33vw, 100vw",
 								alt: project.caption || project.title,
 								className: "aspect-[4/3] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]",
-								loading: "lazy"
+								loading: i < 3 ? "eager" : "lazy"
 							}) : /* @__PURE__ */ jsx(Placeholder, {
 								caption: project.caption,
 								parallax: .05,
@@ -1795,7 +2332,8 @@ function ProjectShow({ project, gallery, next, labels }) {
 				title: project.title,
 				description: seoDescription || void 0,
 				image: project.coverImage || void 0,
-				type: "article"
+				type: "article",
+				preloadImage: Boolean(project.coverImage)
 			}),
 			/* @__PURE__ */ jsxs(Link, {
 				href: route("projects.index"),
@@ -1822,11 +2360,15 @@ function ProjectShow({ project, gallery, next, labels }) {
 			/* @__PURE__ */ jsxs("div", {
 				className: "relative mb-6 overflow-hidden rounded-sm md:mb-7",
 				"data-reveal": "0",
-				children: [project.coverImage ? /* @__PURE__ */ jsx("img", {
+				"data-reveal-variant": "clip",
+				children: [project.coverImage ? /* @__PURE__ */ jsx(OptimizedImage, {
 					src: project.coverImage,
+					srcSet: project.coverSrcSet,
+					sizes: "100vw",
 					alt: project.coverCaption || project.title,
 					className: "h-[56vh] w-full object-cover md:h-[74vh]",
-					loading: "eager"
+					loading: "eager",
+					fetchPriority: "high"
 				}) : /* @__PURE__ */ jsx(Placeholder, {
 					caption: `cover — ${project.coverCaption}`,
 					parallax: .12,
@@ -1875,8 +2417,10 @@ function ProjectShow({ project, gallery, next, labels }) {
 					className: "group overflow-hidden rounded-[2px]",
 					"data-reveal": i % 2 * 90,
 					style: { gridColumn: i === 0 ? "1 / -1" : "auto" },
-					children: g.url ? /* @__PURE__ */ jsx("img", {
+					children: g.url ? /* @__PURE__ */ jsx(OptimizedImage, {
 						src: g.url,
+						srcSet: g.srcSet,
+						sizes: i === 0 ? "100vw" : "(min-width: 768px) 50vw, 100vw",
 						alt: g.label,
 						className: "aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]",
 						style: { "--ratio": i === 0 ? "16 / 8" : "4 / 3" },
