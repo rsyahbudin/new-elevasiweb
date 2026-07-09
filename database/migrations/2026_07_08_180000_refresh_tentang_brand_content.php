@@ -34,7 +34,13 @@ return new class extends Migration
         $existing = SiteSetting::query()->where('key', 'tentang')->value('value');
         $merged = array_replace_recursive($defaults, is_array($existing) ? $existing : []);
 
-        unset($merged['timeline'], $merged['section_timeline_label']);
+        unset(
+            $merged['timeline'],
+            $merged['section_timeline_label'],
+            $merged['capabilities_line1'],
+            $merged['capabilities_line2'],
+            $merged['tagline'],
+        );
 
         foreach ([
             'title',
@@ -42,15 +48,14 @@ return new class extends Migration
             'section_process_label',
             'section_values_label',
             'manifesto',
-            'capabilities_line1',
-            'capabilities_line2',
-            'tagline',
             'process_intro',
             'body',
             'process',
             'values',
         ] as $key) {
-            $merged[$key] = $defaults[$key];
+            if (array_key_exists($key, $defaults)) {
+                $merged[$key] = $defaults[$key];
+            }
         }
 
         SiteSetting::updateOrCreate(['key' => 'tentang'], ['value' => $merged]);

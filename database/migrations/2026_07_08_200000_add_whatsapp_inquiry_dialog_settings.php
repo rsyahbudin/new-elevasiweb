@@ -27,7 +27,9 @@ return new class extends Migration
             'inquiry_dialog_submitting_label',
             'inquiry_dialog_cancel_label',
         ] as $key) {
-            $merged[$key] = $defaults[$key];
+            if (array_key_exists($key, $defaults)) {
+                $merged[$key] = $defaults[$key];
+            }
         }
 
         SiteSetting::updateOrCreate(['key' => 'contact'], ['value' => $merged]);

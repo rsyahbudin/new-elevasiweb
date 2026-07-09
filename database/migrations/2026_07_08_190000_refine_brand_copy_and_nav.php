@@ -22,7 +22,9 @@ return new class extends Migration
         );
 
         foreach (['manifesto', 'process_intro', 'body', 'values'] as $key) {
-            $merged[$key] = $tentangDefaults[$key];
+            if (array_key_exists($key, $tentangDefaults)) {
+                $merged[$key] = $tentangDefaults[$key];
+            }
         }
 
         SiteSetting::updateOrCreate(['key' => 'tentang'], ['value' => $merged]);
@@ -33,7 +35,9 @@ return new class extends Migration
         $heroMerged = array_replace_recursive($heroDefaults, is_array($heroExisting) ? $heroExisting : []);
 
         foreach (['eyebrow', 'lede', 'marquee_text'] as $key) {
-            $heroMerged[$key] = $heroDefaults[$key];
+            if (array_key_exists($key, $heroDefaults)) {
+                $heroMerged[$key] = $heroDefaults[$key];
+            }
         }
 
         SiteSetting::updateOrCreate(['key' => 'hero'], ['value' => $heroMerged]);

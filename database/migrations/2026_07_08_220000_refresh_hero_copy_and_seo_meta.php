@@ -14,7 +14,9 @@ return new class extends Migration
         $heroMerged = array_replace_recursive($heroDefaults, is_array($heroExisting) ? $heroExisting : []);
 
         foreach (['page_title', 'meta_description', 'headline_line1', 'headline_accent', 'headline_word'] as $key) {
-            $heroMerged[$key] = $heroDefaults[$key];
+            if (array_key_exists($key, $heroDefaults)) {
+                $heroMerged[$key] = $heroDefaults[$key];
+            }
         }
 
         SiteSetting::updateOrCreate(['key' => 'hero'], ['value' => $heroMerged]);
