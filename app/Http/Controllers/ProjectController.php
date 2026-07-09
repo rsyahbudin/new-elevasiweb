@@ -19,6 +19,7 @@ class ProjectController extends Controller
         $activeCategory = $request->query('category');
 
         $projects = Project::published()
+            ->ordered()
             ->with('category')
             ->inCategory($activeCategory)
             ->paginate(self::PER_PAGE)
@@ -72,7 +73,7 @@ class ProjectController extends Controller
 
         abort_if(! $project, 404);
 
-        $allPublishedIds = Project::published()->pluck('id')->all();
+        $allPublishedIds = Project::published()->ordered()->pluck('id')->all();
         $currentPosition = array_search($project->id, $allPublishedIds, true);
         $nextId = $allPublishedIds[($currentPosition + 1) % count($allPublishedIds)];
         $next = $nextId === $project->id ? null : Project::find($nextId);

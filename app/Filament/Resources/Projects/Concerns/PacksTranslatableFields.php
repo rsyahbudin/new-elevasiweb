@@ -10,9 +10,20 @@ trait PacksTranslatableFields
     protected function packTranslatableFields(array $data): array
     {
         foreach (static::$translatableFields as $field) {
+            $id = trim((string) ($data["{$field}_id"] ?? ''));
+            $en = trim((string) ($data["{$field}_en"] ?? ''));
+
+            // Jangan hapus terjemahan EN yang sudah ada jika field EN dikosongkan saat edit.
+            if ($en === '' && isset($this->record)) {
+                $existingEn = trim((string) ($this->record->getTranslation($field, 'en', false) ?? ''));
+                if ($existingEn !== '') {
+                    $en = $existingEn;
+                }
+            }
+
             $data[$field] = [
-                'id' => $data["{$field}_id"] ?? '',
-                'en' => $data["{$field}_en"] ?? '',
+                'id' => $id,
+                'en' => $en,
             ];
             unset($data["{$field}_id"], $data["{$field}_en"]);
         }

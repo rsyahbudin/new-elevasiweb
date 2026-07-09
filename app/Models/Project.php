@@ -25,12 +25,13 @@ class Project extends Model implements HasMedia
 
     protected $fillable = [
         'title', 'slug', 'category_id', 'client_name', 'location_city', 'area_size', 'year_completed',
-        'scope_of_work', 'description', 'cover_caption', 'status', 'published_at', 'sort_order',
+        'scope_of_work', 'description', 'cover_caption', 'status', 'published_at', 'sort_order', 'show_on_home',
     ];
 
     protected $casts = [
         'status' => ProjectStatus::class,
         'published_at' => 'datetime',
+        'show_on_home' => 'boolean',
     ];
 
     public function getRouteKeyName(): string
@@ -50,7 +51,13 @@ class Project extends Model implements HasMedia
 
     public function scopePublished(Builder $query): Builder
     {
-        return $query->where('status', ProjectStatus::Published)
+        return $query->where('status', ProjectStatus::Published);
+    }
+
+    public function scopeOrdered(Builder $query): Builder
+    {
+        return $query
+            ->orderBy('sort_order')
             ->orderByDesc('published_at');
     }
 
@@ -61,6 +68,22 @@ class Project extends Model implements HasMedia
         }
 
         return $query->whereHas('category', fn (Builder $q) => $q->where('slug', $categorySlug));
+    }
+
+    public function scopeForHome(Builder $query): Builder
+    {
+        return $query
+            ->where('show_on_home', true)
+            ->ordered();
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Project $project) {
+            if ($project->status === ProjectStatus::Published) {
+                $project->published_at ??= now();
+            }
+        });
     }
 
     public function registerMediaCollections(): void

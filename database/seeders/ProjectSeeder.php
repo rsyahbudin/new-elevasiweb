@@ -29,6 +29,7 @@ class ProjectSeeder extends Seeder
                     'status' => ProjectStatus::Published,
                     'published_at' => now()->subMonths(count($projects) - $index),
                     'sort_order' => $index,
+                    'show_on_home' => $index < 6,
                 ],
             );
         }

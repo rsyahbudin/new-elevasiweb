@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProjectStatus;
 use App\Filament\Pages\ManageSiteSettings;
 use App\Models\Category;
 use App\Models\Project;
@@ -44,8 +45,13 @@ class HomeController extends Controller
 
         $home = SiteSetting::translatedMerged('home', ManageSiteSettings::homeDefaults());
 
-        $featured = Project::published()
-            ->with('category')
+        $publishedQuery = Project::query()
+            ->where('status', ProjectStatus::Published)
+            ->with('category');
+
+        $hasHomeSelection = (clone $publishedQuery)->where('show_on_home', true)->exists();
+
+        $featured = ($hasHomeSelection ? $publishedQuery->forHome() : $publishedQuery->ordered())
             ->limit(6)
             ->get()
             ->map(fn (Project $project) => [

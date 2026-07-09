@@ -67,6 +67,16 @@ class HandleInertiaRequests extends Middleware
             ?: ($analytics['ga_measurement_id'] ?? '')
         ));
 
+        $hero = SiteSetting::translatedMerged('hero', ManageSiteSettings::heroDefaults(), $locale);
+        $services = collect(SiteSetting::translatedMerged('services', ManageSiteSettings::servicesDefaults(), $locale))
+            ->map(fn (array $service) => [
+                'number' => $service['number'] ?? '',
+                'name' => $service['name'] ?? '',
+            ])
+            ->take(4)
+            ->values()
+            ->all();
+
         return [
             ...parent::share($request),
             'locale' => $locale,
@@ -125,6 +135,10 @@ class HandleInertiaRequests extends Middleware
                     'submit' => $contact['inquiry_dialog_submit_label'] ?? '',
                     'submitting' => $contact['inquiry_dialog_submitting_label'] ?? '',
                     'cancel' => $contact['inquiry_dialog_cancel_label'] ?? '',
+                ],
+                'splash' => [
+                    'location' => $hero['location'] ?? 'Jakarta, Indonesia',
+                    'services' => $services,
                 ],
             ],
             'ziggy' => fn () => [...(new Ziggy)->toArray(), 'location' => $request->url()],

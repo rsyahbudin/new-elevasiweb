@@ -8,6 +8,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -20,6 +21,7 @@ class ProjectsTable
     {
         return $table
             ->defaultSort('sort_order')
+            ->description('Urutan tampil di situs: geser baris proyek (↑↓) di tabel ini. Tidak perlu isi angka manual.')
             ->columns([
                 SpatieMediaLibraryImageColumn::make('cover')
                     ->collection('cover')
@@ -32,6 +34,13 @@ class ProjectsTable
                 TextColumn::make('category.name')
                     ->label('Kategori')
                     ->badge(),
+                IconColumn::make('show_on_home')
+                    ->label('Beranda')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-home')
+                    ->falseIcon('heroicon-o-minus')
+                    ->trueColor('success')
+                    ->tooltip('Tampil di section Karya pilihan di beranda'),
                 TextColumn::make('client_name')
                     ->label('Klien')
                     ->searchable()
@@ -56,9 +65,6 @@ class ProjectsTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('sort_order')
-                    ->numeric()
-                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('category')
@@ -66,6 +72,12 @@ class ProjectsTable
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
                 SelectFilter::make('status')
                     ->options(ProjectStatus::class),
+                SelectFilter::make('show_on_home')
+                    ->label('Beranda')
+                    ->options([
+                        '1' => 'Tampil di beranda',
+                        '0' => 'Tidak di beranda',
+                    ]),
                 TrashedFilter::make(),
             ])
             ->recordActions([

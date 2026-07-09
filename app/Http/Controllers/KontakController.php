@@ -30,8 +30,8 @@ class KontakController extends Controller
         }
 
         $recentProjects = Project::published()
+            ->ordered()
             ->with('category')
-            ->latest('published_at')
             ->limit(6)
             ->get()
             ->map(fn (Project $project) => [

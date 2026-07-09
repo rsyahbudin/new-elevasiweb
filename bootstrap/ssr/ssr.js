@@ -16,6 +16,139 @@ var __exportAll = (all, no_symbols) => {
 	return target;
 };
 //#endregion
+//#region resources/js/lib/analytics.js
+var PAGE_VIEW_KEY = "__elevasiLastGaPage";
+function canTrack() {
+	return typeof window !== "undefined" && typeof window.gtag === "function";
+}
+/**
+* @param {string} measurementId
+*/
+function ensureGtag(measurementId) {
+	if (!measurementId || typeof window === "undefined" || typeof document === "undefined") return;
+	window.dataLayer = window.dataLayer || [];
+	if (typeof window.gtag !== "function") window.gtag = function gtag() {
+		window.dataLayer.push(arguments);
+	};
+	if (!document.getElementById("ga-gtag")) {
+		const script = document.createElement("script");
+		script.id = "ga-gtag";
+		script.async = true;
+		script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+		document.head.appendChild(script);
+		window.gtag("js", /* @__PURE__ */ new Date());
+		window.gtag("config", measurementId, {
+			send_page_view: false,
+			anonymize_ip: true
+		});
+	}
+}
+/**
+* Track a page view for Inertia SPA navigations.
+* @param {string} [url]
+* @param {string} [title]
+*/
+function trackPageView(url, title) {
+	if (!canTrack()) return;
+	const pagePath = url || `${window.location.pathname}${window.location.search}`;
+	if (window[PAGE_VIEW_KEY] === pagePath) return;
+	window[PAGE_VIEW_KEY] = pagePath;
+	window.gtag("event", "page_view", {
+		page_path: pagePath,
+		page_location: window.location.href,
+		page_title: title || document.title
+	});
+}
+/**
+* @param {string} eventName
+* @param {Record<string, unknown>} [params]
+*/
+function trackEvent(eventName, params = {}) {
+	if (!canTrack() || !eventName) return;
+	window.gtag("event", eventName, params);
+}
+//#endregion
+//#region resources/js/Components/GoogleAnalytics.jsx
+function GoogleAnalytics() {
+	const { url, settings } = usePage().props;
+	const measurementId = settings?.gaMeasurementId;
+	useEffect(() => {
+		if (!measurementId) return;
+		ensureGtag(measurementId);
+		trackPageView(url, document.title);
+	}, [measurementId, url]);
+	return null;
+}
+//#endregion
+//#region resources/images/Logo-Elevasi-White.gif
+var Logo_Elevasi_White_default = "/build/assets/Logo-Elevasi-White-V7TOM52Z.gif";
+//#endregion
+//#region resources/js/Components/SplashScreen.jsx
+var ENTER_MS = 2400;
+function prefersReducedMotion() {
+	return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+function exitAnimationClass(isExiting) {
+	return isExiting ? "[animation-play-state:running]" : "[animation-play-state:paused]";
+}
+function SplashScreen() {
+	const [visible, setVisible] = useState(false);
+	const [phase, setPhase] = useState("enter");
+	const isExiting = phase === "exit";
+	useEffect(() => {
+		if (prefersReducedMotion()) return;
+		setVisible(true);
+		document.body.classList.add("overflow-hidden");
+		const exitTimer = window.setTimeout(() => setPhase("exit"), ENTER_MS);
+		const hideTimer = window.setTimeout(() => {
+			setVisible(false);
+			document.body.classList.remove("overflow-hidden");
+		}, 3300);
+		return () => {
+			window.clearTimeout(exitTimer);
+			window.clearTimeout(hideTimer);
+			document.body.classList.remove("overflow-hidden");
+		};
+	}, []);
+	if (!visible) return null;
+	return /* @__PURE__ */ jsxs("div", {
+		className: `fixed inset-0 z-[200] grid min-h-[100dvh] place-items-center px-5 motion-reduce:hidden sm:px-6 ${isExiting ? "pointer-events-none" : "pointer-events-auto"}`,
+		"aria-hidden": "true",
+		role: "presentation",
+		children: [
+			/* @__PURE__ */ jsx("div", { className: `absolute inset-0 bg-ink will-change-transform [clip-path:inset(0_50%_0_0)] motion-safe:animate-splash-panel-left-exit ${exitAnimationClass(isExiting)}` }),
+			/* @__PURE__ */ jsx("div", { className: `absolute inset-0 bg-ink will-change-transform [clip-path:inset(0_0_0_50%)] motion-safe:animate-splash-panel-right-exit ${exitAnimationClass(isExiting)}` }),
+			/* @__PURE__ */ jsxs("div", {
+				className: `relative z-[2] flex w-[min(76vw,220px)] flex-col items-center text-center text-paper motion-safe:animate-splash-content-exit sm:w-[min(72vw,280px)] md:w-80 ${exitAnimationClass(isExiting)}`,
+				children: [
+					/* @__PURE__ */ jsx("div", {
+						className: "mb-2 w-full overflow-hidden sm:mb-2.5",
+						children: /* @__PURE__ */ jsx("img", {
+							src: Logo_Elevasi_White_default,
+							alt: "Elevasi Design & Build",
+							className: "h-auto w-full motion-safe:animate-splash-logo-in"
+						})
+					}),
+					/* @__PURE__ */ jsx("p", {
+						className: "mb-4 font-mono text-[9px] uppercase tracking-[0.16em] text-accent motion-safe:animate-splash-fade-up sm:mb-5 sm:text-[10px]",
+						children: "Jakarta, Indonesia"
+					}),
+					/* @__PURE__ */ jsxs("div", {
+						className: "grid w-full gap-2",
+						children: [/* @__PURE__ */ jsx("div", {
+							className: "h-px overflow-hidden bg-[rgba(243,243,240,0.15)]",
+							children: /* @__PURE__ */ jsx("div", { className: "h-full w-full origin-left scale-x-0 bg-accent motion-safe:animate-splash-progress" })
+						}), /* @__PURE__ */ jsx("span", {
+							className: "font-mono text-[9px] uppercase tracking-[0.14em] text-[rgba(243,243,240,0.4)] motion-safe:animate-splash-fade-in sm:text-[10px]",
+							children: "Loading"
+						})]
+					})
+				]
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/Components/WhatsAppInquiryDialog.jsx
 function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 	const titleId = useId();
@@ -65,6 +198,10 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 		post(route("kontak.store"), {
 			preserveScroll: true,
 			onSuccess: () => {
+				trackEvent("generate_lead", {
+					event_category: "conversion",
+					event_label: sourcePage || url || "/"
+				});
 				reset();
 				onClose();
 			}
@@ -264,6 +401,10 @@ function WhatsAppButton({ children, className = "", source, showArrow = true, di
 		className,
 		disabled,
 		onClick: (event) => {
+			trackEvent("whatsapp_click", {
+				event_category: "engagement",
+				event_label: source || "unknown"
+			});
 			openDialog(source);
 			onClick?.(event);
 		},
@@ -312,6 +453,8 @@ function SiteLayout({ children }) {
 		copy: cms.inquiry,
 		onOpen: closeMobileNav,
 		children: [
+			/* @__PURE__ */ jsx(SplashScreen, {}),
+			/* @__PURE__ */ jsx(GoogleAnalytics, {}),
 			/* @__PURE__ */ jsx("header", {
 				className: "pointer-events-none fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4 md:px-6 md:pt-5",
 				children: /* @__PURE__ */ jsxs("div", {

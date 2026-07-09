@@ -29,7 +29,16 @@ class EditTestimonial extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['quote'] = ['id' => $data['quote_id'] ?? '', 'en' => $data['quote_en'] ?? ''];
+        $quoteEn = trim((string) ($data['quote_en'] ?? ''));
+
+        if ($quoteEn === '' && isset($this->record)) {
+            $existingEn = trim((string) ($this->record->getTranslation('quote', 'en', false) ?? ''));
+            if ($existingEn !== '') {
+                $quoteEn = $existingEn;
+            }
+        }
+
+        $data['quote'] = ['id' => trim((string) ($data['quote_id'] ?? '')), 'en' => $quoteEn];
         unset($data['quote_id'], $data['quote_en']);
 
         return $data;

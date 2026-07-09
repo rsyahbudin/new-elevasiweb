@@ -29,7 +29,16 @@ class EditCategory extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['name'] = ['id' => $data['name_id'] ?? '', 'en' => $data['name_en'] ?? ''];
+        $nameEn = trim((string) ($data['name_en'] ?? ''));
+
+        if ($nameEn === '' && isset($this->record)) {
+            $existingEn = trim((string) ($this->record->getTranslation('name', 'en', false) ?? ''));
+            if ($existingEn !== '') {
+                $nameEn = $existingEn;
+            }
+        }
+
+        $data['name'] = ['id' => trim((string) ($data['name_id'] ?? '')), 'en' => $nameEn];
         unset($data['name_id'], $data['name_en']);
 
         return $data;
