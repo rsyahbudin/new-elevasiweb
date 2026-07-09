@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Projects\Schemas;
 
 use App\Enums\ProjectStatus;
+use App\Support\CmsValidation;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
@@ -32,6 +33,7 @@ class ProjectForm
                                         TextInput::make('title_id')
                                             ->label('Nama proyek')
                                             ->required()
+                                            ->validationMessages(CmsValidation::required('Nama proyek'))
                                             ->maxLength(255)
                                             ->live(onBlur: true)
                                             ->afterStateUpdated(function ($state, callable $set, string $operation) {
@@ -43,12 +45,14 @@ class ProjectForm
                                         TextInput::make('scope_of_work_id')
                                             ->label('Lingkup pekerjaan')
                                             ->required()
+                                            ->validationMessages(CmsValidation::required('Lingkup pekerjaan'))
                                             ->maxLength(255)
                                             ->helperText('Contoh: Design + Build, Interior Fit-Out'),
                                         Textarea::make('description_id')
                                             ->label('Deskripsi')
                                             ->rows(6)
                                             ->required()
+                                            ->validationMessages(CmsValidation::required('Deskripsi'))
                                             ->helperText('Pisahkan paragraf dengan baris kosong.'),
                                     ]),
                             ]),
@@ -92,6 +96,10 @@ class ProjectForm
                             ->label('Slug URL')
                             ->required()
                             ->unique(ignoreRecord: true)
+                            ->validationMessages(array_merge(
+                                CmsValidation::required('Slug URL'),
+                                CmsValidation::uniqueSlug(),
+                            ))
                             ->helperText('Otomatis dari nama proyek (ID) saat dibuat. Digunakan di URL publik.'),
                         Select::make('category_id')
                             ->label('Kategori')
@@ -99,7 +107,8 @@ class ProjectForm
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->validationMessages(CmsValidation::required('Kategori')),
                         TextInput::make('client_name')
                             ->label('Klien')
                             ->placeholder('Contoh: Pak Andi / PT Sejahtera')
@@ -107,6 +116,7 @@ class ProjectForm
                         TextInput::make('location_city')
                             ->label('Kota / lokasi')
                             ->required()
+                            ->validationMessages(CmsValidation::required('Kota / lokasi'))
                             ->placeholder('Jakarta Selatan'),
                         TextInput::make('area_size')
                             ->label('Luas area')
@@ -117,12 +127,14 @@ class ProjectForm
                             ->numeric()
                             ->required()
                             ->minValue(2000)
-                            ->maxValue((int) date('Y') + 2),
+                            ->maxValue((int) date('Y') + 2)
+                            ->validationMessages(CmsValidation::yearCompleted()),
                         Select::make('status')
                             ->label('Status')
                             ->options(ProjectStatus::class)
                             ->default(ProjectStatus::Draft)
                             ->required()
+                            ->validationMessages(CmsValidation::required('Status'))
                             ->helperText('Draft = belum tampil di situs. Published = tayang publik — tanggal publish diisi otomatis.'),
                     ]),
 
@@ -140,7 +152,11 @@ class ProjectForm
                             ->imageEditor()
                             ->rules(['dimensions:min_width=2000,min_height=1200'])
                             ->maxSize(8 * 1024)
-                            ->helperText('Disarankan 2400×1350 (16:9), minimal 2000×1200, max 8 MB.')
+                            ->validationMessages(array_merge(
+                                CmsValidation::required('Foto cover'),
+                                CmsValidation::imageUpload(2000, 1200, 8),
+                            ))
+                            ->helperText('Disarankan 2400×1350 (16:9), minimal 2000×1200, maks. 8 MB.')
                             ->required(),
                         SpatieMediaLibraryFileUpload::make('gallery')
                             ->label('Gallery')
@@ -151,7 +167,8 @@ class ProjectForm
                             ->imageEditor()
                             ->rules(['dimensions:min_width=1400,min_height=1000'])
                             ->maxSize(15 * 1024)
-                            ->helperText('Bisa banyak foto. Disarankan 1600×1200 (4:3), minimal 1400×1000, max 15 MB per file.'),
+                            ->validationMessages(CmsValidation::imageUpload(1400, 1000, 15))
+                            ->helperText('Bisa banyak foto. Disarankan 1600×1200 (4:3), minimal 1400×1000, maks. 15 MB per file.'),
                     ]),
             ]);
     }

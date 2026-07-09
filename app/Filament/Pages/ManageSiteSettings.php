@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Actions\Images\OptimizeStoredImage;
 use App\Models\SiteSetting;
+use App\Support\CmsValidation;
 use BackedEnum;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
@@ -109,9 +110,11 @@ class ManageSiteSettings extends Page implements HasForms
                                             ->directory('site-settings/hero')
                                             ->visibility('public')
                                             ->imageEditor()
+                                            ->maxFiles(1)
                                             ->rules(['dimensions:min_width=2400,min_height=1400'])
                                             ->maxSize(8 * 1024)
-                                            ->helperText('Disarankan 2880×1600 px (sekitar 16:9). Minimal 2400×1400 px, max 8 MB. Dipakai full-bleed di beranda (~62–76vh).')
+                                            ->validationMessages(CmsValidation::imageUpload(2400, 1400, 8))
+                                            ->helperText('Disarankan 2880×1600 px (sekitar 16:9). Minimal 2400×1400 px, maks. 8 MB. Dipakai full-bleed di beranda.')
                                             ->columnSpanFull(),
                                         TextInput::make('hero.cover_caption.id')
                                             ->label('Caption foto cover (ID)')
@@ -206,9 +209,10 @@ class ManageSiteSettings extends Page implements HasForms
                                         TextInput::make('contact.whatsapp_number')
                                             ->label('Nomor WhatsApp')
                                             ->helperText('Format internasional tanpa +, contoh: 6281234567890')
-                                            ->required(),
-                                        TextInput::make('contact.instagram_url')->label('URL Instagram')->url(),
-                                        TextInput::make('contact.email')->label('Email')->email(),
+                                            ->rules(['required', 'regex:/^[0-9]{10,15}$/'])
+                                            ->validationMessages(CmsValidation::whatsappNumber()),
+                                        TextInput::make('contact.instagram_url')->label('URL Instagram')->url()->validationMessages(CmsValidation::url()),
+                                        TextInput::make('contact.email')->label('Email')->email()->validationMessages(CmsValidation::email()),
                                         Textarea::make('contact.address.id')->label('Alamat (ID)')->rows(2),
                                         Textarea::make('contact.address.en')->label('Alamat (EN)')->rows(2),
                                         Textarea::make('contact.service_area.id')->label('Area layanan (ID)')->rows(2),
@@ -237,9 +241,11 @@ class ManageSiteSettings extends Page implements HasForms
                                             ->directory('site-settings/contact')
                                             ->visibility('public')
                                             ->imageEditor()
+                                            ->maxFiles(1)
                                             ->rules(['dimensions:min_width=1800,min_height=900'])
                                             ->maxSize(6 * 1024)
-                                            ->helperText('Disarankan 2400×1080 px (sekitar 21:9 wide). Minimal 1800×900 px, max 6 MB.')
+                                            ->validationMessages(CmsValidation::imageUpload(1800, 900, 6))
+                                            ->helperText('Disarankan 2400×1080 px (sekitar 21:9). Minimal 1800×900 px, maks. 6 MB.')
                                             ->columnSpanFull(),
                                     ]),
                                 Section::make('Dialog WhatsApp')
@@ -373,6 +379,10 @@ class ManageSiteSettings extends Page implements HasForms
                                 TextInput::make('projects.detail_about_project.en')->label('About project label (EN)'),
                                 TextInput::make('projects.detail_next_project.id')->label('Next project label (ID)'),
                                 TextInput::make('projects.detail_next_project.en')->label('Next project label (EN)'),
+                                TextInput::make('projects.detail_cta_label.id')->label('CTA tombol detail (ID)'),
+                                TextInput::make('projects.detail_cta_label.en')->label('CTA tombol detail (EN)'),
+                                Textarea::make('projects.detail_cta_note.id')->label('Catatan CTA detail (ID)')->rows(2),
+                                Textarea::make('projects.detail_cta_note.en')->label('Catatan CTA detail (EN)')->rows(2),
                             ]),
 
                         Tab::make('Navigation')
@@ -411,9 +421,11 @@ class ManageSiteSettings extends Page implements HasForms
                                             ->directory('site-settings/footer')
                                             ->visibility('public')
                                             ->imageEditor()
+                                            ->maxFiles(1)
                                             ->rules(['dimensions:min_width=1800,min_height=1000'])
                                             ->maxSize(6 * 1024)
-                                            ->helperText('Disarankan 2400×1200 px (2:1). Minimal 1800×1000 px, max 6 MB. Pilih foto kontras sedang — teks putih harus tetap terbaca.'),
+                                            ->validationMessages(CmsValidation::imageUpload(1800, 1000, 6))
+                                            ->helperText('Disarankan 2400×1200 px (2:1). Minimal 1800×1000 px, maks. 6 MB. Pilih foto yang masih terbaca dengan teks putih di atasnya.'),
                                     ]),
                                 Section::make('Bar bawah footer')
                                     ->columns(2)
@@ -440,7 +452,8 @@ class ManageSiteSettings extends Page implements HasForms
                                             ->label('Measurement ID')
                                             ->placeholder('G-XXXXXXXXXX')
                                             ->helperText('Dari Google Analytics → Admin → Data streams → Web → Measurement ID. Format: G-XXXXXXXXXX. Bisa juga diisi via .env GA_MEASUREMENT_ID.')
-                                            ->rules(['nullable', 'regex:/^G-[A-Z0-9]+$/i']),
+                                            ->rules(['nullable', 'regex:/^G-[A-Z0-9]+$/i'])
+                                            ->validationMessages(CmsValidation::gaMeasurementId()),
                                     ]),
                             ]),
                     ]),
@@ -460,6 +473,10 @@ class ManageSiteSettings extends Page implements HasForms
         ];
 
         foreach ($imageFields as ['key' => $key, 'field' => $field]) {
+            $data[$key][$field] = self::normalizeImagePath($data[$key][$field] ?? null);
+        }
+
+        foreach ($imageFields as ['key' => $key, 'field' => $field]) {
             $defaults = match ($key) {
                 'hero' => self::heroDefaults(),
                 'contact' => self::contactDefaults(),
@@ -467,10 +484,10 @@ class ManageSiteSettings extends Page implements HasForms
                 default => [],
             };
 
-            $old = SiteSetting::get($key, $defaults)[$field] ?? null;
+            $old = self::normalizeImagePath(SiteSetting::get($key, $defaults)[$field] ?? null);
             $new = $data[$key][$field] ?? null;
 
-            if (is_string($old) && $old !== '' && $old !== $new) {
+            if ($old !== null && $old !== $new) {
                 $optimizer->purge($old);
             }
         }
@@ -482,15 +499,36 @@ class ManageSiteSettings extends Page implements HasForms
         foreach ($imageFields as ['key' => $key, 'field' => $field]) {
             $path = $data[$key][$field] ?? null;
 
-            if (is_string($path) && $path !== '') {
-                $optimizer->ensure($path);
+            if ($path === null) {
+                continue;
+            }
+
+            if ($optimizer->ensure($path) === null) {
+                Notification::make()
+                    ->title('Foto tersimpan, tapi gagal dioptimalkan')
+                    ->body('File asli tetap dipakai. Coba upload ulang dengan format JPG/PNG standar, atau hubungi tim teknis jika masalah berulang.')
+                    ->warning()
+                    ->send();
             }
         }
 
+        $this->form->fill($data);
+
         Notification::make()
-            ->title('Settings saved')
+            ->title('Pengaturan disimpan')
             ->success()
             ->send();
+    }
+
+    public static function normalizeImagePath(mixed $value): ?string
+    {
+        if (is_array($value)) {
+            $value = collect($value)
+                ->filter(fn ($item) => is_string($item) && $item !== '')
+                ->first();
+        }
+
+        return is_string($value) && $value !== '' ? $value : null;
     }
 
     public static function brandDefaults(): array

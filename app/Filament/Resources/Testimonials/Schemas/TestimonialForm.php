@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Testimonials\Schemas;
 
+use App\Support\CmsValidation;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -24,6 +25,7 @@ class TestimonialForm
                         TextInput::make('client_name')
                             ->label('Nama klien')
                             ->required()
+                            ->validationMessages(CmsValidation::required('Nama klien'))
                             ->placeholder('Contoh: Budi Santoso'),
                         Select::make('project_id')
                             ->label('Proyek terkait')
@@ -48,6 +50,7 @@ class TestimonialForm
                                 Textarea::make('quote_id')
                                     ->label('Kutipan (ID)')
                                     ->required()
+                                    ->validationMessages(CmsValidation::required('Kutipan'))
                                     ->rows(4)
                                     ->helperText('Teks utama testimoni dalam Bahasa Indonesia.'),
                             ]),

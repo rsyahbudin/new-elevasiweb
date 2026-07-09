@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Categories\Schemas;
 
+use App\Support\CmsValidation;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -23,6 +24,10 @@ class CategoryForm
                             ->label('Slug')
                             ->required()
                             ->unique(ignoreRecord: true)
+                            ->validationMessages(array_merge(
+                                CmsValidation::required('Slug'),
+                                CmsValidation::uniqueCategorySlug(),
+                            ))
                             ->helperText('Untuk URL filter, contoh: /proyek?category=residential. Dibuat otomatis dari nama Indonesia saat kategori baru.')
                             ->columnSpanFull(),
                         Tabs::make('Nama kategori')
@@ -33,6 +38,7 @@ class CategoryForm
                                         TextInput::make('name_id')
                                             ->label('Nama (ID)')
                                             ->required()
+                                            ->validationMessages(CmsValidation::required('Nama kategori'))
                                             ->live(onBlur: true)
                                             ->afterStateUpdated(function ($state, callable $set, string $operation) {
                                                 if ($operation === 'create') {
