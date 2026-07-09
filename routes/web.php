@@ -12,7 +12,7 @@ Route::get('/robots.txt', function () {
     $sitemap = rtrim(config('app.url'), '/').'/sitemap.xml';
 
     return response(
-        "User-agent: *\nAllow: /\n\nDisallow: /kelola\nDisallow: /livewire\n\nSitemap: {$sitemap}\n",
+        "User-agent: *\nAllow: /\n\nDisallow: /admin\nDisallow: /livewire\n\nSitemap: {$sitemap}\n",
         200,
         ['Content-Type' => 'text/plain; charset=UTF-8'],
     );
