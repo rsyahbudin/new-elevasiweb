@@ -13,6 +13,10 @@ export async function loadGsap() {
     const { ScrollTrigger } = await import('gsap/ScrollTrigger');
 
     gsap.registerPlugin(ScrollTrigger);
+    ScrollTrigger.config({
+        limitCallbacks: true,
+        ignoreMobileResize: true,
+    });
     gsapInstance = gsap;
 
     return gsapInstance;

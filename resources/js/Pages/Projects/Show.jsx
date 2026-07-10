@@ -99,7 +99,7 @@ export default function ProjectShow({ project, gallery, next, labels }) {
                             srcSet={project.coverSrcSet}
                             sizes="100vw"
                             alt={project.coverCaption || project.title}
-                            className="h-[56vh] w-full object-cover transition duration-500 group-hover:scale-[1.01] md:h-[74vh]"
+                            className="img-zoom-on-hover-sm h-[56vh] w-full object-cover md:h-[74vh]"
                             loading="eager"
                             fetchPriority="high"
                         />
@@ -146,7 +146,7 @@ export default function ProjectShow({ project, gallery, next, labels }) {
                     const lightboxOffset = project.coverImage ? 1 : 0;
 
                     return (
-                    <div key={g.label} className="group overflow-hidden rounded-[2px]" data-reveal={(i % 2) * 90} style={{ gridColumn: i === 0 ? '1 / -1' : 'auto' }}>
+                    <div key={g.label} className="gallery-scroll-item group overflow-hidden rounded-[2px]" data-reveal={(i % 2) * 90} style={{ gridColumn: i === 0 ? '1 / -1' : 'auto' }}>
                         {g.url ? (
                             <button
                                 type="button"
@@ -159,7 +159,7 @@ export default function ProjectShow({ project, gallery, next, labels }) {
                                     srcSet={g.srcSet}
                                     sizes={i === 0 ? '100vw' : '(min-width: 768px) 50vw, 100vw'}
                                     alt={g.label}
-                                    className="aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
+                                    className="img-zoom-on-hover aspect-[var(--ratio)] h-full w-full object-cover"
                                     style={{ '--ratio': i === 0 ? '16 / 8' : '4 / 3' }}
                                     loading="lazy"
                                 />

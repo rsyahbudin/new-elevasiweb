@@ -47,7 +47,6 @@ function Hero({ hero }) {
                                 srcSet={hero.coverSrcSet}
                                 alt={hero.coverCaption || 'Hero cover image'}
                                 className="h-full w-full object-cover"
-                                data-parallax="0.12"
                                 loading="eager"
                                 fetchPriority="high"
                                 sizes="100vw"
@@ -119,7 +118,7 @@ function FeaturedWork({ featured, home }) {
                                     srcSet={project.coverSrcSet}
                                     sizes="(min-width: 768px) 50vw, 100vw"
                                     alt={project.caption || project.title}
-                                    className="aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
+                                    className="aspect-[var(--ratio)] img-zoom-on-hover h-full w-full object-cover"
                                     style={{ '--ratio': i % 3 === 0 ? '4 / 4.6' : '4 / 3' }}
                                     loading="lazy"
                                 />

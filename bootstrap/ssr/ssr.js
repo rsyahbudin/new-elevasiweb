@@ -94,6 +94,10 @@ async function loadGsap() {
 	const { gsap } = await import("gsap");
 	const { ScrollTrigger } = await import("gsap/ScrollTrigger");
 	gsap.registerPlugin(ScrollTrigger);
+	ScrollTrigger.config({
+		limitCallbacks: true,
+		ignoreMobileResize: true
+	});
 	gsapInstance = gsap;
 	return gsapInstance;
 }
@@ -943,7 +947,7 @@ function SiteLayout({ children }) {
 			/* @__PURE__ */ jsx("header", {
 				className: "pointer-events-none fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4 md:px-6 md:pt-5",
 				children: /* @__PURE__ */ jsxs("div", {
-					className: "pointer-events-auto mx-auto flex max-w-5xl items-center gap-2.5 rounded-full border border-[rgba(27,28,26,0.1)] bg-[rgba(243,243,240,0.82)] px-3 py-2.5 shadow-[0_12px_40px_rgba(27,28,26,0.07)] backdrop-blur-xl sm:gap-3 sm:px-3.5 md:gap-6 md:px-5 md:py-2.5",
+					className: "pointer-events-auto mx-auto flex max-w-5xl items-center gap-2.5 rounded-full border border-[rgba(27,28,26,0.1)] bg-[rgba(243,243,240,0.92)] px-3 py-2.5 shadow-[0_12px_40px_rgba(27,28,26,0.07)] max-md:backdrop-blur-none md:bg-[rgba(243,243,240,0.82)] md:backdrop-blur-xl sm:gap-3 sm:px-3.5 md:gap-6 md:px-5 md:py-2.5",
 					children: [
 						/* @__PURE__ */ jsx("button", {
 							type: "button",
@@ -1383,14 +1387,21 @@ function useScrollReveal(containerRef, deps = []) {
 }
 //#endregion
 //#region resources/js/hooks/useParallax.js
+function shouldSkipParallax() {
+	if (typeof window === "undefined") return true;
+	if (prefersReducedMotion$1()) return true;
+	const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+	const narrowViewport = window.matchMedia("(max-width: 768px)").matches;
+	return coarsePointer || narrowViewport;
+}
 /**
-* Smooth scrub parallax on [data-parallax] elements (value = intensity, default 0.08).
+* Smooth scrub parallax on [data-parallax] placeholder fills only (not photos).
 */
 function useParallax(containerRef) {
 	useEffect(() => {
 		const container = containerRef.current;
-		if (!container || prefersReducedMotion$1()) return;
-		const elements = Array.from(container.querySelectorAll("[data-parallax]"));
+		if (!container || shouldSkipParallax()) return;
+		const elements = Array.from(container.querySelectorAll("[data-parallax]")).filter((el) => el.tagName !== "IMG" && !el.querySelector("img"));
 		if (elements.length === 0) return;
 		let ctx;
 		let cancelled = false;
@@ -1403,15 +1414,20 @@ function useParallax(containerRef) {
 					const host = el.parentElement;
 					if (!host) return;
 					const speed = parseFloat(el.dataset.parallax) || .08;
-					const travel = Math.max(24, Math.round(speed * 320));
-					gsap.fromTo(el, { y: -travel / 2 }, {
+					const travel = Math.max(16, Math.round(speed * 200));
+					gsap.fromTo(el, {
+						y: -travel / 2,
+						force3D: true
+					}, {
 						y: travel / 2,
 						ease: "none",
+						force3D: true,
 						scrollTrigger: {
 							trigger: host,
 							start: "top bottom",
 							end: "bottom top",
-							scrub: .65
+							scrub: true,
+							invalidateOnRefresh: true
 						}
 					});
 				});
@@ -1487,7 +1503,6 @@ function Hero({ hero }) {
 						srcSet: hero.coverSrcSet,
 						alt: hero.coverCaption || "Hero cover image",
 						className: "h-full w-full object-cover",
-						"data-parallax": "0.12",
 						loading: "eager",
 						fetchPriority: "high",
 						sizes: "100vw"
@@ -1570,7 +1585,7 @@ function FeaturedWork({ featured, home }) {
 								srcSet: project.coverSrcSet,
 								sizes: "(min-width: 768px) 50vw, 100vw",
 								alt: project.caption || project.title,
-								className: "aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]",
+								className: "aspect-[var(--ratio)] img-zoom-on-hover h-full w-full object-cover",
 								style: { "--ratio": i % 3 === 0 ? "4 / 4.6" : "4 / 3" },
 								loading: "lazy"
 							})
@@ -2217,7 +2232,7 @@ function ProjectsIndex({ projects, filters, activeCategory, meta, labels }) {
 								srcSet: project.coverSrcSet,
 								sizes: "(min-width: 768px) 33vw, 100vw",
 								alt: project.caption || project.title,
-								className: "aspect-[4/3] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]",
+								className: "aspect-[4/3] img-zoom-on-hover h-full w-full object-cover",
 								loading: i < 3 ? "eager" : "lazy"
 							}) : /* @__PURE__ */ jsx(Placeholder, {
 								caption: project.caption,
@@ -2837,7 +2852,7 @@ function ProjectShow({ project, gallery, next, labels }) {
 						srcSet: project.coverSrcSet,
 						sizes: "100vw",
 						alt: project.coverCaption || project.title,
-						className: "h-[56vh] w-full object-cover transition duration-500 group-hover:scale-[1.01] md:h-[74vh]",
+						className: "img-zoom-on-hover-sm h-[56vh] w-full object-cover md:h-[74vh]",
 						loading: "eager",
 						fetchPriority: "high"
 					})
@@ -2888,7 +2903,7 @@ function ProjectShow({ project, gallery, next, labels }) {
 				children: gallery.map((g, i) => {
 					const lightboxOffset = project.coverImage ? 1 : 0;
 					return /* @__PURE__ */ jsx("div", {
-						className: "group overflow-hidden rounded-[2px]",
+						className: "gallery-scroll-item group overflow-hidden rounded-[2px]",
 						"data-reveal": i % 2 * 90,
 						style: { gridColumn: i === 0 ? "1 / -1" : "auto" },
 						children: g.url ? /* @__PURE__ */ jsx("button", {
@@ -2901,7 +2916,7 @@ function ProjectShow({ project, gallery, next, labels }) {
 								srcSet: g.srcSet,
 								sizes: i === 0 ? "100vw" : "(min-width: 768px) 50vw, 100vw",
 								alt: g.label,
-								className: "aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]",
+								className: "img-zoom-on-hover aspect-[var(--ratio)] h-full w-full object-cover",
 								style: { "--ratio": i === 0 ? "16 / 8" : "4 / 3" },
 								loading: "lazy"
 							})

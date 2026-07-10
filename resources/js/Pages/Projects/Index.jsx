@@ -93,7 +93,7 @@ export default function ProjectsIndex({ projects, filters, activeCategory, meta,
                                     srcSet={project.coverSrcSet}
                                     sizes="(min-width: 768px) 33vw, 100vw"
                                     alt={project.caption || project.title}
-                                    className="aspect-[4/3] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
+                                    className="aspect-[4/3] img-zoom-on-hover h-full w-full object-cover"
                                     loading={i < 3 ? 'eager' : 'lazy'}
                                 />
                             ) : (

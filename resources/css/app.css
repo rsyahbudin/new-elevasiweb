@@ -66,6 +66,28 @@
     .placeholder-caption--xs {
         @apply px-2.5 py-1 text-[11px];
     }
+
+    .img-zoom-on-hover,
+    .img-zoom-on-hover-sm {
+        transform: translateZ(0);
+        transition: transform 500ms ease;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+        .group:hover .img-zoom-on-hover {
+            transform: translateZ(0) scale(1.015);
+        }
+
+        .group:hover .img-zoom-on-hover-sm {
+            transform: translateZ(0) scale(1.01);
+        }
+    }
+
+    .gallery-scroll-item {
+        content-visibility: auto;
+        contain: paint;
+        contain-intrinsic-size: auto 320px;
+    }
 }
 
 .js [data-reveal] {

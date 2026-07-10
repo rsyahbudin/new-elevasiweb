@@ -87,7 +87,7 @@ class ProjectController extends Controller
 
         $labels = SiteSetting::translatedMerged('projects', ManageSiteSettings::projectsDefaults());
 
-        $cover = $project->coverImageSources('large');
+        $cover = $project->coverImageSources('medium');
 
         return Inertia::render('Projects/Show', [
             'project' => [
@@ -108,7 +108,7 @@ class ProjectController extends Controller
             ],
             'gallery' => $project->getMedia('gallery')
                 ->map(function ($media, int $index) use ($project) {
-                    $sources = Project::mediaImageSources($media, 'large');
+                    $sources = Project::mediaImageSources($media, 'medium');
 
                     return [
                         'label' => $media->getCustomProperty('caption')

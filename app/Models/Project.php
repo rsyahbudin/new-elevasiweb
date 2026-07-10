@@ -110,7 +110,7 @@ class Project extends Model implements HasMedia
             ->width(1920)
             ->height(1440)
             ->format('webp')
-            ->queued();
+            ->nonQueued();
     }
 
     /**
