@@ -27,11 +27,11 @@ export default function SiteLayout({ children }) {
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const pageRef = usePageTransition();
 
-    const isProjectsArea = url.startsWith('/proyek') || url.startsWith('/en/proyek');
-    const isStudioArea = url === '/tentang' || url === '/en/tentang';
-    const isContactPage = url === '/kontak' || url === '/en/kontak';
+    const isProjectsArea = url.startsWith('/proyek') || url.startsWith('/id/proyek');
+    const isStudioArea = url === '/tentang' || url === '/id/tentang';
+    const isContactPage = url === '/kontak' || url === '/id/kontak';
     const closeMobileNav = () => setIsMobileNavOpen(false);
-    const homeUrl = locale === 'en' ? '/en' : '/';
+    const homeUrl = locale === 'id' ? '/id' : '/';
     const goHome = () => {
         closeMobileNav();
         router.visit(homeUrl);

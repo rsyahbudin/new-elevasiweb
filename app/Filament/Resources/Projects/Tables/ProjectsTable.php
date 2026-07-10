@@ -26,6 +26,8 @@ class ProjectsTable
                 SpatieMediaLibraryImageColumn::make('cover')
                     ->collection('cover')
                     ->conversion('thumbnail')
+                    ->imageWidth(88)
+                    ->imageHeight(66)
                     ->label(''),
                 TextColumn::make('title')
                     ->label('Proyek')

@@ -22,7 +22,7 @@ export default function OptimizedImage({
             sizes={srcSet && sizes ? sizes : undefined}
             alt={alt}
             loading={loading}
-            fetchPriority={fetchPriority}
+            fetchpriority={fetchPriority}
             decoding="async"
             className={className}
             {...rest}

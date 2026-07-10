@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Head, Link, createInertiaApp, router, useForm, usePage } from "@inertiajs/react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import { createPortal } from "react-dom";
 import createServer from "@inertiajs/react/server";
 import ReactDOMServer from "react-dom/server";
 import { route as route$1 } from "ziggy-js";
@@ -889,7 +890,7 @@ function OptimizedImage({ src, srcSet, sizes, alt = "", loading = "lazy", fetchP
 		sizes: srcSet && sizes ? sizes : void 0,
 		alt,
 		loading,
-		fetchPriority,
+		fetchpriority: fetchPriority,
 		decoding: "async",
 		className,
 		...rest
@@ -914,11 +915,11 @@ function SiteLayout({ children }) {
 	const { locale, altLocaleUrl, settings, cms, url } = props;
 	const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 	const pageRef = usePageTransition();
-	const isProjectsArea = url.startsWith("/proyek") || url.startsWith("/en/proyek");
-	const isStudioArea = url === "/tentang" || url === "/en/tentang";
-	const isContactPage = url === "/kontak" || url === "/en/kontak";
+	const isProjectsArea = url.startsWith("/proyek") || url.startsWith("/id/proyek");
+	const isStudioArea = url === "/tentang" || url === "/id/tentang";
+	const isContactPage = url === "/kontak" || url === "/id/kontak";
 	const closeMobileNav = () => setIsMobileNavOpen(false);
-	const homeUrl = locale === "en" ? "/en" : "/";
+	const homeUrl = locale === "id" ? "/id" : "/";
 	const goHome = () => {
 		closeMobileNav();
 		router.visit(homeUrl);
@@ -1222,7 +1223,7 @@ function Seo({ title, description, image, type = "website", noIndex = false, pre
 				"head-key": "hreflang-default",
 				rel: "alternate",
 				hrefLang: "x-default",
-				href: alternateId
+				href: alternateEn
 			}),
 			preloadImage && image ? /* @__PURE__ */ jsx("link", {
 				"head-key": "preload-lcp",
@@ -2291,12 +2292,477 @@ function ProjectsIndex({ projects, filters, activeCategory, meta, labels }) {
 }
 ProjectsIndex.layout = (page) => /* @__PURE__ */ jsx(SiteLayout, { children: page });
 //#endregion
+//#region resources/js/Components/ImageLightbox.jsx
+var SWIPE_THRESHOLD = 48;
+var MIN_SCALE = 1;
+var MAX_SCALE = 4;
+var DOUBLE_TAP_MS = 300;
+var DOUBLE_TAP_ZOOM = 2.5;
+function resolvePreviewSrc(image) {
+	return image?.fullUrl || image?.url || null;
+}
+function clamp(value, min, max) {
+	return Math.min(max, Math.max(min, value));
+}
+function touchDistance(touches) {
+	const [first, second] = touches;
+	const dx = first.clientX - second.clientX;
+	const dy = first.clientY - second.clientY;
+	return Math.hypot(dx, dy);
+}
+function clampPan(scale, x, y, width, height) {
+	if (scale <= 1) return {
+		x: 0,
+		y: 0
+	};
+	const maxX = (scale - 1) * width / 2;
+	const maxY = (scale - 1) * height / 2;
+	return {
+		x: clamp(x, -maxX, maxX),
+		y: clamp(y, -maxY, maxY)
+	};
+}
+function ImageLightbox({ images, index, onClose, onNavigate }) {
+	const labelId = useId();
+	const scrollLockY = useRef(0);
+	const viewportRef = useRef(null);
+	const lastTapRef = useRef(0);
+	const gestureRef = useRef({
+		mode: null,
+		pinchStartDistance: 0,
+		pinchStartScale: 1,
+		panStartX: 0,
+		panStartY: 0,
+		panOriginX: 0,
+		panOriginY: 0,
+		swipeStartX: null
+	});
+	const [isMounted, setIsMounted] = useState(false);
+	const [isImageReady, setIsImageReady] = useState(false);
+	const [zoom, setZoom] = useState({
+		scale: 1,
+		x: 0,
+		y: 0
+	});
+	const [isGesturing, setIsGesturing] = useState(false);
+	const { locale } = usePage().props;
+	const isOpen = index !== null;
+	const current = isOpen ? images[index] : null;
+	const previewSrc = resolvePreviewSrc(current);
+	const isZoomed = zoom.scale > 1.01;
+	const showPrevious = useCallback(() => {
+		onNavigate((index - 1 + images.length) % images.length);
+	}, [
+		index,
+		images.length,
+		onNavigate
+	]);
+	const showNext = useCallback(() => {
+		onNavigate((index + 1) % images.length);
+	}, [
+		index,
+		images.length,
+		onNavigate
+	]);
+	const resetZoom = useCallback(() => {
+		setZoom({
+			scale: 1,
+			x: 0,
+			y: 0
+		});
+		gestureRef.current.mode = null;
+		gestureRef.current.swipeStartX = null;
+	}, []);
+	const applyZoom = useCallback((getNext) => {
+		setZoom((prev) => {
+			const viewport = viewportRef.current;
+			const width = viewport?.clientWidth ?? 0;
+			const height = viewport?.clientHeight ?? 0;
+			const raw = typeof getNext === "function" ? getNext(prev) : getNext;
+			const scale = clamp(raw.scale, MIN_SCALE, MAX_SCALE);
+			if (scale <= 1) return {
+				scale: 1,
+				x: 0,
+				y: 0
+			};
+			const pan = clampPan(scale, raw.x ?? prev.x, raw.y ?? prev.y, width, height);
+			return {
+				scale,
+				x: pan.x,
+				y: pan.y
+			};
+		});
+	}, []);
+	const toggleDoubleTapZoom = useCallback(() => {
+		setZoom((prev) => {
+			if (prev.scale > 1.01) return {
+				scale: 1,
+				x: 0,
+				y: 0
+			};
+			return {
+				scale: DOUBLE_TAP_ZOOM,
+				x: 0,
+				y: 0
+			};
+		});
+	}, []);
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+	useEffect(() => {
+		if (!isOpen || !previewSrc) {
+			setIsImageReady(false);
+			return;
+		}
+		resetZoom();
+		setIsImageReady(false);
+		let cancelled = false;
+		const loader = new Image();
+		loader.decoding = "async";
+		loader.src = previewSrc;
+		if (loader.complete) setIsImageReady(true);
+		loader.onload = () => {
+			if (!cancelled) setIsImageReady(true);
+		};
+		loader.onerror = () => {
+			if (!cancelled) setIsImageReady(true);
+		};
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		isOpen,
+		previewSrc,
+		resetZoom
+	]);
+	useEffect(() => {
+		if (!isOpen) return;
+		[(index - 1 + images.length) % images.length, (index + 1) % images.length].forEach((neighborIndex) => {
+			const src = resolvePreviewSrc(images[neighborIndex]);
+			if (!src) return;
+			const img = new Image();
+			img.decoding = "async";
+			img.src = src;
+		});
+	}, [
+		images,
+		index,
+		isOpen
+	]);
+	useEffect(() => {
+		if (!isOpen) return;
+		scrollLockY.current = window.scrollY;
+		const { style: bodyStyle } = document.body;
+		const { style: htmlStyle } = document.documentElement;
+		const previous = {
+			bodyPosition: bodyStyle.position,
+			bodyTop: bodyStyle.top,
+			bodyWidth: bodyStyle.width,
+			bodyOverflow: bodyStyle.overflow,
+			htmlOverflow: htmlStyle.overflow
+		};
+		bodyStyle.position = "fixed";
+		bodyStyle.top = `-${scrollLockY.current}px`;
+		bodyStyle.width = "100%";
+		bodyStyle.overflow = "hidden";
+		htmlStyle.overflow = "hidden";
+		const onKeyDown = (event) => {
+			if (event.key === "Escape") {
+				if (isZoomed) {
+					resetZoom();
+					return;
+				}
+				onClose();
+			} else if (!isZoomed && event.key === "ArrowLeft") showPrevious();
+			else if (!isZoomed && event.key === "ArrowRight") showNext();
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => {
+			window.removeEventListener("keydown", onKeyDown);
+			bodyStyle.position = previous.bodyPosition;
+			bodyStyle.top = previous.bodyTop;
+			bodyStyle.width = previous.bodyWidth;
+			bodyStyle.overflow = previous.bodyOverflow;
+			htmlStyle.overflow = previous.htmlOverflow;
+			window.scrollTo(0, scrollLockY.current);
+		};
+	}, [
+		isOpen,
+		isZoomed,
+		onClose,
+		resetZoom,
+		showNext,
+		showPrevious
+	]);
+	useEffect(() => {
+		const viewport = viewportRef.current;
+		if (!isOpen || !viewport) return;
+		const onWheel = (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			const delta = -event.deltaY * .0025;
+			applyZoom((prev) => ({
+				scale: prev.scale + delta,
+				x: prev.x,
+				y: prev.y
+			}));
+		};
+		viewport.addEventListener("wheel", onWheel, { passive: false });
+		return () => {
+			viewport.removeEventListener("wheel", onWheel);
+		};
+	}, [applyZoom, isOpen]);
+	const onTouchStart = (event) => {
+		const touches = event.touches;
+		if (touches.length === 2) {
+			setIsGesturing(true);
+			gestureRef.current.mode = "pinch";
+			gestureRef.current.pinchStartDistance = touchDistance(touches);
+			gestureRef.current.pinchStartScale = zoom.scale;
+			gestureRef.current.swipeStartX = null;
+			return;
+		}
+		if (touches.length !== 1) return;
+		const touch = touches[0];
+		if (isZoomed) {
+			setIsGesturing(true);
+			gestureRef.current.mode = "pan";
+			gestureRef.current.panStartX = touch.clientX;
+			gestureRef.current.panStartY = touch.clientY;
+			gestureRef.current.panOriginX = zoom.x;
+			gestureRef.current.panOriginY = zoom.y;
+			gestureRef.current.swipeStartX = null;
+			return;
+		}
+		gestureRef.current.mode = "swipe";
+		gestureRef.current.swipeStartX = touch.clientX;
+	};
+	const onTouchMove = (event) => {
+		const touches = event.touches;
+		const gesture = gestureRef.current;
+		if (gesture.mode === "pinch" && touches.length === 2) {
+			event.preventDefault();
+			const distance = touchDistance(touches);
+			if (gesture.pinchStartDistance <= 0) return;
+			const nextScale = gesture.pinchStartScale * (distance / gesture.pinchStartDistance);
+			applyZoom((prev) => ({
+				scale: nextScale,
+				x: prev.x,
+				y: prev.y
+			}));
+			return;
+		}
+		if (gesture.mode === "pan" && touches.length === 1) {
+			event.preventDefault();
+			const touch = touches[0];
+			const deltaX = touch.clientX - gesture.panStartX;
+			const deltaY = touch.clientY - gesture.panStartY;
+			applyZoom((prev) => ({
+				scale: prev.scale,
+				x: gesture.panOriginX + deltaX,
+				y: gesture.panOriginY + deltaY
+			}));
+		}
+	};
+	const onTouchEnd = (event) => {
+		const gesture = gestureRef.current;
+		if (gesture.mode === "pinch" || gesture.mode === "pan") {
+			if (event.touches.length === 0) {
+				gesture.mode = null;
+				setIsGesturing(false);
+				setZoom((prev) => prev.scale < 1.05 ? {
+					scale: 1,
+					x: 0,
+					y: 0
+				} : prev);
+			}
+			return;
+		}
+		if (gesture.mode !== "swipe" || gesture.swipeStartX === null) return;
+		const touch = event.changedTouches[0];
+		const now = Date.now();
+		const deltaX = touch.clientX - gesture.swipeStartX;
+		gesture.swipeStartX = null;
+		gesture.mode = null;
+		if (now - lastTapRef.current < DOUBLE_TAP_MS && Math.abs(deltaX) < 12) {
+			lastTapRef.current = 0;
+			toggleDoubleTapZoom();
+			return;
+		}
+		lastTapRef.current = now;
+		if (images.length < 2 || Math.abs(deltaX) < SWIPE_THRESHOLD) return;
+		if (deltaX < 0) showNext();
+		else showPrevious();
+	};
+	if (!isMounted || !isOpen || !current || !previewSrc) return null;
+	const hasMultiple = images.length > 1;
+	const controlClass = "flex items-center justify-center rounded-full border border-[rgba(243,243,240,0.22)] bg-[rgba(27,28,26,0.62)] text-[rgb(243,243,240)] backdrop-blur-sm transition active:scale-95 active:bg-[rgba(27,28,26,0.85)] touch-manipulation";
+	const stopClose = (event) => {
+		event.stopPropagation();
+	};
+	const handleNavClick = (event, action) => {
+		event.stopPropagation();
+		resetZoom();
+		action();
+	};
+	const zoomHint = locale === "id" ? "Cubit / ketuk 2x untuk zoom" : "Pinch / double-tap to zoom";
+	const swipeHint = locale === "id" ? "Geser untuk ganti foto" : "Swipe to change photo";
+	return createPortal(/* @__PURE__ */ jsxs("div", {
+		className: "fixed inset-0 z-[200] flex flex-col overscroll-none bg-[rgba(12,12,11,0.96)] backdrop-blur-md",
+		style: {
+			paddingTop: "env(safe-area-inset-top)",
+			paddingBottom: "env(safe-area-inset-bottom)"
+		},
+		role: "dialog",
+		"aria-modal": "true",
+		"aria-labelledby": labelId,
+		onClick: onClose,
+		children: [
+			/* @__PURE__ */ jsx("div", {
+				className: "flex h-11 shrink-0 items-center justify-end px-3 sm:h-16 sm:px-8",
+				children: /* @__PURE__ */ jsx("button", {
+					type: "button",
+					className: `${controlClass} h-10 w-10 text-2xl leading-none sm:h-11 sm:w-11`,
+					onClick: (event) => {
+						event.stopPropagation();
+						onClose();
+					},
+					"aria-label": "Close image",
+					children: "×"
+				})
+			}),
+			/* @__PURE__ */ jsxs("div", {
+				className: "relative mx-auto flex min-h-0 w-full max-w-[min(100vw,1400px)] flex-1 items-center justify-center px-1 sm:px-20",
+				children: [
+					hasMultiple && !isZoomed ? /* @__PURE__ */ jsx("button", {
+						type: "button",
+						className: `${controlClass} absolute left-2 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 text-xl sm:left-6 sm:flex`,
+						onClick: (event) => handleNavClick(event, showPrevious),
+						"aria-label": "Previous image",
+						children: "←"
+					}) : null,
+					/* @__PURE__ */ jsxs("div", {
+						ref: viewportRef,
+						className: "flex h-full w-full touch-none items-center justify-center overflow-hidden",
+						onClick: stopClose,
+						onDoubleClick: (event) => {
+							event.stopPropagation();
+							toggleDoubleTapZoom();
+						},
+						onTouchStart: (event) => {
+							event.stopPropagation();
+							onTouchStart(event);
+						},
+						onTouchMove: (event) => {
+							event.stopPropagation();
+							onTouchMove(event);
+						},
+						onTouchEnd: (event) => {
+							event.stopPropagation();
+							onTouchEnd(event);
+						},
+						children: [!isImageReady ? /* @__PURE__ */ jsx("div", {
+							className: "pointer-events-none absolute inset-0 flex items-center justify-center",
+							children: /* @__PURE__ */ jsx("div", { className: "pointer-events-auto h-9 w-9 animate-spin rounded-full border-2 border-[rgba(243,243,240,0.2)] border-t-[rgba(243,243,240,0.85)]" })
+						}) : null, /* @__PURE__ */ jsx("img", {
+							src: previewSrc,
+							alt: current.label,
+							draggable: false,
+							decoding: "async",
+							className: `max-h-[min(86dvh,92vh)] max-w-full select-none object-contain shadow-[0_24px_80px_rgba(0,0,0,0.45)] will-change-transform sm:max-h-[min(72vh,780px)] ${isImageReady ? "opacity-100" : "opacity-0"} ${isGesturing ? "" : "transition-transform duration-200 ease-out"}`,
+							style: { transform: `translate3d(${zoom.x}px, ${zoom.y}px, 0) scale(${zoom.scale})` }
+						})]
+					}),
+					hasMultiple && !isZoomed ? /* @__PURE__ */ jsx("button", {
+						type: "button",
+						className: `${controlClass} absolute right-2 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 text-xl sm:right-6 sm:flex`,
+						onClick: (event) => handleNavClick(event, showNext),
+						"aria-label": "Next image",
+						children: "→"
+					}) : null
+				]
+			}),
+			/* @__PURE__ */ jsxs("div", {
+				className: "shrink-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 text-center sm:px-4 sm:pb-5",
+				children: [
+					/* @__PURE__ */ jsxs("p", {
+						id: labelId,
+						className: "mx-auto mb-2 max-w-2xl px-1 font-mono text-[10px] uppercase leading-relaxed tracking-[0.08em] text-[rgba(243,243,240,0.7)] sm:mb-1 sm:text-[11px]",
+						children: [current.label, hasMultiple ? /* @__PURE__ */ jsx("span", {
+							className: "hidden sm:inline",
+							children: ` · ${index + 1} / ${images.length}`
+						}) : null]
+					}),
+					/* @__PURE__ */ jsx("p", {
+						className: "mb-3 font-mono text-[9px] uppercase tracking-[0.08em] text-[rgba(243,243,240,0.4)] sm:mb-2",
+						children: isZoomed ? locale === "id" ? "Geser untuk geser foto · Esc untuk reset zoom" : "Drag to pan · Esc to reset zoom" : `${zoomHint}${hasMultiple ? ` · ${swipeHint}` : ""}`
+					}),
+					isZoomed ? /* @__PURE__ */ jsx("button", {
+						type: "button",
+						className: `${controlClass} mx-auto mb-2 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.08em] sm:hidden`,
+						onClick: (event) => {
+							event.stopPropagation();
+							resetZoom();
+						},
+						children: locale === "id" ? "Reset zoom" : "Reset zoom"
+					}) : null,
+					hasMultiple && !isZoomed ? /* @__PURE__ */ jsxs("div", {
+						className: "flex items-center justify-between gap-3 sm:hidden",
+						children: [
+							/* @__PURE__ */ jsx("button", {
+								type: "button",
+								className: `${controlClass} h-12 w-12 shrink-0 text-lg`,
+								onClick: (event) => handleNavClick(event, showPrevious),
+								"aria-label": "Previous image",
+								children: "←"
+							}),
+							/* @__PURE__ */ jsx("div", {
+								className: "min-w-0 flex-1 text-center",
+								children: /* @__PURE__ */ jsxs("span", {
+									className: "font-mono text-[11px] uppercase tracking-[0.1em] text-[rgba(243,243,240,0.75)]",
+									children: [
+										index + 1,
+										" / ",
+										images.length
+									]
+								})
+							}),
+							/* @__PURE__ */ jsx("button", {
+								type: "button",
+								className: `${controlClass} h-12 w-12 shrink-0 text-lg`,
+								onClick: (event) => handleNavClick(event, showNext),
+								"aria-label": "Next image",
+								children: "→"
+							})
+						]
+					}) : null
+				]
+			})
+		]
+	}), document.body);
+}
+//#endregion
 //#region resources/js/Pages/Projects/Show.jsx
 var Show_exports = /* @__PURE__ */ __exportAll({ default: () => ProjectShow });
 function ProjectShow({ project, gallery, next, labels }) {
 	const containerRef = useRef(null);
+	const [lightboxIndex, setLightboxIndex] = useState(null);
 	useScrollReveal(containerRef);
 	useParallax(containerRef);
+	const lightboxImages = useMemo(() => [project.coverImage ? {
+		url: project.coverImage,
+		srcSet: project.coverSrcSet,
+		fullUrl: project.coverFullUrl || project.coverImage,
+		label: project.coverCaption || project.title
+	} : null, ...gallery.filter((item) => item.url)].filter(Boolean), [
+		gallery,
+		project.coverCaption,
+		project.coverFullUrl,
+		project.coverImage,
+		project.coverSrcSet,
+		project.title
+	]);
 	const metaItems = [
 		{
 			label: labels.category,
@@ -2361,14 +2827,20 @@ function ProjectShow({ project, gallery, next, labels }) {
 				className: "relative mb-6 overflow-hidden rounded-sm md:mb-7",
 				"data-reveal": "0",
 				"data-reveal-variant": "clip",
-				children: [project.coverImage ? /* @__PURE__ */ jsx(OptimizedImage, {
-					src: project.coverImage,
-					srcSet: project.coverSrcSet,
-					sizes: "100vw",
-					alt: project.coverCaption || project.title,
-					className: "h-[56vh] w-full object-cover md:h-[74vh]",
-					loading: "eager",
-					fetchPriority: "high"
+				children: [project.coverImage ? /* @__PURE__ */ jsx("button", {
+					type: "button",
+					className: "group block w-full cursor-zoom-in touch-manipulation text-left active:opacity-90",
+					onClick: () => setLightboxIndex(0),
+					"aria-label": `View ${project.coverCaption || project.title}`,
+					children: /* @__PURE__ */ jsx(OptimizedImage, {
+						src: project.coverImage,
+						srcSet: project.coverSrcSet,
+						sizes: "100vw",
+						alt: project.coverCaption || project.title,
+						className: "h-[56vh] w-full object-cover transition duration-500 group-hover:scale-[1.01] md:h-[74vh]",
+						loading: "eager",
+						fetchPriority: "high"
+					})
 				}) : /* @__PURE__ */ jsx(Placeholder, {
 					caption: `cover — ${project.coverCaption}`,
 					parallax: .12,
@@ -2413,25 +2885,40 @@ function ProjectShow({ project, gallery, next, labels }) {
 			}),
 			/* @__PURE__ */ jsx("div", {
 				className: "grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-[26px]",
-				children: gallery.map((g, i) => /* @__PURE__ */ jsx("div", {
-					className: "group overflow-hidden rounded-[2px]",
-					"data-reveal": i % 2 * 90,
-					style: { gridColumn: i === 0 ? "1 / -1" : "auto" },
-					children: g.url ? /* @__PURE__ */ jsx(OptimizedImage, {
-						src: g.url,
-						srcSet: g.srcSet,
-						sizes: i === 0 ? "100vw" : "(min-width: 768px) 50vw, 100vw",
-						alt: g.label,
-						className: "aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]",
-						style: { "--ratio": i === 0 ? "16 / 8" : "4 / 3" },
-						loading: "lazy"
-					}) : /* @__PURE__ */ jsx(Placeholder, {
-						caption: g.label,
-						parallax: .06,
-						className: "aspect-[var(--ratio)] transition duration-500 group-hover:scale-[1.015]",
-						style: { "--ratio": i === 0 ? "16 / 8" : "4 / 3" }
-					})
-				}, g.label))
+				children: gallery.map((g, i) => {
+					const lightboxOffset = project.coverImage ? 1 : 0;
+					return /* @__PURE__ */ jsx("div", {
+						className: "group overflow-hidden rounded-[2px]",
+						"data-reveal": i % 2 * 90,
+						style: { gridColumn: i === 0 ? "1 / -1" : "auto" },
+						children: g.url ? /* @__PURE__ */ jsx("button", {
+							type: "button",
+							className: "block w-full cursor-zoom-in touch-manipulation text-left active:opacity-90",
+							onClick: () => setLightboxIndex(lightboxOffset + i),
+							"aria-label": `View ${g.label}`,
+							children: /* @__PURE__ */ jsx(OptimizedImage, {
+								src: g.url,
+								srcSet: g.srcSet,
+								sizes: i === 0 ? "100vw" : "(min-width: 768px) 50vw, 100vw",
+								alt: g.label,
+								className: "aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]",
+								style: { "--ratio": i === 0 ? "16 / 8" : "4 / 3" },
+								loading: "lazy"
+							})
+						}) : /* @__PURE__ */ jsx(Placeholder, {
+							caption: g.label,
+							parallax: .06,
+							className: "aspect-[var(--ratio)] transition duration-500 group-hover:scale-[1.015]",
+							style: { "--ratio": i === 0 ? "16 / 8" : "4 / 3" }
+						})
+					}, g.label);
+				})
+			}),
+			/* @__PURE__ */ jsx(ImageLightbox, {
+				images: lightboxImages,
+				index: lightboxIndex,
+				onClose: () => setLightboxIndex(null),
+				onNavigate: setLightboxIndex
 			}),
 			next && /* @__PURE__ */ jsxs(Link, {
 				href: route("projects.show", next.slug),
@@ -2641,15 +3128,15 @@ Tentang.layout = (page) => /* @__PURE__ */ jsx(SiteLayout, { children: page });
 //#region resources/js/route.js
 /**
 * Wraps Ziggy's route() so every existing call site (e.g. route('projects.index'))
-* keeps working unchanged while transparently resolving to the "en."-prefixed
-* route when the current page is in the English locale. Routes are registered
+* keeps working unchanged while transparently resolving to the "id."-prefixed
+* route when the current page is in the Indonesian locale. Routes are registered
 * twice server-side (see routes/web.php) because Laravel's optional route
 * parameters only work at the end of a URI, so a single "{locale?}/proyek"
 * route can't match a bare "/proyek".
 */
 function createLocaleAwareRoute(getLocale, getZiggyConfig) {
 	return (name, params, absolute, config) => {
-		return route$1(getLocale() === "en" && !name.startsWith("en.") ? `en.${name}` : name, params, absolute, config ?? getZiggyConfig());
+		return route$1(getLocale() === "id" && !name.startsWith("id.") ? `id.${name}` : name, params, absolute, config ?? getZiggyConfig());
 	};
 }
 //#endregion

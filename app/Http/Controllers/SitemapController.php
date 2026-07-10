@@ -17,15 +17,15 @@ class SitemapController extends Controller
             ['loc' => '/proyek', 'changefreq' => 'weekly', 'priority' => '0.9'],
             ['loc' => '/tentang', 'changefreq' => 'monthly', 'priority' => '0.7'],
             ['loc' => '/kontak', 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => '/en', 'changefreq' => 'weekly', 'priority' => '0.9'],
-            ['loc' => '/en/proyek', 'changefreq' => 'weekly', 'priority' => '0.8'],
-            ['loc' => '/en/tentang', 'changefreq' => 'monthly', 'priority' => '0.6'],
-            ['loc' => '/en/kontak', 'changefreq' => 'monthly', 'priority' => '0.7'],
+            ['loc' => '/id', 'changefreq' => 'weekly', 'priority' => '0.9'],
+            ['loc' => '/id/proyek', 'changefreq' => 'weekly', 'priority' => '0.8'],
+            ['loc' => '/id/tentang', 'changefreq' => 'monthly', 'priority' => '0.6'],
+            ['loc' => '/id/kontak', 'changefreq' => 'monthly', 'priority' => '0.7'],
         ];
 
         $projects = Project::published()
             ->get(['slug', 'updated_at', 'published_at'])
-            ->flatMap(function (Project $project) use ($base) {
+            ->flatMap(function (Project $project) {
                 $lastmod = ($project->updated_at ?? $project->published_at)?->toAtomString();
 
                 return [
@@ -36,7 +36,7 @@ class SitemapController extends Controller
                         'lastmod' => $lastmod,
                     ],
                     [
-                        'loc' => "/en/proyek/{$project->slug}",
+                        'loc' => "/id/proyek/{$project->slug}",
                         'changefreq' => 'monthly',
                         'priority' => '0.7',
                         'lastmod' => $lastmod,

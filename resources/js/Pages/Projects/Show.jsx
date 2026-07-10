@@ -1,8 +1,9 @@
-import { useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from '@inertiajs/react';
 import SiteLayout from '../../Layouts/SiteLayout';
 import Placeholder from '../../Components/Placeholder';
 import OptimizedImage from '../../Components/OptimizedImage';
+import ImageLightbox from '../../Components/ImageLightbox';
 import Seo from '../../Components/Seo';
 import WhatsAppButton from '../../Components/WhatsAppButton';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
@@ -10,9 +11,26 @@ import { useParallax } from '../../hooks/useParallax';
 
 export default function ProjectShow({ project, gallery, next, labels }) {
     const containerRef = useRef(null);
+    const [lightboxIndex, setLightboxIndex] = useState(null);
 
     useScrollReveal(containerRef);
     useParallax(containerRef);
+
+    const lightboxImages = useMemo(
+        () =>
+            [
+                project.coverImage
+                    ? {
+                          url: project.coverImage,
+                          srcSet: project.coverSrcSet,
+                          fullUrl: project.coverFullUrl || project.coverImage,
+                          label: project.coverCaption || project.title,
+                      }
+                    : null,
+                ...gallery.filter((item) => item.url),
+            ].filter(Boolean),
+        [gallery, project.coverCaption, project.coverFullUrl, project.coverImage, project.coverSrcSet, project.title],
+    );
 
     const metaItems = [
         { label: labels.category, value: project.category },
@@ -70,15 +88,22 @@ export default function ProjectShow({ project, gallery, next, labels }) {
 
             <div className="relative mb-6 overflow-hidden rounded-sm md:mb-7" data-reveal="0" data-reveal-variant="clip">
                 {project.coverImage ? (
-                    <OptimizedImage
-                        src={project.coverImage}
-                        srcSet={project.coverSrcSet}
-                        sizes="100vw"
-                        alt={project.coverCaption || project.title}
-                        className="h-[56vh] w-full object-cover md:h-[74vh]"
-                        loading="eager"
-                        fetchPriority="high"
-                    />
+                    <button
+                        type="button"
+                        className="group block w-full cursor-zoom-in touch-manipulation text-left active:opacity-90"
+                        onClick={() => setLightboxIndex(0)}
+                        aria-label={`View ${project.coverCaption || project.title}`}
+                    >
+                        <OptimizedImage
+                            src={project.coverImage}
+                            srcSet={project.coverSrcSet}
+                            sizes="100vw"
+                            alt={project.coverCaption || project.title}
+                            className="h-[56vh] w-full object-cover transition duration-500 group-hover:scale-[1.01] md:h-[74vh]"
+                            loading="eager"
+                            fetchPriority="high"
+                        />
+                    </button>
                 ) : (
                     <Placeholder
                         caption={`cover — ${project.coverCaption}`}
@@ -117,18 +142,28 @@ export default function ProjectShow({ project, gallery, next, labels }) {
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-[26px]">
-                {gallery.map((g, i) => (
+                {gallery.map((g, i) => {
+                    const lightboxOffset = project.coverImage ? 1 : 0;
+
+                    return (
                     <div key={g.label} className="group overflow-hidden rounded-[2px]" data-reveal={(i % 2) * 90} style={{ gridColumn: i === 0 ? '1 / -1' : 'auto' }}>
                         {g.url ? (
-                            <OptimizedImage
-                                src={g.url}
-                                srcSet={g.srcSet}
-                                sizes={i === 0 ? '100vw' : '(min-width: 768px) 50vw, 100vw'}
-                                alt={g.label}
-                                className="aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
-                                style={{ '--ratio': i === 0 ? '16 / 8' : '4 / 3' }}
-                                loading="lazy"
-                            />
+                            <button
+                                type="button"
+                                className="block w-full cursor-zoom-in touch-manipulation text-left active:opacity-90"
+                                onClick={() => setLightboxIndex(lightboxOffset + i)}
+                                aria-label={`View ${g.label}`}
+                            >
+                                <OptimizedImage
+                                    src={g.url}
+                                    srcSet={g.srcSet}
+                                    sizes={i === 0 ? '100vw' : '(min-width: 768px) 50vw, 100vw'}
+                                    alt={g.label}
+                                    className="aspect-[var(--ratio)] h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
+                                    style={{ '--ratio': i === 0 ? '16 / 8' : '4 / 3' }}
+                                    loading="lazy"
+                                />
+                            </button>
                         ) : (
                             <Placeholder
                                 caption={g.label}
@@ -138,8 +173,16 @@ export default function ProjectShow({ project, gallery, next, labels }) {
                             />
                         )}
                     </div>
-                ))}
+                    );
+                })}
             </div>
+
+            <ImageLightbox
+                images={lightboxImages}
+                index={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+                onNavigate={setLightboxIndex}
+            />
 
             {next && (
                 <Link href={route('projects.show', next.slug)} className="group block py-20 text-center md:py-[120px]" data-reveal="0">

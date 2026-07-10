@@ -18,11 +18,16 @@ Route::get('/robots.txt', function () {
     );
 })->name('robots');
 
+Route::permanentRedirect('/en', '/');
+Route::get('/en/{path}', function (string $path) {
+    return redirect('/'.$path, 301);
+})->where('path', '.*');
+
 /*
- * Registered twice — once with no prefix (default "id" locale) and once
- * under "/en" — because Laravel's optional route parameters only work at
+ * Registered twice — once with no prefix (default "en" locale) and once
+ * under "/id" — because Laravel's optional route parameters only work at
  * the end of a URI, so "{locale?}/proyek" can't match a bare "/proyek".
- * The "en." name prefix lets the client-side route() helper (see
+ * The "id." name prefix lets the client-side route() helper (see
  * resources/js/app.jsx) transparently pick the right variant per request.
  */
 $registerPublicRoutes = function (): void {
@@ -42,4 +47,4 @@ $registerPublicRoutes = function (): void {
 
 $registerPublicRoutes();
 
-Route::prefix('en')->name('en.')->group($registerPublicRoutes);
+Route::prefix('id')->name('id.')->group($registerPublicRoutes);

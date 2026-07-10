@@ -9,13 +9,13 @@
         <priority>{{ $url['priority'] }}</priority>
 @php
     $path = $url['loc'];
-    $isEn = str_starts_with($path, '/en');
-    $idPath = $isEn ? (preg_replace('#^/en(/|$)#', '/', $path) ?: '/') : $path;
-    $enPath = $isEn ? $path : ($path === '/' ? '/en' : '/en'.$path);
+    $isId = str_starts_with($path, '/id');
+    $enPath = $isId ? (preg_replace('#^/id(/|$)#', '/', $path) ?: '/') : $path;
+    $idPath = $isId ? $path : ($path === '/' ? '/id' : '/id'.$path);
 @endphp
         <xhtml:link rel="alternate" hreflang="id" href="{{ $base.$idPath }}" />
         <xhtml:link rel="alternate" hreflang="en" href="{{ $base.$enPath }}" />
-        <xhtml:link rel="alternate" hreflang="x-default" href="{{ $base.$idPath }}" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="{{ $base.$enPath }}" />
     </url>
 @endforeach
 </urlset>

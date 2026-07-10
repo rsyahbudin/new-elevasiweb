@@ -9,11 +9,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SetLocale
 {
-    public const DEFAULT_LOCALE = 'id';
+    public const DEFAULT_LOCALE = 'en';
 
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $request->is('en') || $request->is('en/*') ? 'en' : self::DEFAULT_LOCALE;
+        $locale = $request->is('id') || $request->is('id/*') ? 'id' : self::DEFAULT_LOCALE;
 
         App::setLocale($locale);
 

@@ -88,15 +88,15 @@ class Project extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('cover')->singleFile();
-        $this->addMediaCollection('gallery');
+        $this->addMediaCollection('cover')->singleFile()->useDisk('public');
+        $this->addMediaCollection('gallery')->useDisk('public');
     }
 
     public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumbnail')
-            ->width(480)
-            ->height(360)
+            ->width(640)
+            ->height(480)
             ->format('webp')
             ->nonQueued();
 
@@ -104,7 +104,7 @@ class Project extends Model implements HasMedia
             ->width(1024)
             ->height(768)
             ->format('webp')
-            ->queued();
+            ->nonQueued();
 
         $this->addMediaConversion('large')
             ->width(1920)
@@ -114,7 +114,7 @@ class Project extends Model implements HasMedia
     }
 
     /**
-     * @return array{src: string, srcSet: string|null}|null
+     * @return array{src: string, srcSet: string|null, fullUrl: string}|null
      */
     public function coverImageSources(string $size = 'medium'): ?array
     {
@@ -126,7 +126,7 @@ class Project extends Model implements HasMedia
 
         $urls = [];
 
-        foreach (['thumbnail' => 480, 'medium' => 1024, 'large' => 1920] as $name => $width) {
+        foreach (['thumbnail' => 640, 'medium' => 1024, 'large' => 1920] as $name => $width) {
             if ($media->hasGeneratedConversion($name)) {
                 $urls[$name] = ['url' => $media->getUrl($name), 'width' => $width];
             }
@@ -135,7 +135,7 @@ class Project extends Model implements HasMedia
         if ($urls === []) {
             $fallback = $media->getUrl();
 
-            return $fallback ? ['src' => $fallback, 'srcSet' => null] : null;
+            return $fallback ? ['src' => $fallback, 'srcSet' => null, 'fullUrl' => $fallback] : null;
         }
 
         $src = $urls[$size]['url'] ?? $urls['medium']['url'] ?? $urls['thumbnail']['url'] ?? $media->getUrl();
@@ -146,17 +146,18 @@ class Project extends Model implements HasMedia
         return [
             'src' => $src,
             'srcSet' => $srcSet !== '' ? $srcSet : null,
+            'fullUrl' => $media->getUrl(),
         ];
     }
 
     /**
-     * @return array{url: string, srcSet: string|null}
+     * @return array{url: string, srcSet: string|null, fullUrl: string}
      */
     public static function mediaImageSources(Media $media, string $size = 'large'): array
     {
         $urls = [];
 
-        foreach (['thumbnail' => 480, 'medium' => 1024, 'large' => 1920] as $name => $width) {
+        foreach (['thumbnail' => 640, 'medium' => 1024, 'large' => 1920] as $name => $width) {
             if ($media->hasGeneratedConversion($name)) {
                 $urls[$name] = ['url' => $media->getUrl($name), 'width' => $width];
             }
@@ -165,7 +166,7 @@ class Project extends Model implements HasMedia
         $url = $urls[$size]['url']
             ?? $urls['medium']['url']
             ?? $urls['thumbnail']['url']
-            ?? $media->getAvailableUrl(['large', 'medium']);
+            ?? $media->getUrl();
 
         $srcSet = collect($urls)
             ->map(fn (array $item) => "{$item['url']} {$item['width']}w")
@@ -174,6 +175,7 @@ class Project extends Model implements HasMedia
         return [
             'url' => $url,
             'srcSet' => $srcSet !== '' ? $srcSet : null,
+            'fullUrl' => $media->getUrl(),
         ];
     }
 }

@@ -53,7 +53,7 @@ export default function Seo({
             <link head-key="canonical" rel="canonical" href={canonical} />
             <link head-key="hreflang-id" rel="alternate" hrefLang="id" href={alternateId} />
             <link head-key="hreflang-en" rel="alternate" hrefLang="en" href={alternateEn} />
-            <link head-key="hreflang-default" rel="alternate" hrefLang="x-default" href={alternateId} />
+            <link head-key="hreflang-default" rel="alternate" hrefLang="x-default" href={alternateEn} />
 
             {preloadImage && image ? (
                 <link head-key="preload-lcp" rel="preload" as="image" href={absoluteUrl(image, appUrl)} />

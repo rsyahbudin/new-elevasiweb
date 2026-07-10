@@ -52,8 +52,10 @@ class HandleInertiaRequests extends Middleware
         ];
         $heroMeta = is_array($heroRaw) ? ($heroRaw['meta_description'] ?? []) : [];
         $defaultDescription = (! empty($heroMeta[$locale]) ? $heroMeta[$locale] : null)
+            ?? ($heroMeta['en'] ?? null)
             ?? ($heroMeta['id'] ?? null)
             ?? $seoDefaults[$locale]
+            ?? $seoDefaults['en']
             ?? $seoDefaults['id'];
 
         $analytics = SiteSetting::get('analytics', ManageSiteSettings::analyticsDefaults()) ?? [];
@@ -152,9 +154,9 @@ class HandleInertiaRequests extends Middleware
     private function urlForLocale(Request $request, string $locale): string
     {
         $path = trim($request->path(), '/');
-        $path = preg_replace('#^en(/|$)#', '', $path);
+        $path = preg_replace('#^id(/|$)#', '', $path);
 
-        $prefix = $locale === 'en' ? '/en' : '';
+        $prefix = $locale === 'id' ? '/id' : '';
         $suffix = $path !== '' ? '/'.$path : '';
 
         return ($prefix.$suffix) ?: '/';

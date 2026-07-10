@@ -102,6 +102,7 @@ class ProjectController extends Controller
                 'coverCaption' => $project->cover_caption ?? $project->title,
                 'coverImage' => $cover['src'] ?? null,
                 'coverSrcSet' => $cover['srcSet'] ?? null,
+                'coverFullUrl' => $cover['fullUrl'] ?? null,
                 'description1' => $description1,
                 'description2' => $description2,
             ],
@@ -114,6 +115,7 @@ class ProjectController extends Controller
                             ?: "{$project->title} — image ".($index + 1),
                         'url' => $sources['url'],
                         'srcSet' => $sources['srcSet'],
+                        'fullUrl' => $sources['fullUrl'],
                     ];
                 })
                 ->values(),
