@@ -61,7 +61,13 @@ trait PacksTranslatableFields
     protected function packFieldValue(mixed $value, string $field): mixed
     {
         if ($field === 'body') {
-            return is_array($value) ? $value : trim((string) ($value ?? ''));
+            if (is_array($value)) {
+                return $value;
+            }
+
+            $normalized = ArticleBodyRenderer::forEditor($value);
+
+            return ArticleBodyRenderer::isEmpty($normalized) ? '' : $normalized;
         }
 
         return trim((string) ($value ?? ''));

@@ -34,21 +34,22 @@ class ArticleBodyRenderer
             }
         }
 
-        return collect(array_values(array_filter(preg_split('/\n\s*\n/', $body) ?: [])))
-            ->map(fn (string $paragraph) => '<p>'.e(trim($paragraph)).'</p>')
-            ->implode('');
+        if (self::looksLikeHtml($trimmed)) {
+            return RichContentRenderer::make($trimmed)->toHtml();
+        }
+
+        return RichContentRenderer::make(self::plainTextToDoc($trimmed))->toHtml();
     }
 
     /**
      * Normalize stored body for the Filament RichEditor (TipTap).
+     *
+     * @return array<string, mixed>
      */
-    public static function forEditor(mixed $body): array|string
+    public static function forEditor(mixed $body): array
     {
         if (blank($body)) {
-            return [
-                'type' => 'doc',
-                'content' => [],
-            ];
+            return self::doc();
         }
 
         if (is_array($body) && ($body['type'] ?? null) === 'doc') {
@@ -56,19 +57,13 @@ class ArticleBodyRenderer
         }
 
         if (! is_string($body)) {
-            return [
-                'type' => 'doc',
-                'content' => [],
-            ];
+            return self::doc();
         }
 
         $trimmed = trim($body);
 
         if ($trimmed === '') {
-            return [
-                'type' => 'doc',
-                'content' => [],
-            ];
+            return self::doc();
         }
 
         if (str_starts_with($trimmed, '{')) {
@@ -79,18 +74,126 @@ class ArticleBodyRenderer
             }
         }
 
-        $paragraphs = array_values(array_filter(preg_split('/\n\s*\n/', $body) ?: []));
-
-        if ($paragraphs === []) {
-            return [
-                'type' => 'doc',
-                'content' => [],
-            ];
+        if (self::looksLikeHtml($trimmed)) {
+            return RichContentRenderer::make($trimmed)->toArray();
         }
 
-        return collect($paragraphs)
-            ->map(fn (string $paragraph) => '<p>'.e(trim($paragraph)).'</p>')
-            ->implode('');
+        return self::plainTextToDoc($trimmed);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $content
+     * @return array<string, mixed>
+     */
+    public static function doc(array $content = []): array
+    {
+        return [
+            'type' => 'doc',
+            'content' => $content,
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>|string  ...$parts
+     * @return array<string, mixed>
+     */
+    public static function paragraph(string|array ...$parts): array
+    {
+        $content = [];
+
+        foreach ($parts as $part) {
+            if (is_string($part)) {
+                $content[] = self::text($part);
+
+                continue;
+            }
+
+            $content[] = $part;
+        }
+
+        return [
+            'type' => 'paragraph',
+            'content' => $content,
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $marks
+     * @return array<string, mixed>
+     */
+    public static function text(string $text, array $marks = []): array
+    {
+        $node = [
+            'type' => 'text',
+            'text' => $text,
+        ];
+
+        if ($marks !== []) {
+            $node['marks'] = $marks;
+        }
+
+        return $node;
+    }
+
+    public static function bold(string $text): array
+    {
+        return self::text($text, [['type' => 'bold']]);
+    }
+
+    public static function italic(string $text): array
+    {
+        return self::text($text, [['type' => 'italic']]);
+    }
+
+    public static function heading(int $level, string $text): array
+    {
+        return [
+            'type' => 'heading',
+            'attrs' => ['level' => $level],
+            'content' => [self::text($text)],
+        ];
+    }
+
+    /**
+     * @param  array<int, string>  $items
+     * @return array<string, mixed>
+     */
+    public static function bulletList(array $items): array
+    {
+        return [
+            'type' => 'bulletList',
+            'content' => collect($items)
+                ->map(fn (string $item) => [
+                    'type' => 'listItem',
+                    'content' => [self::paragraph($item)],
+                ])
+                ->all(),
+        ];
+    }
+
+    /**
+     * @param  array<int, string>  $items
+     * @return array<string, mixed>
+     */
+    public static function orderedList(array $items): array
+    {
+        return [
+            'type' => 'orderedList',
+            'content' => collect($items)
+                ->map(fn (string $item) => [
+                    'type' => 'listItem',
+                    'content' => [self::paragraph($item)],
+                ])
+                ->all(),
+        ];
+    }
+
+    public static function blockquote(string $text): array
+    {
+        return [
+            'type' => 'blockquote',
+            'content' => [self::paragraph($text)],
+        ];
     }
 
     public static function isEmpty(mixed $body): bool
@@ -115,6 +218,33 @@ class ArticleBodyRenderer
             return false;
         }
 
+        if (is_string($body) && self::looksLikeHtml($body)) {
+            return trim(strip_tags($body)) === '';
+        }
+
         return trim((string) $body) === '';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function plainTextToDoc(string $body): array
+    {
+        $paragraphs = array_values(array_filter(preg_split('/\n\s*\n/', $body) ?: []));
+
+        if ($paragraphs === []) {
+            return self::doc();
+        }
+
+        return self::doc(
+            collect($paragraphs)
+                ->map(fn (string $paragraph) => self::paragraph(trim($paragraph)))
+                ->all(),
+        );
+    }
+
+    private static function looksLikeHtml(string $value): bool
+    {
+        return (bool) preg_match('/<(p|ul|ol|li|h[1-6]|blockquote|strong|em|br|a)\b/i', $value);
     }
 }

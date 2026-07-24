@@ -90,6 +90,7 @@ class ArticleForm
                                             ->label('Isi artikel')
                                             ->required()
                                             ->validationMessages(CmsValidation::required('Isi artikel'))
+                                            ->json()
                                             ->toolbarButtons($bodyToolbar)
                                             ->helperText('Bold, italic, heading, bullet/numbered list, blockquote, dan link. Tampilan situs disesuaikan otomatis.')
                                             ->columnSpanFull(),
@@ -105,6 +106,7 @@ class ArticleForm
                                             ->rows(3),
                                         RichEditor::make('body_en')
                                             ->label('Body')
+                                            ->json()
                                             ->toolbarButtons($bodyToolbar)
                                             ->helperText('Optional. Leave blank to use Indonesian content on /en.')
                                             ->columnSpanFull(),
