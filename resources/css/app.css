@@ -109,16 +109,26 @@
         @apply mb-3 mt-8 text-[clamp(20px,2.4vw,24px)] font-semibold tracking-[-0.01em] text-ink first:mt-0;
     }
 
+    .article-body ul,
+    .article-body ol {
+        @apply mb-6 list-outside space-y-3 pl-6;
+    }
+
     .article-body ul {
-        @apply mb-6 list-disc space-y-2 pl-5;
+        @apply list-disc;
     }
 
     .article-body ol {
-        @apply mb-6 list-decimal space-y-2 pl-5;
+        @apply list-decimal;
     }
 
     .article-body li {
-        @apply pl-1;
+        @apply block pl-1;
+        display: list-item;
+    }
+
+    .article-body li > p {
+        @apply mb-0;
     }
 
     .article-body blockquote {

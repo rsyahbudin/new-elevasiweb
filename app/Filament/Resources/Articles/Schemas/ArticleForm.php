@@ -92,7 +92,7 @@ class ArticleForm
                                             ->validationMessages(CmsValidation::required('Isi artikel'))
                                             ->json()
                                             ->toolbarButtons($bodyToolbar)
-                                            ->helperText('Bold, italic, heading, bullet/numbered list, blockquote, dan link. Tampilan situs disesuaikan otomatis.')
+                                            ->helperText('Untuk bullet/numbered list: klik ikon list di toolbar (jangan ketik "1." manual). Enter = poin baru. Bold, heading, blockquote, dan link juga tersedia.')
                                             ->columnSpanFull(),
                                     ]),
                                 Tab::make('English')
@@ -108,7 +108,7 @@ class ArticleForm
                                             ->label('Body')
                                             ->json()
                                             ->toolbarButtons($bodyToolbar)
-                                            ->helperText('Optional. Leave blank to use Indonesian content on /en.')
+                                            ->helperText('For lists, use the toolbar list buttons (do not type "1." manually). Enter adds a new item.')
                                             ->columnSpanFull(),
                                     ]),
                             ])
