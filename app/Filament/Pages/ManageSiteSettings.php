@@ -486,6 +486,16 @@ class ManageSiteSettings extends Page implements HasForms
                             ]),
                         Tab::make('Analytics')
                             ->schema([
+                                Section::make('Google Search Console')
+                                    ->description('Verifikasi kepemilikan situs agar bisa submit sitemap dan pantau indexing di Google.')
+                                    ->schema([
+                                        TextInput::make('analytics.google_search_console_verification')
+                                            ->label('Kode verifikasi HTML tag')
+                                            ->placeholder('abc123XYZ...')
+                                            ->helperText('Google Search Console → Settings → Ownership verification → HTML tag → salin nilai atribut content="..." (bukan seluruh tag). Setelah deploy, klik Verify. Bisa juga via .env GOOGLE_SEARCH_CONSOLE_VERIFICATION.')
+                                            ->rules(['nullable', 'regex:/^[a-zA-Z0-9_-]{10,128}$/'])
+                                            ->validationMessages(CmsValidation::googleSearchConsoleVerification()),
+                                    ]),
                                 Section::make('Google Analytics 4')
                                     ->description('Isi Measurement ID dari Google Analytics. Kosongkan untuk menonaktifkan tracking di situs publik.')
                                     ->schema([
@@ -583,6 +593,7 @@ class ManageSiteSettings extends Page implements HasForms
     {
         return [
             'ga_measurement_id' => '',
+            'google_search_console_verification' => '',
         ];
     }
 

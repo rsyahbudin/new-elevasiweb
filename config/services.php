@@ -39,4 +39,8 @@ return [
         'measurement_id' => env('GA_MEASUREMENT_ID'),
     ],
 
+    'google_search_console' => [
+        'verification' => env('GOOGLE_SEARCH_CONSOLE_VERIFICATION'),
+    ],
+
 ];

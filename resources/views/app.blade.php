@@ -9,6 +9,10 @@
         <link rel="icon" type="image/gif" href="{{ Vite::asset('resources/images/elevasi-logo.gif') }}">
         <link rel="apple-touch-icon" href="{{ Vite::asset('resources/images/elevasi-logo.gif') }}">
 
+        @if ($googleSearchConsoleVerification = \App\Support\SiteVerification::googleSearchConsoleToken())
+            <meta name="google-site-verification" content="{{ $googleSearchConsoleVerification }}">
+        @endif
+
         @routes
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])

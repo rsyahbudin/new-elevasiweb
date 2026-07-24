@@ -52,6 +52,16 @@ class CmsValidation
     /**
      * @return array<string, string>
      */
+    public static function googleSearchConsoleVerification(): array
+    {
+        return [
+            'regex' => 'Kode verifikasi belum benar. Salin hanya bagian content="..." dari meta tag Google (tanpa tanda kutip).',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
     public static function email(): array
     {
         return [
