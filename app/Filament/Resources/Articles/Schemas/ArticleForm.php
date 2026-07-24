@@ -27,9 +27,10 @@ class ArticleForm
             ['bold', 'italic', 'underline'],
             ['h2', 'h3'],
             ['bulletList', 'orderedList'],
-            ['blockquote', 'link'],
+            ['attachFiles', 'blockquote', 'link'],
             ['undo', 'redo'],
         ];
+        $bodyHelper = 'Gunakan ikon gambar untuk foto di dalam artikel. List: klik ikon bullet/numbered (jangan ketik "1." manual). Disarankan foto landscape min. 1200×800 px, maks. '.CmsImageSpec::MAX_MB.' MB — tampilan responsif otomatis di mobile/tablet/desktop.';
 
         return $schema
             ->components([
@@ -92,7 +93,9 @@ class ArticleForm
                                             ->validationMessages(CmsValidation::required('Isi artikel'))
                                             ->json()
                                             ->toolbarButtons($bodyToolbar)
-                                            ->helperText('Untuk bullet/numbered list: klik ikon list di toolbar (jangan ketik "1." manual). Enter = poin baru. Bold, heading, blockquote, dan link juga tersedia.')
+                                            ->fileAttachmentsAcceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                            ->fileAttachmentsMaxSize(CmsImageSpec::MAX_KB)
+                                            ->helperText($bodyHelper)
                                             ->columnSpanFull(),
                                     ]),
                                 Tab::make('English')
@@ -108,7 +111,9 @@ class ArticleForm
                                             ->label('Body')
                                             ->json()
                                             ->toolbarButtons($bodyToolbar)
-                                            ->helperText('For lists, use the toolbar list buttons (do not type "1." manually). Enter adds a new item.')
+                                            ->fileAttachmentsAcceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                            ->fileAttachmentsMaxSize(CmsImageSpec::MAX_KB)
+                                            ->helperText('For lists, use the toolbar list buttons. Inline images are responsive on all screen sizes.')
                                             ->columnSpanFull(),
                                     ]),
                             ])

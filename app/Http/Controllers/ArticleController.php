@@ -59,12 +59,20 @@ class ArticleController extends Controller
         $labels = SiteSetting::translatedMerged('articles', ManageSiteSettings::articlesDefaults());
         $cover = $article->coverImageSources('medium');
 
+        $richContentField = ArticleBodyRenderer::richContentFieldForLocale($article, app()->getLocale());
+        $body = $article->getTranslation('body', app()->getLocale(), false);
+
+        if (ArticleBodyRenderer::isEmpty($body)) {
+            $body = $article->getTranslation('body', 'id', false);
+            $richContentField = 'body_id';
+        }
+
         return Inertia::render('Articles/Show', [
             'article' => [
                 'slug' => $article->slug,
                 'title' => $article->title,
                 'excerpt' => $article->excerpt,
-                'bodyHtml' => ArticleBodyRenderer::toHtml($article->body),
+                'bodyHtml' => ArticleBodyRenderer::toHtml($body, $article, $richContentField),
                 'publishedAt' => $article->published_at?->translatedFormat('d M Y'),
                 'coverImage' => $cover['src'] ?? null,
                 'coverSrcSet' => $cover['srcSet'] ?? null,

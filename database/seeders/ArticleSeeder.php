@@ -49,7 +49,101 @@ class ArticleSeeder extends Seeder
                 1200,
                 $data['rgb'],
             );
+
+            $this->seedInlineImages($article, $data);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function seedInlineImages(Article $article, array $data): void
+    {
+        $article->clearMediaCollection(Article::BODY_ID_ATTACHMENTS);
+        $article->clearMediaCollection(Article::BODY_EN_ATTACHMENTS);
+
+        $inlineCount = ($data['inline_images'] ?? 1);
+
+        $article->setTranslation('body', 'id', ArticleBodyRenderer::doc(
+            $this->insertInlineImagesIntoBody(
+                $data['body_id']['content'] ?? [],
+                $this->createInlineImageNodes($article, Article::BODY_ID_ATTACHMENTS, $data, $inlineCount),
+                $inlineCount,
+            ),
+        ));
+
+        $article->setTranslation('body', 'en', ArticleBodyRenderer::doc(
+            $this->insertInlineImagesIntoBody(
+                $data['body_en']['content'] ?? [],
+                $this->createInlineImageNodes($article, Article::BODY_EN_ATTACHMENTS, $data, $inlineCount, 'EN'),
+                $inlineCount,
+            ),
+        ));
+
+        $article->save();
+    }
+
+    /**
+     * @param  array{0: int, 1: int, 2: int}  $rgb
+     * @return array<int, array<string, mixed>>
+     */
+    private function createInlineImageNodes(Article $article, string $collection, array $data, int $count, string $localeLabel = 'ID'): array
+    {
+        $nodes = [];
+
+        for ($i = 1; $i <= $count; $i++) {
+            $label = $data['title_en']." inline {$i} {$localeLabel}";
+            $rgb = $this->inlineImageRgb($data['rgb'], $i);
+            $path = $this->createPlaceholderImage($label, 1920, 1280, $rgb);
+
+            try {
+                $media = $article->addMedia($path)->toMediaCollection($collection);
+                $caption = $localeLabel === 'EN'
+                    ? 'Article illustration — '.$data['title_en']
+                    : 'Ilustrasi artikel — '.$data['title_id'];
+
+                $nodes[] = ArticleBodyRenderer::image($media->uuid, $caption);
+            } finally {
+                @unlink($path);
+            }
+        }
+
+        return $nodes;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $content
+     * @param  array<int, array<string, mixed>>  $imageNodes
+     * @return array<int, array<string, mixed>>
+     */
+    private function insertInlineImagesIntoBody(array $content, array $imageNodes, int $inlineCount): array
+    {
+        if ($imageNodes === []) {
+            return $content;
+        }
+
+        array_splice($content, 1, 0, [$imageNodes[0]]);
+
+        if ($inlineCount > 1 && isset($imageNodes[1])) {
+            array_splice($content, 5, 0, [$imageNodes[1]]);
+        }
+
+        return $content;
+    }
+
+    /**
+     * @param  array{0: int, 1: int, 2: int}  $rgb
+     * @return array{0: int, 1: int, 2: int}
+     */
+    private function inlineImageRgb(array $rgb, int $variant): array
+    {
+        $shift = ($variant - 1) * 14;
+
+        return [
+            max(0, min(255, $rgb[0] - $shift)),
+            max(0, min(255, $rgb[1] - (int) ($shift / 2))),
+            max(0, min(255, $rgb[2] + (int) ($shift / 3))),
+        ];
     }
 
     /**
@@ -149,6 +243,7 @@ class ArticleSeeder extends Seeder
                     ),
                 ]),
                 'rgb' => [80, 120, 96],
+                'inline_images' => 2,
             ],
             [
                 'title_id' => '5 Material yang Tahan Cuaca Tropis',

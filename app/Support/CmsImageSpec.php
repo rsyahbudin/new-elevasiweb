@@ -43,6 +43,14 @@ class CmsImageSpec
                 usage: 'Cover artikel — daftar & halaman detail.',
                 optional: true,
             ),
+            'article_body_inline' => self::make(
+                minWidth: 1200,
+                minHeight: 800,
+                recommended: '1920×1280',
+                aspect: '3:2',
+                usage: 'Foto di dalam isi artikel — lebar mengikuti kolom teks, otomatis responsif.',
+                optional: true,
+            ),
             'hero_cover' => self::make(
                 minWidth: 2400,
                 minHeight: 1350,

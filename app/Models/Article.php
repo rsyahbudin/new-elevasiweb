@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Enums\ProjectStatus;
+use Filament\Forms\Components\RichEditor\FileAttachmentProviders\SpatieMediaLibraryFileAttachmentProvider;
+use Filament\Forms\Components\RichEditor\Models\Concerns\InteractsWithRichContent;
+use Filament\Forms\Components\RichEditor\Models\Contracts\HasRichContent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -11,11 +14,16 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
-class Article extends Model implements HasMedia
+class Article extends Model implements HasMedia, HasRichContent
 {
     use HasTranslations;
     use HasUuids;
     use InteractsWithMedia;
+    use InteractsWithRichContent;
+
+    public const BODY_ID_ATTACHMENTS = 'body-id-attachments';
+
+    public const BODY_EN_ATTACHMENTS = 'body-en-attachments';
 
     public array $translatable = ['title', 'excerpt', 'body'];
 
@@ -63,6 +71,30 @@ class Article extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('cover')->singleFile()->useDisk('public');
+        $this->addMediaCollection(self::BODY_ID_ATTACHMENTS)->useDisk('public');
+        $this->addMediaCollection(self::BODY_EN_ATTACHMENTS)->useDisk('public');
+    }
+
+    public function setUpRichContent(): void
+    {
+        $this->registerRichContent('body_id')
+            ->fileAttachmentProvider(
+                SpatieMediaLibraryFileAttachmentProvider::make()
+                    ->collection(self::BODY_ID_ATTACHMENTS),
+            );
+
+        $this->registerRichContent('body_en')
+            ->fileAttachmentProvider(
+                SpatieMediaLibraryFileAttachmentProvider::make()
+                    ->collection(self::BODY_EN_ATTACHMENTS),
+            );
+    }
+
+    public function bodyAttachmentCollection(string $richContentField): string
+    {
+        return $richContentField === 'body_en'
+            ? self::BODY_EN_ATTACHMENTS
+            : self::BODY_ID_ATTACHMENTS;
     }
 
     public function registerMediaConversions(?Media $media = null): void

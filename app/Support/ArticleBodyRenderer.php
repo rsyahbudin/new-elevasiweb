@@ -2,18 +2,23 @@
 
 namespace App\Support;
 
+use App\Models\Article;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
 
 class ArticleBodyRenderer
 {
-    public static function toHtml(mixed $body): string
+    public static function toHtml(mixed $body, ?Article $article = null, ?string $richContentField = null): string
     {
         if (blank($body)) {
             return '';
         }
 
         if (is_array($body) && ($body['type'] ?? null) === 'doc') {
-            return RichContentRenderer::make(self::normalizeDoc($body))->toHtml();
+            return self::enhanceInlineImages(
+                self::renderDoc(self::normalizeDoc($body), $article, $richContentField),
+                $article,
+                $richContentField,
+            );
         }
 
         if (! is_string($body)) {
@@ -30,15 +35,40 @@ class ArticleBodyRenderer
             $decoded = json_decode($trimmed, true);
 
             if (is_array($decoded) && ($decoded['type'] ?? null) === 'doc') {
-                return RichContentRenderer::make(self::normalizeDoc($decoded))->toHtml();
+                return self::enhanceInlineImages(
+                    self::renderDoc(self::normalizeDoc($decoded), $article, $richContentField),
+                    $article,
+                    $richContentField,
+                );
             }
         }
 
         if (self::looksLikeHtml($trimmed)) {
-            return RichContentRenderer::make($trimmed)->toHtml();
+            return self::enhanceInlineImages(
+                RichContentRenderer::make($trimmed)->toHtml(),
+                $article,
+                $richContentField,
+            );
         }
 
-        return RichContentRenderer::make(self::plainTextToDoc($trimmed))->toHtml();
+        return self::enhanceInlineImages(
+            self::renderDoc(self::plainTextToDoc($trimmed), $article, $richContentField),
+            $article,
+            $richContentField,
+        );
+    }
+
+    public static function richContentFieldForLocale(Article $article, string $locale): string
+    {
+        if ($locale === 'en') {
+            $englishBody = $article->getTranslation('body', 'en', false);
+
+            if (! self::isEmpty($englishBody)) {
+                return 'body_en';
+            }
+        }
+
+        return 'body_id';
     }
 
     /**
@@ -206,6 +236,21 @@ class ArticleBodyRenderer
         return [
             'type' => 'blockquote',
             'content' => [self::paragraph($text)],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function image(string $mediaUuid, string $alt = ''): array
+    {
+        return [
+            'type' => 'image',
+            'attrs' => [
+                'src' => null,
+                'alt' => $alt,
+                'id' => $mediaUuid,
+            ],
         ];
     }
 
@@ -441,6 +486,122 @@ class ArticleBodyRenderer
 
     private static function looksLikeHtml(string $value): bool
     {
-        return (bool) preg_match('/<(p|ul|ol|li|h[1-6]|blockquote|strong|b|em|i|u|br|a)\b/i', $value);
+        return (bool) preg_match('/<(p|ul|ol|li|h[1-6]|blockquote|strong|b|em|i|u|br|a|img|figure)\b/i', $value);
+    }
+
+    /**
+     * @param  array<string, mixed>  $doc
+     */
+    private static function renderDoc(array $doc, ?Article $article, ?string $richContentField): string
+    {
+        $renderer = RichContentRenderer::make($doc);
+
+        if ($article && $richContentField) {
+            $provider = $article->getRichContentAttribute($richContentField)?->getFileAttachmentProvider();
+
+            if ($provider) {
+                $renderer->fileAttachmentProvider($provider);
+            }
+        }
+
+        return $renderer->toHtml();
+    }
+
+    private static function enhanceInlineImages(string $html, ?Article $article, ?string $richContentField): string
+    {
+        if ($article === null || $richContentField === null || ! str_contains($html, '<img')) {
+            return $html;
+        }
+
+        $collection = $article->bodyAttachmentCollection($richContentField);
+        $mediaItems = $article->getMedia($collection);
+
+        if ($mediaItems->isEmpty()) {
+            return self::wrapBareImages($html);
+        }
+
+        return preg_replace_callback(
+            '/<img\b([^>]*?)src="([^"]+)"([^>]*?)>/i',
+            function (array $matches) use ($mediaItems): string {
+                $before = $matches[1];
+                $src = html_entity_decode($matches[2], ENT_QUOTES);
+                $after = $matches[3];
+                $attributes = $before.$after;
+
+                $media = $mediaItems->first(
+                    fn ($item) => $item->getUrl() === $src
+                        || ($item->hasGeneratedConversion('medium') && $item->getUrl('medium') === $src)
+                        || ($item->hasGeneratedConversion('large') && $item->getUrl('large') === $src)
+                        || str_ends_with($src, $item->file_name),
+                );
+
+                if (! $media) {
+                    return self::wrapSingleImage($matches[0]);
+                }
+
+                $sources = [];
+
+                foreach (['thumbnail' => 640, 'medium' => 1024, 'large' => 1920] as $name => $width) {
+                    if ($media->hasGeneratedConversion($name)) {
+                        $sources[$name] = ['url' => $media->getUrl($name), 'width' => $width];
+                    }
+                }
+
+                if ($sources === []) {
+                    $sources['original'] = ['url' => $media->getUrl(), 'width' => 1920];
+                }
+
+                $defaultSrc = $sources['medium']['url']
+                    ?? $sources['large']['url']
+                    ?? $sources['thumbnail']['url']
+                    ?? $sources['original']['url'];
+
+                $srcset = collect($sources)
+                    ->map(fn (array $item) => "{$item['url']} {$item['width']}w")
+                    ->implode(', ');
+
+                $alt = '';
+
+                if (preg_match('/\balt="([^"]*)"/', $attributes, $altMatch)) {
+                    $alt = $altMatch[1];
+                }
+
+                return sprintf(
+                    '<figure class="article-body-figure"><img src="%s" srcset="%s" sizes="(min-width: 720px) 720px, 100vw" alt="%s" loading="lazy" decoding="async" class="article-body-image" /></figure>',
+                    e($defaultSrc),
+                    e($srcset),
+                    e($alt),
+                );
+            },
+            $html,
+        ) ?? self::wrapBareImages($html);
+    }
+
+    private static function wrapBareImages(string $html): string
+    {
+        return preg_replace_callback(
+            '/<img\b([^>]*?)>/i',
+            fn (array $matches) => self::wrapSingleImage('<img'.$matches[1].'>'),
+            $html,
+        ) ?? $html;
+    }
+
+    private static function wrapSingleImage(string $imgTag): string
+    {
+        if (str_contains($imgTag, 'article-body-figure')) {
+            return $imgTag;
+        }
+
+        $attributes = $imgTag;
+
+        if (! str_contains($attributes, 'class="')) {
+            $attributes = preg_replace('/<img\b/', '<img class="article-body-image"', $attributes) ?? $attributes;
+        }
+
+        if (! str_contains($attributes, 'loading=')) {
+            $attributes = preg_replace('/<img\b/', '<img loading="lazy" decoding="async"', $attributes) ?? $attributes;
+        }
+
+        return '<figure class="article-body-figure">'.$attributes.'</figure>';
     }
 }

@@ -162,6 +162,18 @@
         @apply underline decoration-[rgba(31,122,70,0.35)] underline-offset-[3px];
     }
 
+    .article-body-figure {
+        @apply my-8 overflow-hidden rounded-sm;
+    }
+
+    .article-body-image {
+        @apply block h-auto w-full max-w-full rounded-sm;
+    }
+
+    .article-body img:not(.article-body-image) {
+        @apply my-8 block h-auto w-full max-w-full rounded-sm;
+    }
+
     .article-body strong em,
     .article-body strong i,
     .article-body b em,

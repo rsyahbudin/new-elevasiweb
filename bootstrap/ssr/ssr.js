@@ -1561,7 +1561,7 @@ function ArticleShow({ article, labels }) {
 				children: ["← ", labels.allArticles]
 			}),
 			/* @__PURE__ */ jsx("h1", {
-				className: "mb-6 mt-7 max-w-[14ch] text-[clamp(44px,7vw,112px)] font-semibold uppercase leading-[0.98] tracking-[-0.035em] md:mb-8",
+				className: "mb-6 mt-7 max-w-[720px] text-[clamp(32px,5.2vw,72px)] font-semibold uppercase leading-[1.06] tracking-[-0.03em] [text-wrap:balance] md:mb-8 md:leading-[1.04]",
 				"data-reveal": "80",
 				children: article.title
 			}),
