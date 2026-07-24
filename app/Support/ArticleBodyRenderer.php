@@ -30,7 +30,7 @@ class ArticleBodyRenderer
             $decoded = json_decode($trimmed, true);
 
             if (is_array($decoded) && ($decoded['type'] ?? null) === 'doc') {
-                return RichContentRenderer::make($decoded)->toHtml();
+                return RichContentRenderer::make(self::normalizeDoc($decoded))->toHtml();
             }
         }
 
@@ -70,7 +70,7 @@ class ArticleBodyRenderer
             $decoded = json_decode($trimmed, true);
 
             if (is_array($decoded) && ($decoded['type'] ?? null) === 'doc') {
-                return $decoded;
+                return self::normalizeDoc($decoded);
             }
         }
 
@@ -143,6 +143,19 @@ class ArticleBodyRenderer
     public static function italic(string $text): array
     {
         return self::text($text, [['type' => 'italic']]);
+    }
+
+    public static function underline(string $text): array
+    {
+        return self::text($text, [['type' => 'underline']]);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $marks
+     */
+    public static function marked(string $text, array $marks): array
+    {
+        return self::text($text, $marks);
     }
 
     public static function heading(int $level, string $text): array
@@ -428,6 +441,6 @@ class ArticleBodyRenderer
 
     private static function looksLikeHtml(string $value): bool
     {
-        return (bool) preg_match('/<(p|ul|ol|li|h[1-6]|blockquote|strong|em|br|a)\b/i', $value);
+        return (bool) preg_match('/<(p|ul|ol|li|h[1-6]|blockquote|strong|b|em|i|u|br|a)\b/i', $value);
     }
 }

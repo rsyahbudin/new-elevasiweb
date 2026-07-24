@@ -145,11 +145,30 @@
         @apply text-ink underline decoration-[rgba(31,122,70,0.35)] underline-offset-[3px] transition hover:text-accent hover:decoration-accent;
     }
 
-    .article-body strong {
+    .article-body strong,
+    .article-body b {
         @apply font-semibold text-ink;
     }
 
-    .article-body em {
+    .article-body em,
+    .article-body i {
+        @apply text-[rgba(27,28,26,0.88)];
+        font-family: 'Instrument Serif', serif;
+        font-style: italic;
+        font-weight: 400;
+    }
+
+    .article-body u {
+        @apply underline decoration-[rgba(31,122,70,0.35)] underline-offset-[3px];
+    }
+
+    .article-body strong em,
+    .article-body strong i,
+    .article-body b em,
+    .article-body b i,
+    .article-body em strong,
+    .article-body i strong {
+        @apply font-semibold text-ink;
         font-family: 'Instrument Serif', serif;
         font-style: italic;
     }

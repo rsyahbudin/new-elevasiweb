@@ -59,6 +59,98 @@ class ArticleSeeder extends Seeder
     {
         return [
             [
+                'title_id' => 'Preview Format Artikel',
+                'title_en' => 'Article Format Preview',
+                'excerpt_id' => 'Artikel ini untuk mengetes bold, italic, underline, heading, list, blockquote, dan link di halaman artikel.',
+                'excerpt_en' => 'This article tests bold, italic, underline, headings, lists, blockquotes, and links on the article page.',
+                'body_id' => ArticleBodyRenderer::doc([
+                    ArticleBodyRenderer::paragraph(
+                        'Paragraf normal dengan ',
+                        ArticleBodyRenderer::bold('teks bold'),
+                        ', ',
+                        ArticleBodyRenderer::italic('teks italic'),
+                        ', ',
+                        ArticleBodyRenderer::underline('teks underline'),
+                        ', dan ',
+                        ArticleBodyRenderer::marked('bold + italic', [['type' => 'bold'], ['type' => 'italic']]),
+                        '.',
+                    ),
+                    ArticleBodyRenderer::heading(2, 'Heading level 2'),
+                    ArticleBodyRenderer::heading(3, 'Heading level 3'),
+                    ArticleBodyRenderer::paragraph('Bullet list:'),
+                    ArticleBodyRenderer::bulletList([
+                        'Poin bullet pertama',
+                        'Poin bullet kedua',
+                    ]),
+                    ArticleBodyRenderer::paragraph(
+                        'Italic dalam paragraf: ',
+                        ArticleBodyRenderer::italic('contoh teks italic'),
+                        '.',
+                    ),
+                    ArticleBodyRenderer::paragraph('Numbered list:'),
+                    ArticleBodyRenderer::orderedList([
+                        'Poin bernomor pertama',
+                        'Poin bernomor kedua',
+                        'Poin bernomor ketiga',
+                    ]),
+                    ArticleBodyRenderer::blockquote(
+                        'Blockquote menggunakan serif italic — cocok untuk kutipan atau penekanan.',
+                    ),
+                    ArticleBodyRenderer::paragraph(
+                        'Contoh link ke ',
+                        ArticleBodyRenderer::marked('website Elevasi', [[
+                            'type' => 'link',
+                            'attrs' => [
+                                'href' => 'https://elevasidesignbuild.com',
+                                'target' => '_blank',
+                            ],
+                        ]]),
+                        '.',
+                    ),
+                ]),
+                'body_en' => ArticleBodyRenderer::doc([
+                    ArticleBodyRenderer::paragraph(
+                        'Normal paragraph with ',
+                        ArticleBodyRenderer::bold('bold text'),
+                        ', ',
+                        ArticleBodyRenderer::italic('italic text'),
+                        ', ',
+                        ArticleBodyRenderer::underline('underlined text'),
+                        ', and ',
+                        ArticleBodyRenderer::marked('bold + italic', [['type' => 'bold'], ['type' => 'italic']]),
+                        '.',
+                    ),
+                    ArticleBodyRenderer::heading(2, 'Heading level 2'),
+                    ArticleBodyRenderer::heading(3, 'Heading level 3'),
+                    ArticleBodyRenderer::paragraph('Bullet list:'),
+                    ArticleBodyRenderer::bulletList([
+                        'First bullet item',
+                        'Second bullet item',
+                    ]),
+                    ArticleBodyRenderer::paragraph('Numbered list:'),
+                    ArticleBodyRenderer::orderedList([
+                        'First numbered item',
+                        'Second numbered item',
+                        'Third numbered item',
+                    ]),
+                    ArticleBodyRenderer::blockquote(
+                        'Blockquote in serif italic — suitable for quotes or emphasis.',
+                    ),
+                    ArticleBodyRenderer::paragraph(
+                        'Example link to the ',
+                        ArticleBodyRenderer::marked('Elevasi website', [[
+                            'type' => 'link',
+                            'attrs' => [
+                                'href' => 'https://elevasidesignbuild.com',
+                                'target' => '_blank',
+                            ],
+                        ]]),
+                        '.',
+                    ),
+                ]),
+                'rgb' => [80, 120, 96],
+            ],
+            [
                 'title_id' => '5 Material yang Tahan Cuaca Tropis',
                 'title_en' => '5 Materials That Survive Tropical Weather',
                 'excerpt_id' => 'Memilih material bukan soal estetika saja — di iklim Indonesia, durability dan perawatan jadi pertimbangan utama sebelum desain diputuskan.',
