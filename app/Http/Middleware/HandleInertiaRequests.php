@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Filament\Pages\ManageSiteSettings;
+use App\Models\Article;
+use App\Models\GalleryItem;
 use App\Models\SiteSetting;
 use App\Support\StoredImageSources;
 use Illuminate\Http\Request;
@@ -106,10 +108,14 @@ class HandleInertiaRequests extends Middleware
             'cms' => [
                 'nav' => [
                     'work' => $navigation['work'] ?? '',
+                    'gallery' => $navigation['gallery'] ?? '',
+                    'articles' => $navigation['articles'] ?? '',
                     'studio' => $navigation['studio'] ?? '',
                     'contact' => $navigation['contact'] ?? '',
                     'cta' => $navigation['cta'] ?? '',
                     'ctaWhatsapp' => $contact['page_cta_label'] ?? $navigation['cta'] ?? '',
+                    'showGallery' => GalleryItem::published()->exists(),
+                    'showArticles' => Article::published()->exists(),
                 ],
                 'footer' => [
                     'eyebrow' => $footer['eyebrow'] ?? '',

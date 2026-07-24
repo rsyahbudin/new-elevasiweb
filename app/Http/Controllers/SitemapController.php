@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Article;
+use App\Models\GalleryItem;
 use App\Models\Project;
 use Illuminate\Http\Response;
 
@@ -22,6 +24,16 @@ class SitemapController extends Controller
             ['loc' => '/id/tentang', 'changefreq' => 'monthly', 'priority' => '0.6'],
             ['loc' => '/id/kontak', 'changefreq' => 'monthly', 'priority' => '0.7'],
         ];
+
+        if (GalleryItem::published()->exists()) {
+            $static[] = ['loc' => '/galeri', 'changefreq' => 'weekly', 'priority' => '0.8'];
+            $static[] = ['loc' => '/id/galeri', 'changefreq' => 'weekly', 'priority' => '0.7'];
+        }
+
+        if (Article::published()->exists()) {
+            $static[] = ['loc' => '/artikel', 'changefreq' => 'weekly', 'priority' => '0.8'];
+            $static[] = ['loc' => '/id/artikel', 'changefreq' => 'weekly', 'priority' => '0.7'];
+        }
 
         $projects = Project::published()
             ->get(['slug', 'updated_at', 'published_at'])
@@ -44,12 +56,34 @@ class SitemapController extends Controller
                 ];
             });
 
+        $articles = Article::published()
+            ->get(['slug', 'updated_at', 'published_at'])
+            ->flatMap(function (Article $article) {
+                $lastmod = ($article->updated_at ?? $article->published_at)?->toAtomString();
+
+                return [
+                    [
+                        'loc' => "/artikel/{$article->slug}",
+                        'changefreq' => 'monthly',
+                        'priority' => '0.7',
+                        'lastmod' => $lastmod,
+                    ],
+                    [
+                        'loc' => "/id/artikel/{$article->slug}",
+                        'changefreq' => 'monthly',
+                        'priority' => '0.6',
+                        'lastmod' => $lastmod,
+                    ],
+                ];
+            });
+
         $urls = collect($static)
             ->map(fn (array $item) => [
                 ...$item,
                 'lastmod' => $item['lastmod'] ?? $now,
             ])
-            ->concat($projects);
+            ->concat($projects)
+            ->concat($articles);
 
         $xml = view('sitemap', [
             'base' => $base,

@@ -28,6 +28,8 @@ export default function SiteLayout({ children }) {
     const pageRef = usePageTransition();
 
     const isProjectsArea = url.startsWith('/proyek') || url.startsWith('/id/proyek');
+    const isGalleryArea = url.startsWith('/galeri') || url.startsWith('/id/galeri');
+    const isArticlesArea = url.startsWith('/artikel') || url.startsWith('/id/artikel');
     const isStudioArea = url === '/tentang' || url === '/id/tentang';
     const isContactPage = url === '/kontak' || url === '/id/kontak';
     const closeMobileNav = () => setIsMobileNavOpen(false);
@@ -74,10 +76,20 @@ export default function SiteLayout({ children }) {
                         />
                     </button>
 
-                    <nav className="hidden flex-1 items-center justify-center gap-7 md:flex">
+                    <nav className="hidden flex-1 items-center justify-center gap-5 lg:gap-7 md:flex">
                         <Link href={route('projects.index')} className={navLinkClass(isProjectsArea)}>
                             {cms.nav.work}
                         </Link>
+                        {cms.nav.showGallery && (
+                            <Link href={route('gallery.index')} className={navLinkClass(isGalleryArea)}>
+                                {cms.nav.gallery}
+                            </Link>
+                        )}
+                        {cms.nav.showArticles && (
+                            <Link href={route('articles.index')} className={navLinkClass(isArticlesArea)}>
+                                {cms.nav.articles}
+                            </Link>
+                        )}
                         <Link href={route('tentang')} className={navLinkClass(isStudioArea)}>
                             {cms.nav.studio}
                         </Link>
@@ -136,6 +148,28 @@ export default function SiteLayout({ children }) {
                     >
                         {cms.nav.work}
                     </Link>
+                    {cms.nav.showGallery && (
+                        <Link
+                            href={route('gallery.index')}
+                            className={`border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${
+                                isGalleryArea ? 'text-[rgb(31,122,70)]' : 'text-[rgb(27,28,26)]'
+                            }`}
+                            onClick={closeMobileNav}
+                        >
+                            {cms.nav.gallery}
+                        </Link>
+                    )}
+                    {cms.nav.showArticles && (
+                        <Link
+                            href={route('articles.index')}
+                            className={`border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${
+                                isArticlesArea ? 'text-[rgb(31,122,70)]' : 'text-[rgb(27,28,26)]'
+                            }`}
+                            onClick={closeMobileNav}
+                        >
+                            {cms.nav.articles}
+                        </Link>
+                    )}
                     <Link
                         href={route('tentang')}
                         className={`border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${

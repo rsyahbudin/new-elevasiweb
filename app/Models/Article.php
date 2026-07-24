@@ -6,47 +6,37 @@ use App\Enums\ProjectStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
-class Project extends Model implements HasMedia
+class Article extends Model implements HasMedia
 {
     use HasTranslations;
     use HasUuids;
     use InteractsWithMedia;
-    use SoftDeletes;
 
-    public array $translatable = ['title', 'description', 'scope_of_work'];
+    public array $translatable = ['title', 'excerpt', 'body'];
 
     protected $fillable = [
-        'title', 'slug', 'category_id', 'client_name', 'design_by', 'location_city', 'area_size', 'year_completed',
-        'scope_of_work', 'description', 'cover_caption', 'status', 'published_at', 'sort_order', 'show_on_home',
+        'slug',
+        'title',
+        'excerpt',
+        'body',
+        'status',
+        'published_at',
+        'sort_order',
     ];
 
     protected $casts = [
         'status' => ProjectStatus::class,
         'published_at' => 'datetime',
-        'show_on_home' => 'boolean',
     ];
 
     public function getRouteKeyName(): string
     {
         return 'slug';
-    }
-
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class);
-    }
-
-    public function testimonials(): HasMany
-    {
-        return $this->hasMany(Testimonial::class);
     }
 
     public function scopePublished(Builder $query): Builder
@@ -57,31 +47,15 @@ class Project extends Model implements HasMedia
     public function scopeOrdered(Builder $query): Builder
     {
         return $query
-            ->orderBy('sort_order')
-            ->orderByDesc('published_at');
-    }
-
-    public function scopeInCategory(Builder $query, ?string $categorySlug): Builder
-    {
-        if (! $categorySlug) {
-            return $query;
-        }
-
-        return $query->whereHas('category', fn (Builder $q) => $q->where('slug', $categorySlug));
-    }
-
-    public function scopeForHome(Builder $query): Builder
-    {
-        return $query
-            ->where('show_on_home', true)
-            ->ordered();
+            ->orderByDesc('published_at')
+            ->orderBy('sort_order');
     }
 
     protected static function booted(): void
     {
-        static::saving(function (Project $project) {
-            if ($project->status === ProjectStatus::Published) {
-                $project->published_at ??= now();
+        static::saving(function (Article $article) {
+            if ($article->status === ProjectStatus::Published) {
+                $article->published_at ??= now();
             }
         });
     }
@@ -89,7 +63,6 @@ class Project extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('cover')->singleFile()->useDisk('public');
-        $this->addMediaCollection('gallery')->useDisk('public');
     }
 
     public function registerMediaConversions(?Media $media = null): void
@@ -145,35 +118,6 @@ class Project extends Model implements HasMedia
 
         return [
             'src' => $src,
-            'srcSet' => $srcSet !== '' ? $srcSet : null,
-            'fullUrl' => $media->getUrl(),
-        ];
-    }
-
-    /**
-     * @return array{url: string, srcSet: string|null, fullUrl: string}
-     */
-    public static function mediaImageSources(Media $media, string $size = 'large'): array
-    {
-        $urls = [];
-
-        foreach (['thumbnail' => 640, 'medium' => 1024, 'large' => 1920] as $name => $width) {
-            if ($media->hasGeneratedConversion($name)) {
-                $urls[$name] = ['url' => $media->getUrl($name), 'width' => $width];
-            }
-        }
-
-        $url = $urls[$size]['url']
-            ?? $urls['medium']['url']
-            ?? $urls['thumbnail']['url']
-            ?? $media->getUrl();
-
-        $srcSet = collect($urls)
-            ->map(fn (array $item) => "{$item['url']} {$item['width']}w")
-            ->implode(', ');
-
-        return [
-            'url' => $url,
             'srcSet' => $srcSet !== '' ? $srcSet : null,
             'fullUrl' => $media->getUrl(),
         ];

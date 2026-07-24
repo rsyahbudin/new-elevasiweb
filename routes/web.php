@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\ProjectController;
@@ -35,6 +37,10 @@ $registerPublicRoutes = function (): void {
 
     Route::get('/proyek', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('/proyek/{slug}', [ProjectController::class, 'show'])->name('projects.show');
+
+    Route::get('/galeri', [GalleryController::class, 'index'])->name('gallery.index');
+    Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
+    Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
 
     Route::get('/tentang', [StaticPageController::class, 'tentang'])->name('tentang');
     Route::get('/layanan', [StaticPageController::class, 'layanan'])->name('layanan');

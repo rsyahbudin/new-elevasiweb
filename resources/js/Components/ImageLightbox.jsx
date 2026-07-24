@@ -196,9 +196,15 @@ export default function ImageLightbox({ images, index, onClose, onNavigate }) {
                 }
 
                 onClose();
-            } else if (!isZoomed && event.key === 'ArrowLeft') {
+            } else if (event.key === 'ArrowLeft') {
+                if (isZoomed) {
+                    resetZoom();
+                }
                 showPrevious();
-            } else if (!isZoomed && event.key === 'ArrowRight') {
+            } else if (event.key === 'ArrowRight') {
+                if (isZoomed) {
+                    resetZoom();
+                }
                 showNext();
             }
         };
@@ -402,10 +408,10 @@ export default function ImageLightbox({ images, index, onClose, onNavigate }) {
             </div>
 
             <div className="relative mx-auto flex min-h-0 w-full max-w-[min(100vw,1400px)] flex-1 items-center justify-center px-1 sm:px-20">
-                {hasMultiple && !isZoomed ? (
+                {hasMultiple ? (
                     <button
                         type="button"
-                        className={`${controlClass} absolute left-2 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 text-xl sm:left-6 sm:flex`}
+                        className={`${controlClass} absolute left-2 top-1/2 z-30 hidden h-12 w-12 -translate-y-1/2 text-xl sm:left-6 sm:flex`}
                         onClick={(event) => handleNavClick(event, showPrevious)}
                         aria-label="Previous image"
                     >
@@ -454,10 +460,10 @@ export default function ImageLightbox({ images, index, onClose, onNavigate }) {
                     />
                 </div>
 
-                {hasMultiple && !isZoomed ? (
+                {hasMultiple ? (
                     <button
                         type="button"
-                        className={`${controlClass} absolute right-2 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 text-xl sm:right-6 sm:flex`}
+                        className={`${controlClass} absolute right-2 top-1/2 z-30 hidden h-12 w-12 -translate-y-1/2 text-xl sm:right-6 sm:flex`}
                         onClick={(event) => handleNavClick(event, showNext)}
                         aria-label="Next image"
                     >
@@ -480,8 +486,8 @@ export default function ImageLightbox({ images, index, onClose, onNavigate }) {
                 <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.08em] text-[rgba(243,243,240,0.4)] sm:mb-2">
                     {isZoomed
                         ? locale === 'id'
-                            ? 'Geser untuk geser foto · Esc untuk reset zoom'
-                            : 'Drag to pan · Esc to reset zoom'
+                            ? 'Geser untuk geser foto · Esc untuk reset zoom · ← → ganti foto'
+                            : 'Drag to pan · Esc to reset zoom · ← → change photo'
                         : `${zoomHint}${hasMultiple ? ` · ${swipeHint}` : ''}`}
                 </p>
 

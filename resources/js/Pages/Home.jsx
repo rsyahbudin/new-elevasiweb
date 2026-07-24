@@ -118,8 +118,7 @@ function FeaturedWork({ featured, home }) {
                                     srcSet={project.coverSrcSet}
                                     sizes="(min-width: 768px) 50vw, 100vw"
                                     alt={project.caption || project.title}
-                                    className="aspect-[var(--ratio)] img-zoom-on-hover h-full w-full object-cover"
-                                    style={{ '--ratio': i % 3 === 0 ? '4 / 4.6' : '4 / 3' }}
+                                    className="aspect-[4/3] img-zoom-on-hover h-full w-full object-cover"
                                     loading="lazy"
                                 />
                             </div>
@@ -127,8 +126,7 @@ function FeaturedWork({ featured, home }) {
                             <Placeholder
                                 caption={project.caption}
                                 parallax={0.07}
-                                className="aspect-[var(--ratio)] transition duration-500 group-hover:scale-[1.015]"
-                                style={{ '--ratio': i % 3 === 0 ? '4 / 4.6' : '4 / 3' }}
+                                className="aspect-[4/3] transition duration-500 group-hover:scale-[1.015]"
                             />
                         )}
                         <div className="flex items-baseline justify-between px-0.5 pb-0 pt-4">

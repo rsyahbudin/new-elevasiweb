@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Actions\Images\OptimizeStoredImage;
 use App\Models\SiteSetting;
+use App\Support\CmsImageSpec;
 use App\Support\CmsValidation;
 use BackedEnum;
 use Filament\Forms\Components\ColorPicker;
@@ -51,6 +52,8 @@ class ManageSiteSettings extends Page implements HasForms
             'footer' => array_replace_recursive(self::footerDefaults(), SiteSetting::get('footer', self::footerDefaults()) ?? []),
             'home' => array_replace_recursive(self::homeDefaults(), SiteSetting::get('home', self::homeDefaults()) ?? []),
             'projects' => array_replace_recursive(self::projectsDefaults(), SiteSetting::get('projects', self::projectsDefaults()) ?? []),
+            'gallery' => array_replace_recursive(self::galleryDefaults(), SiteSetting::get('gallery', self::galleryDefaults()) ?? []),
+            'articles' => array_replace_recursive(self::articlesDefaults(), SiteSetting::get('articles', self::articlesDefaults()) ?? []),
             'brand' => array_replace_recursive(self::brandDefaults(), SiteSetting::get('brand', self::brandDefaults()) ?? []),
             'analytics' => array_replace_recursive(self::analyticsDefaults(), SiteSetting::get('analytics', self::analyticsDefaults()) ?? []),
         ]);
@@ -111,10 +114,10 @@ class ManageSiteSettings extends Page implements HasForms
                                             ->visibility('public')
                                             ->imageEditor()
                                             ->maxFiles(1)
-                                            ->rules(['dimensions:min_width=2400,min_height=1400'])
-                                            ->maxSize(8 * 1024)
-                                            ->validationMessages(CmsValidation::imageUpload(2400, 1400, 8))
-                                            ->helperText('Disarankan 2880×1600 px (sekitar 16:9). Minimal 2400×1400 px, maks. 8 MB. Dipakai full-bleed di beranda.')
+                                            ->rules(CmsImageSpec::preset('hero_cover')['rules'])
+                                            ->maxSize(CmsImageSpec::MAX_KB)
+                                            ->validationMessages(CmsImageSpec::preset('hero_cover')['messages'])
+                                            ->helperText(CmsImageSpec::preset('hero_cover')['helper'])
                                             ->columnSpanFull(),
                                         TextInput::make('hero.cover_caption.id')
                                             ->label('Caption foto cover (ID)')
@@ -242,10 +245,10 @@ class ManageSiteSettings extends Page implements HasForms
                                             ->visibility('public')
                                             ->imageEditor()
                                             ->maxFiles(1)
-                                            ->rules(['dimensions:min_width=1800,min_height=900'])
-                                            ->maxSize(6 * 1024)
-                                            ->validationMessages(CmsValidation::imageUpload(1800, 900, 6))
-                                            ->helperText('Disarankan 2400×1080 px (sekitar 21:9). Minimal 1800×900 px, maks. 6 MB.')
+                                            ->rules(CmsImageSpec::preset('contact_banner')['rules'])
+                                            ->maxSize(CmsImageSpec::MAX_KB)
+                                            ->validationMessages(CmsImageSpec::preset('contact_banner')['messages'])
+                                            ->helperText(CmsImageSpec::preset('contact_banner')['helper'])
                                             ->columnSpanFull(),
                                     ]),
                                 Section::make('Dialog WhatsApp')
@@ -367,6 +370,8 @@ class ManageSiteSettings extends Page implements HasForms
                                 TextInput::make('projects.detail_category.en')->label('Category label (EN)'),
                                 TextInput::make('projects.detail_client.id')->label('Client label (ID)'),
                                 TextInput::make('projects.detail_client.en')->label('Client label (EN)'),
+                                TextInput::make('projects.detail_design_by.id')->label('Design by label (ID)'),
+                                TextInput::make('projects.detail_design_by.en')->label('Design by label (EN)'),
                                 TextInput::make('projects.detail_location.id')->label('Location label (ID)'),
                                 TextInput::make('projects.detail_location.en')->label('Location label (EN)'),
                                 TextInput::make('projects.detail_year_completed.id')->label('Year completed label (ID)'),
@@ -385,10 +390,46 @@ class ManageSiteSettings extends Page implements HasForms
                                 Textarea::make('projects.detail_cta_note.en')->label('Catatan CTA detail (EN)')->rows(2),
                             ]),
 
+                        Tab::make('Gallery Page')
+                            ->schema([
+                                TextInput::make('gallery.index_page_title.id')->label('Index page title / SEO (ID)'),
+                                TextInput::make('gallery.index_page_title.en')->label('Index page title / SEO (EN)'),
+                                Textarea::make('gallery.index_meta_description.id')->label('Index meta description (ID)')->rows(2),
+                                Textarea::make('gallery.index_meta_description.en')->label('Index meta description (EN)')->rows(2),
+                                TextInput::make('gallery.index_heading.id')->label('Index heading (ID)'),
+                                TextInput::make('gallery.index_heading.en')->label('Index heading (EN)'),
+                                TextInput::make('gallery.index_heading_accent.id')->label('Index heading accent (ID)'),
+                                TextInput::make('gallery.index_heading_accent.en')->label('Index heading accent (EN)'),
+                                TextInput::make('gallery.index_empty.id')->label('Empty state message (ID)'),
+                                TextInput::make('gallery.index_empty.en')->label('Empty state message (EN)'),
+                            ]),
+
+                        Tab::make('Articles Page')
+                            ->schema([
+                                TextInput::make('articles.index_page_title.id')->label('Index page title / SEO (ID)'),
+                                TextInput::make('articles.index_page_title.en')->label('Index page title / SEO (EN)'),
+                                Textarea::make('articles.index_meta_description.id')->label('Index meta description (ID)')->rows(2),
+                                Textarea::make('articles.index_meta_description.en')->label('Index meta description (EN)')->rows(2),
+                                TextInput::make('articles.index_heading.id')->label('Index heading (ID)'),
+                                TextInput::make('articles.index_heading.en')->label('Index heading (EN)'),
+                                TextInput::make('articles.index_heading_accent.id')->label('Index heading accent (ID)'),
+                                TextInput::make('articles.index_heading_accent.en')->label('Index heading accent (EN)'),
+                                TextInput::make('articles.index_empty.id')->label('Empty state message (ID)'),
+                                TextInput::make('articles.index_empty.en')->label('Empty state message (EN)'),
+                                TextInput::make('articles.detail_all_articles.id')->label('Back link label (ID)'),
+                                TextInput::make('articles.detail_all_articles.en')->label('Back link label (EN)'),
+                                TextInput::make('articles.detail_published_on.id')->label('Published on label (ID)'),
+                                TextInput::make('articles.detail_published_on.en')->label('Published on label (EN)'),
+                            ]),
+
                         Tab::make('Navigation')
                             ->schema([
                                 TextInput::make('navigation.work.id')->label('Work link (ID)'),
                                 TextInput::make('navigation.work.en')->label('Work link (EN)'),
+                                TextInput::make('navigation.gallery.id')->label('Gallery link (ID)'),
+                                TextInput::make('navigation.gallery.en')->label('Gallery link (EN)'),
+                                TextInput::make('navigation.articles.id')->label('Articles link (ID)'),
+                                TextInput::make('navigation.articles.en')->label('Articles link (EN)'),
                                 TextInput::make('navigation.studio.id')->label('Studio link (ID)'),
                                 TextInput::make('navigation.studio.en')->label('Studio link (EN)'),
                                 TextInput::make('navigation.contact.id')->label('Contact link (ID)'),
@@ -422,10 +463,10 @@ class ManageSiteSettings extends Page implements HasForms
                                             ->visibility('public')
                                             ->imageEditor()
                                             ->maxFiles(1)
-                                            ->rules(['dimensions:min_width=1800,min_height=1000'])
-                                            ->maxSize(6 * 1024)
-                                            ->validationMessages(CmsValidation::imageUpload(1800, 1000, 6))
-                                            ->helperText('Disarankan 2400×1200 px (2:1). Minimal 1800×1000 px, maks. 6 MB. Pilih foto yang masih terbaca dengan teks putih di atasnya.'),
+                                            ->rules(CmsImageSpec::preset('footer_cta')['rules'])
+                                            ->maxSize(CmsImageSpec::MAX_KB)
+                                            ->validationMessages(CmsImageSpec::preset('footer_cta')['messages'])
+                                            ->helperText(CmsImageSpec::preset('footer_cta')['helper']),
                                     ]),
                                 Section::make('Bar bawah footer')
                                     ->columns(2)
@@ -492,7 +533,7 @@ class ManageSiteSettings extends Page implements HasForms
             }
         }
 
-        foreach (['hero', 'services', 'tentang', 'contact', 'navigation', 'footer', 'home', 'projects', 'brand', 'analytics'] as $key) {
+        foreach (['hero', 'services', 'tentang', 'contact', 'navigation', 'footer', 'home', 'projects', 'gallery', 'articles', 'brand', 'analytics'] as $key) {
             SiteSetting::updateOrCreate(['key' => $key], ['value' => $data[$key] ?? []]);
         }
 
@@ -716,6 +757,8 @@ class ManageSiteSettings extends Page implements HasForms
     {
         return [
             'work' => ['id' => 'Karya', 'en' => 'Work'],
+            'gallery' => ['id' => 'Galeri', 'en' => 'Gallery'],
+            'articles' => ['id' => 'Artikel', 'en' => 'Articles'],
             'studio' => ['id' => 'Studio', 'en' => 'Studio'],
             'contact' => ['id' => 'Kontak', 'en' => 'Contact'],
             'cta' => ['id' => 'Mulai proyek', 'en' => 'Start a project'],
@@ -764,6 +807,7 @@ class ManageSiteSettings extends Page implements HasForms
             'detail_all_projects' => ['id' => 'Semua proyek', 'en' => 'All projects'],
             'detail_category' => ['id' => 'Kategori', 'en' => 'Category'],
             'detail_client' => ['id' => 'Klien', 'en' => 'Client'],
+            'detail_design_by' => ['id' => 'Design by', 'en' => 'Design by'],
             'detail_location' => ['id' => 'Lokasi', 'en' => 'Location'],
             'detail_year_completed' => ['id' => 'Tahun selesai', 'en' => 'Year completed'],
             'detail_scope' => ['id' => 'Lingkup pekerjaan', 'en' => 'Scope'],
@@ -775,6 +819,36 @@ class ManageSiteSettings extends Page implements HasForms
                 'id' => 'Tertarik dengan ruang seperti ini? Ceritakan kebutuhan Anda — kami balas via WhatsApp.',
                 'en' => 'Interested in a space like this? Tell us what you need — we reply on WhatsApp.',
             ],
+        ];
+    }
+
+    public static function galleryDefaults(): array
+    {
+        return [
+            'index_page_title' => ['id' => 'Galeri Inspirasi', 'en' => 'Inspiration Gallery'],
+            'index_meta_description' => [
+                'id' => 'Galeri inspirasi desain interior, material, dan detail ruang dari Elevasi Design & Build.',
+                'en' => 'A gallery of interior design inspiration, materials, and spatial details from Elevasi Design & Build.',
+            ],
+            'index_heading' => ['id' => 'Galeri', 'en' => 'Inspiration'],
+            'index_heading_accent' => ['id' => 'inspirasi', 'en' => 'gallery'],
+            'index_empty' => ['id' => 'Belum ada foto di galeri.', 'en' => 'No gallery images yet.'],
+        ];
+    }
+
+    public static function articlesDefaults(): array
+    {
+        return [
+            'index_page_title' => ['id' => 'Artikel & Edukasi', 'en' => 'Articles & Education'],
+            'index_meta_description' => [
+                'id' => 'Tips desain, material, dan proses bangun rumah dari tim Elevasi Design & Build.',
+                'en' => 'Design tips, materials, and home-building insights from the Elevasi Design & Build team.',
+            ],
+            'index_heading' => ['id' => 'Artikel', 'en' => 'Design'],
+            'index_heading_accent' => ['id' => 'edukasi', 'en' => 'notes'],
+            'index_empty' => ['id' => 'Belum ada artikel.', 'en' => 'No articles yet.'],
+            'detail_all_articles' => ['id' => 'Semua artikel', 'en' => 'All articles'],
+            'detail_published_on' => ['id' => 'Dipublikasikan', 'en' => 'Published'],
         ];
     }
 }

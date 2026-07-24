@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Projects\Schemas;
 
 use App\Enums\ProjectStatus;
+use App\Support\CmsImageSpec;
 use App\Support\CmsValidation;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -22,6 +23,9 @@ class ProjectForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $coverSpec = CmsImageSpec::preset('project_cover');
+        $gallerySpec = CmsImageSpec::preset('project_gallery');
+
         return $schema
             ->columns(1)
             ->components([
@@ -148,6 +152,10 @@ class ProjectForm
                                             ->label('Klien')
                                             ->placeholder('Pak Andi / PT Sejahtera')
                                             ->helperText('Opsional.'),
+                                        TextInput::make('design_by')
+                                            ->label('Design by')
+                                            ->placeholder('Nama desainer / studio')
+                                            ->helperText('Opsional.'),
                                         TextInput::make('area_size')
                                             ->label('Luas area')
                                             ->placeholder('240 m²')
@@ -173,13 +181,13 @@ class ProjectForm
                                     ->panelLayout('integrated')
                                     ->panelAspectRatio('16:9')
                                     ->imageEditor()
-                                    ->rules(['dimensions:min_width=2000,min_height=1125'])
-                                    ->maxSize(8 * 1024)
+                                    ->rules($coverSpec['rules'])
+                                    ->maxSize(CmsImageSpec::MAX_KB)
                                     ->validationMessages(array_merge(
                                         CmsValidation::required('Foto cover'),
-                                        CmsValidation::imageUpload(2000, 1125, 8),
+                                        $coverSpec['messages'],
                                     ))
-                                    ->helperText('Format horizontal 16:9. Disarankan 2400×1350, minimal 2000×1125, maks. 8 MB.')
+                                    ->helperText($coverSpec['helper'])
                                     ->required()
                                     ->columnSpanFull(),
                                 SpatieMediaLibraryFileUpload::make('gallery')
@@ -194,10 +202,10 @@ class ProjectForm
                                     ->multiple()
                                     ->reorderable()
                                     ->imageEditor()
-                                    ->rules(['dimensions:min_width=1600,min_height=900'])
-                                    ->maxSize(15 * 1024)
-                                    ->validationMessages(CmsValidation::imageUpload(1600, 900, 15))
-                                    ->helperText('Thumbnail horizontal 16:9. Disarankan 1920×1080 atau 2400×1350, maks. 15 MB per file.')
+                                    ->rules($gallerySpec['rules'])
+                                    ->maxSize(CmsImageSpec::MAX_KB)
+                                    ->validationMessages($gallerySpec['messages'])
+                                    ->helperText($gallerySpec['helper'])
                                     ->columnSpanFull(),
                             ]),
                     ]),

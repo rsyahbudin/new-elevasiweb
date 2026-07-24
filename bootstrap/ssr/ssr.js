@@ -920,6 +920,8 @@ function SiteLayout({ children }) {
 	const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 	const pageRef = usePageTransition();
 	const isProjectsArea = url.startsWith("/proyek") || url.startsWith("/id/proyek");
+	const isGalleryArea = url.startsWith("/galeri") || url.startsWith("/id/galeri");
+	const isArticlesArea = url.startsWith("/artikel") || url.startsWith("/id/artikel");
 	const isStudioArea = url === "/tentang" || url === "/id/tentang";
 	const isContactPage = url === "/kontak" || url === "/id/kontak";
 	const closeMobileNav = () => setIsMobileNavOpen(false);
@@ -963,16 +965,29 @@ function SiteLayout({ children }) {
 							})
 						}),
 						/* @__PURE__ */ jsxs("nav", {
-							className: "hidden flex-1 items-center justify-center gap-7 md:flex",
-							children: [/* @__PURE__ */ jsx(Link, {
-								href: route("projects.index"),
-								className: navLinkClass(isProjectsArea),
-								children: cms.nav.work
-							}), /* @__PURE__ */ jsx(Link, {
-								href: route("tentang"),
-								className: navLinkClass(isStudioArea),
-								children: cms.nav.studio
-							})]
+							className: "hidden flex-1 items-center justify-center gap-5 lg:gap-7 md:flex",
+							children: [
+								/* @__PURE__ */ jsx(Link, {
+									href: route("projects.index"),
+									className: navLinkClass(isProjectsArea),
+									children: cms.nav.work
+								}),
+								cms.nav.showGallery && /* @__PURE__ */ jsx(Link, {
+									href: route("gallery.index"),
+									className: navLinkClass(isGalleryArea),
+									children: cms.nav.gallery
+								}),
+								cms.nav.showArticles && /* @__PURE__ */ jsx(Link, {
+									href: route("articles.index"),
+									className: navLinkClass(isArticlesArea),
+									children: cms.nav.articles
+								}),
+								/* @__PURE__ */ jsx(Link, {
+									href: route("tentang"),
+									className: navLinkClass(isStudioArea),
+									children: cms.nav.studio
+								})
+							]
 						}),
 						/* @__PURE__ */ jsxs("div", {
 							className: "ml-auto flex shrink-0 items-center gap-1.5 md:gap-3",
@@ -1020,17 +1035,32 @@ function SiteLayout({ children }) {
 				"aria-hidden": !isMobileNavOpen,
 				children: [/* @__PURE__ */ jsxs("nav", {
 					className: "flex flex-1 flex-col justify-center gap-2",
-					children: [/* @__PURE__ */ jsx(Link, {
-						href: route("projects.index"),
-						className: `border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${isProjectsArea ? "text-[rgb(31,122,70)]" : "text-[rgb(27,28,26)]"}`,
-						onClick: closeMobileNav,
-						children: cms.nav.work
-					}), /* @__PURE__ */ jsx(Link, {
-						href: route("tentang"),
-						className: `border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${isStudioArea ? "text-[rgb(31,122,70)]" : "text-[rgb(27,28,26)]"}`,
-						onClick: closeMobileNav,
-						children: cms.nav.studio
-					})]
+					children: [
+						/* @__PURE__ */ jsx(Link, {
+							href: route("projects.index"),
+							className: `border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${isProjectsArea ? "text-[rgb(31,122,70)]" : "text-[rgb(27,28,26)]"}`,
+							onClick: closeMobileNav,
+							children: cms.nav.work
+						}),
+						cms.nav.showGallery && /* @__PURE__ */ jsx(Link, {
+							href: route("gallery.index"),
+							className: `border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${isGalleryArea ? "text-[rgb(31,122,70)]" : "text-[rgb(27,28,26)]"}`,
+							onClick: closeMobileNav,
+							children: cms.nav.gallery
+						}),
+						cms.nav.showArticles && /* @__PURE__ */ jsx(Link, {
+							href: route("articles.index"),
+							className: `border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${isArticlesArea ? "text-[rgb(31,122,70)]" : "text-[rgb(27,28,26)]"}`,
+							onClick: closeMobileNav,
+							children: cms.nav.articles
+						}),
+						/* @__PURE__ */ jsx(Link, {
+							href: route("tentang"),
+							className: `border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${isStudioArea ? "text-[rgb(31,122,70)]" : "text-[rgb(27,28,26)]"}`,
+							onClick: closeMobileNav,
+							children: cms.nav.studio
+						})
+					]
 				}), /* @__PURE__ */ jsxs("div", {
 					className: "mt-auto space-y-5 border-t border-[rgba(27,28,26,0.1)] pt-6 pb-[env(safe-area-inset-bottom)]",
 					children: [/* @__PURE__ */ jsx(NavCta, {
@@ -1386,6 +1416,755 @@ function useScrollReveal(containerRef, deps = []) {
 	}, [containerRef, ...deps]);
 }
 //#endregion
+//#region resources/js/Pages/Articles/Index.jsx
+var Index_exports$2 = /* @__PURE__ */ __exportAll({ default: () => ArticlesIndex });
+function ArticlesIndex({ articles, meta, labels }) {
+	const containerRef = useRef(null);
+	const articleSignature = (articles.data ?? []).map((article) => article.slug).join("|");
+	useScrollReveal(containerRef, [articles.current_page, articleSignature]);
+	const pageLinks = (articles.links ?? []).filter((link) => link.url !== null && !link.label.includes("Previous") && !link.label.includes("Next"));
+	return /* @__PURE__ */ jsxs("main", {
+		className: "px-5 pb-10 pt-36 md:px-10 md:pt-[170px]",
+		ref: containerRef,
+		children: [
+			/* @__PURE__ */ jsx(Seo, {
+				title: labels.pageTitle,
+				description: labels.pageDescription || (labels.heading && labels.headingAccent ? `${labels.heading} ${labels.headingAccent} — Elevasi Design & Build.` : void 0)
+			}),
+			/* @__PURE__ */ jsxs("div", {
+				className: "flex flex-wrap items-end justify-between gap-4 border-b border-[rgba(27,28,26,0.12)] pb-8",
+				"data-reveal": "0",
+				children: [/* @__PURE__ */ jsxs("h1", {
+					className: "m-0 max-w-[12ch] text-[clamp(56px,8vw,132px)] font-semibold uppercase leading-[0.95] tracking-[-0.035em]",
+					children: [
+						labels.heading,
+						" ",
+						/* @__PURE__ */ jsx("span", {
+							className: "serif-italic",
+							children: labels.headingAccent
+						})
+					]
+				}), /* @__PURE__ */ jsxs("span", {
+					className: "font-mono text-[13px] text-[rgba(27,28,26,0.5)]",
+					children: [
+						"( ",
+						String(meta.total).padStart(2, "0"),
+						" )"
+					]
+				})]
+			}),
+			/* @__PURE__ */ jsx("div", {
+				className: "grid grid-cols-1 gap-8 py-10 md:grid-cols-2 md:gap-[26px] md:py-12 lg:grid-cols-3",
+				children: articles.data.map((article, i) => /* @__PURE__ */ jsxs(Link, {
+					href: route("articles.show", article.slug),
+					className: "group block",
+					"data-reveal": i % 3 * 80,
+					children: [
+						/* @__PURE__ */ jsx("div", {
+							className: "overflow-hidden rounded-[2px]",
+							children: article.coverImage ? /* @__PURE__ */ jsx(OptimizedImage, {
+								src: article.coverImage,
+								srcSet: article.coverSrcSet,
+								sizes: "(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw",
+								alt: article.title,
+								className: "aspect-[4/3] img-zoom-on-hover h-full w-full object-cover",
+								loading: i < 3 ? "eager" : "lazy"
+							}) : /* @__PURE__ */ jsx(Placeholder, {
+								caption: article.title,
+								parallax: .05,
+								className: "aspect-[4/3] transition duration-500 group-hover:scale-[1.015]",
+								size: "xs"
+							})
+						}),
+						/* @__PURE__ */ jsxs("div", {
+							className: "flex items-baseline justify-between px-0.5 pb-0 pt-3.5",
+							children: [/* @__PURE__ */ jsx("span", {
+								className: "text-[17px] font-semibold transition group-hover:text-[rgb(31,122,70)]",
+								children: article.title
+							}), article.publishedAt && /* @__PURE__ */ jsx("span", {
+								className: "font-mono text-[11px] uppercase text-[rgba(27,28,26,0.5)]",
+								children: article.publishedAt
+							})]
+						}),
+						article.excerpt && /* @__PURE__ */ jsx("p", {
+							className: "px-0.5 pt-2 text-[15px] leading-relaxed text-[rgba(27,28,26,0.65)] [text-wrap:pretty]",
+							children: article.excerpt
+						})
+					]
+				}, article.slug))
+			}),
+			articles.data.length === 0 && /* @__PURE__ */ jsx("p", {
+				className: "py-20 text-center text-[rgba(27,28,26,0.5)]",
+				"data-reveal": "0",
+				children: labels.empty
+			}),
+			articles.last_page > 1 && /* @__PURE__ */ jsxs("nav", {
+				className: "flex items-center justify-center gap-2 pb-14 pt-16 font-mono text-[13px]",
+				"data-reveal": "0",
+				"aria-label": "Pagination",
+				children: [
+					articles.prev_page_url ? /* @__PURE__ */ jsx(Link, {
+						href: articles.prev_page_url,
+						className: "pr-2 text-[rgba(27,28,26,0.6)] transition hover:text-[rgb(31,122,70)]",
+						"aria-label": "Previous page",
+						children: "←"
+					}) : /* @__PURE__ */ jsx("span", {
+						className: "pr-2 text-[rgba(27,28,26,0.2)]",
+						"aria-hidden": "true",
+						children: "←"
+					}),
+					pageLinks.map((link) => /* @__PURE__ */ jsx(Link, {
+						href: link.url,
+						"aria-current": link.active ? "page" : void 0,
+						className: `h-[38px] w-[38px] rounded-full border text-center leading-[38px] transition ${link.active ? "border-[rgb(27,28,26)] bg-[rgb(27,28,26)] text-[rgb(243,243,240)]" : "border-[rgba(27,28,26,0.2)] text-[rgba(27,28,26,0.6)] hover:border-[rgba(27,28,26,0.5)]"}`,
+						preserveScroll: false,
+						dangerouslySetInnerHTML: { __html: link.label }
+					}, link.label)),
+					articles.next_page_url ? /* @__PURE__ */ jsx(Link, {
+						href: articles.next_page_url,
+						className: "pl-2 text-[rgba(27,28,26,0.6)] transition hover:text-[rgb(31,122,70)]",
+						"aria-label": "Next page",
+						children: "→"
+					}) : /* @__PURE__ */ jsx("span", {
+						className: "pl-2 text-[rgba(27,28,26,0.2)]",
+						"aria-hidden": "true",
+						children: "→"
+					})
+				]
+			})
+		]
+	});
+}
+ArticlesIndex.layout = (page) => /* @__PURE__ */ jsx(SiteLayout, { children: page });
+//#endregion
+//#region resources/js/Pages/Articles/Show.jsx
+var Show_exports$1 = /* @__PURE__ */ __exportAll({ default: () => ArticleShow });
+function ArticleShow({ article, labels }) {
+	const containerRef = useRef(null);
+	useScrollReveal(containerRef);
+	const seoDescription = (article.excerpt || article.paragraphs?.[0] || "").replace(/\s+/g, " ").trim().slice(0, 160);
+	return /* @__PURE__ */ jsxs("main", {
+		className: "px-5 pb-10 pt-36 md:px-10 md:pt-[170px]",
+		ref: containerRef,
+		children: [
+			/* @__PURE__ */ jsx(Seo, {
+				title: article.title,
+				description: seoDescription || void 0,
+				image: article.coverImage || void 0,
+				type: "article",
+				preloadImage: Boolean(article.coverImage)
+			}),
+			/* @__PURE__ */ jsxs(Link, {
+				href: route("articles.index"),
+				className: "font-mono text-xs uppercase tracking-[0.08em] text-[rgba(27,28,26,0.55)] transition hover:text-[rgb(31,122,70)]",
+				"data-reveal": "0",
+				children: ["← ", labels.allArticles]
+			}),
+			/* @__PURE__ */ jsx("h1", {
+				className: "mb-6 mt-7 max-w-[14ch] text-[clamp(44px,7vw,112px)] font-semibold uppercase leading-[0.98] tracking-[-0.035em] md:mb-8",
+				"data-reveal": "80",
+				children: article.title
+			}),
+			article.publishedAt && /* @__PURE__ */ jsxs("div", {
+				className: "mono-label mb-8 border-b border-[rgba(27,28,26,0.12)] pb-6 md:mb-10",
+				"data-reveal": "120",
+				children: [
+					"( ",
+					labels.publishedOn,
+					" ",
+					article.publishedAt,
+					" )"
+				]
+			}),
+			article.coverImage && /* @__PURE__ */ jsxs("div", {
+				className: "relative mb-8 overflow-hidden rounded-sm md:mb-10",
+				"data-reveal": "0",
+				"data-reveal-variant": "clip",
+				children: [/* @__PURE__ */ jsx(OptimizedImage, {
+					src: article.coverImage,
+					srcSet: article.coverSrcSet,
+					sizes: "100vw",
+					alt: article.title,
+					className: "img-zoom-on-hover-sm h-[48vh] w-full object-cover md:h-[62vh]",
+					loading: "eager",
+					fetchPriority: "high"
+				}), /* @__PURE__ */ jsx("div", { className: "pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(27,28,26,0.12)] via-transparent to-transparent" })]
+			}),
+			!article.coverImage && /* @__PURE__ */ jsx(Placeholder, {
+				caption: article.title,
+				parallax: .08,
+				className: "mb-8 h-[40vh] md:mb-10 md:h-[52vh]",
+				"data-reveal": "0"
+			}),
+			/* @__PURE__ */ jsxs("div", {
+				className: "mx-auto max-w-[720px] pb-10 md:pb-16",
+				children: [article.excerpt && /* @__PURE__ */ jsx("p", {
+					className: "mb-8 text-[clamp(20px,2.5vw,28px)] leading-[1.4] tracking-[-0.02em] text-[rgba(27,28,26,0.8)] [text-wrap:balance] md:mb-10",
+					"data-reveal": "100",
+					children: /* @__PURE__ */ jsx("span", {
+						className: "serif-italic",
+						children: article.excerpt
+					})
+				}), /* @__PURE__ */ jsx("div", {
+					className: "text-[17px] leading-[1.7] text-[rgba(27,28,26,0.75)] [text-wrap:pretty] md:text-lg",
+					"data-reveal": "160",
+					children: article.paragraphs.map((paragraph, i) => /* @__PURE__ */ jsx("p", {
+						className: "mb-6 last:mb-0",
+						"data-reveal": 160 + i * 60,
+						children: paragraph
+					}, i))
+				})]
+			})
+		]
+	});
+}
+ArticleShow.layout = (page) => /* @__PURE__ */ jsx(SiteLayout, { children: page });
+//#endregion
+//#region resources/js/Components/ImageLightbox.jsx
+var SWIPE_THRESHOLD = 48;
+var MIN_SCALE = 1;
+var MAX_SCALE = 4;
+var DOUBLE_TAP_MS = 300;
+var DOUBLE_TAP_ZOOM = 2.5;
+function resolvePreviewSrc(image) {
+	return image?.fullUrl || image?.url || null;
+}
+function clamp(value, min, max) {
+	return Math.min(max, Math.max(min, value));
+}
+function touchDistance(touches) {
+	const [first, second] = touches;
+	const dx = first.clientX - second.clientX;
+	const dy = first.clientY - second.clientY;
+	return Math.hypot(dx, dy);
+}
+function clampPan(scale, x, y, width, height) {
+	if (scale <= 1) return {
+		x: 0,
+		y: 0
+	};
+	const maxX = (scale - 1) * width / 2;
+	const maxY = (scale - 1) * height / 2;
+	return {
+		x: clamp(x, -maxX, maxX),
+		y: clamp(y, -maxY, maxY)
+	};
+}
+function ImageLightbox({ images, index, onClose, onNavigate }) {
+	const labelId = useId();
+	const scrollLockY = useRef(0);
+	const viewportRef = useRef(null);
+	const lastTapRef = useRef(0);
+	const gestureRef = useRef({
+		mode: null,
+		pinchStartDistance: 0,
+		pinchStartScale: 1,
+		panStartX: 0,
+		panStartY: 0,
+		panOriginX: 0,
+		panOriginY: 0,
+		swipeStartX: null
+	});
+	const [isMounted, setIsMounted] = useState(false);
+	const [isImageReady, setIsImageReady] = useState(false);
+	const [zoom, setZoom] = useState({
+		scale: 1,
+		x: 0,
+		y: 0
+	});
+	const [isGesturing, setIsGesturing] = useState(false);
+	const { locale } = usePage().props;
+	const isOpen = index !== null;
+	const current = isOpen ? images[index] : null;
+	const previewSrc = resolvePreviewSrc(current);
+	const isZoomed = zoom.scale > 1.01;
+	const showPrevious = useCallback(() => {
+		onNavigate((index - 1 + images.length) % images.length);
+	}, [
+		index,
+		images.length,
+		onNavigate
+	]);
+	const showNext = useCallback(() => {
+		onNavigate((index + 1) % images.length);
+	}, [
+		index,
+		images.length,
+		onNavigate
+	]);
+	const resetZoom = useCallback(() => {
+		setZoom({
+			scale: 1,
+			x: 0,
+			y: 0
+		});
+		gestureRef.current.mode = null;
+		gestureRef.current.swipeStartX = null;
+	}, []);
+	const applyZoom = useCallback((getNext) => {
+		setZoom((prev) => {
+			const viewport = viewportRef.current;
+			const width = viewport?.clientWidth ?? 0;
+			const height = viewport?.clientHeight ?? 0;
+			const raw = typeof getNext === "function" ? getNext(prev) : getNext;
+			const scale = clamp(raw.scale, MIN_SCALE, MAX_SCALE);
+			if (scale <= 1) return {
+				scale: 1,
+				x: 0,
+				y: 0
+			};
+			const pan = clampPan(scale, raw.x ?? prev.x, raw.y ?? prev.y, width, height);
+			return {
+				scale,
+				x: pan.x,
+				y: pan.y
+			};
+		});
+	}, []);
+	const toggleDoubleTapZoom = useCallback(() => {
+		setZoom((prev) => {
+			if (prev.scale > 1.01) return {
+				scale: 1,
+				x: 0,
+				y: 0
+			};
+			return {
+				scale: DOUBLE_TAP_ZOOM,
+				x: 0,
+				y: 0
+			};
+		});
+	}, []);
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+	useEffect(() => {
+		if (!isOpen || !previewSrc) {
+			setIsImageReady(false);
+			return;
+		}
+		resetZoom();
+		setIsImageReady(false);
+		let cancelled = false;
+		const loader = new Image();
+		loader.decoding = "async";
+		loader.src = previewSrc;
+		if (loader.complete) setIsImageReady(true);
+		loader.onload = () => {
+			if (!cancelled) setIsImageReady(true);
+		};
+		loader.onerror = () => {
+			if (!cancelled) setIsImageReady(true);
+		};
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		isOpen,
+		previewSrc,
+		resetZoom
+	]);
+	useEffect(() => {
+		if (!isOpen) return;
+		[(index - 1 + images.length) % images.length, (index + 1) % images.length].forEach((neighborIndex) => {
+			const src = resolvePreviewSrc(images[neighborIndex]);
+			if (!src) return;
+			const img = new Image();
+			img.decoding = "async";
+			img.src = src;
+		});
+	}, [
+		images,
+		index,
+		isOpen
+	]);
+	useEffect(() => {
+		if (!isOpen) return;
+		scrollLockY.current = window.scrollY;
+		const { style: bodyStyle } = document.body;
+		const { style: htmlStyle } = document.documentElement;
+		const previous = {
+			bodyPosition: bodyStyle.position,
+			bodyTop: bodyStyle.top,
+			bodyWidth: bodyStyle.width,
+			bodyOverflow: bodyStyle.overflow,
+			htmlOverflow: htmlStyle.overflow
+		};
+		bodyStyle.position = "fixed";
+		bodyStyle.top = `-${scrollLockY.current}px`;
+		bodyStyle.width = "100%";
+		bodyStyle.overflow = "hidden";
+		htmlStyle.overflow = "hidden";
+		const onKeyDown = (event) => {
+			if (event.key === "Escape") {
+				if (isZoomed) {
+					resetZoom();
+					return;
+				}
+				onClose();
+			} else if (event.key === "ArrowLeft") {
+				if (isZoomed) resetZoom();
+				showPrevious();
+			} else if (event.key === "ArrowRight") {
+				if (isZoomed) resetZoom();
+				showNext();
+			}
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => {
+			window.removeEventListener("keydown", onKeyDown);
+			bodyStyle.position = previous.bodyPosition;
+			bodyStyle.top = previous.bodyTop;
+			bodyStyle.width = previous.bodyWidth;
+			bodyStyle.overflow = previous.bodyOverflow;
+			htmlStyle.overflow = previous.htmlOverflow;
+			window.scrollTo(0, scrollLockY.current);
+		};
+	}, [
+		isOpen,
+		isZoomed,
+		onClose,
+		resetZoom,
+		showNext,
+		showPrevious
+	]);
+	useEffect(() => {
+		const viewport = viewportRef.current;
+		if (!isOpen || !viewport) return;
+		const onWheel = (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			const delta = -event.deltaY * .0025;
+			applyZoom((prev) => ({
+				scale: prev.scale + delta,
+				x: prev.x,
+				y: prev.y
+			}));
+		};
+		viewport.addEventListener("wheel", onWheel, { passive: false });
+		return () => {
+			viewport.removeEventListener("wheel", onWheel);
+		};
+	}, [applyZoom, isOpen]);
+	const onTouchStart = (event) => {
+		const touches = event.touches;
+		if (touches.length === 2) {
+			setIsGesturing(true);
+			gestureRef.current.mode = "pinch";
+			gestureRef.current.pinchStartDistance = touchDistance(touches);
+			gestureRef.current.pinchStartScale = zoom.scale;
+			gestureRef.current.swipeStartX = null;
+			return;
+		}
+		if (touches.length !== 1) return;
+		const touch = touches[0];
+		if (isZoomed) {
+			setIsGesturing(true);
+			gestureRef.current.mode = "pan";
+			gestureRef.current.panStartX = touch.clientX;
+			gestureRef.current.panStartY = touch.clientY;
+			gestureRef.current.panOriginX = zoom.x;
+			gestureRef.current.panOriginY = zoom.y;
+			gestureRef.current.swipeStartX = null;
+			return;
+		}
+		gestureRef.current.mode = "swipe";
+		gestureRef.current.swipeStartX = touch.clientX;
+	};
+	const onTouchMove = (event) => {
+		const touches = event.touches;
+		const gesture = gestureRef.current;
+		if (gesture.mode === "pinch" && touches.length === 2) {
+			event.preventDefault();
+			const distance = touchDistance(touches);
+			if (gesture.pinchStartDistance <= 0) return;
+			const nextScale = gesture.pinchStartScale * (distance / gesture.pinchStartDistance);
+			applyZoom((prev) => ({
+				scale: nextScale,
+				x: prev.x,
+				y: prev.y
+			}));
+			return;
+		}
+		if (gesture.mode === "pan" && touches.length === 1) {
+			event.preventDefault();
+			const touch = touches[0];
+			const deltaX = touch.clientX - gesture.panStartX;
+			const deltaY = touch.clientY - gesture.panStartY;
+			applyZoom((prev) => ({
+				scale: prev.scale,
+				x: gesture.panOriginX + deltaX,
+				y: gesture.panOriginY + deltaY
+			}));
+		}
+	};
+	const onTouchEnd = (event) => {
+		const gesture = gestureRef.current;
+		if (gesture.mode === "pinch" || gesture.mode === "pan") {
+			if (event.touches.length === 0) {
+				gesture.mode = null;
+				setIsGesturing(false);
+				setZoom((prev) => prev.scale < 1.05 ? {
+					scale: 1,
+					x: 0,
+					y: 0
+				} : prev);
+			}
+			return;
+		}
+		if (gesture.mode !== "swipe" || gesture.swipeStartX === null) return;
+		const touch = event.changedTouches[0];
+		const now = Date.now();
+		const deltaX = touch.clientX - gesture.swipeStartX;
+		gesture.swipeStartX = null;
+		gesture.mode = null;
+		if (now - lastTapRef.current < DOUBLE_TAP_MS && Math.abs(deltaX) < 12) {
+			lastTapRef.current = 0;
+			toggleDoubleTapZoom();
+			return;
+		}
+		lastTapRef.current = now;
+		if (images.length < 2 || Math.abs(deltaX) < SWIPE_THRESHOLD) return;
+		if (deltaX < 0) showNext();
+		else showPrevious();
+	};
+	if (!isMounted || !isOpen || !current || !previewSrc) return null;
+	const hasMultiple = images.length > 1;
+	const controlClass = "flex items-center justify-center rounded-full border border-[rgba(243,243,240,0.22)] bg-[rgba(27,28,26,0.62)] text-[rgb(243,243,240)] backdrop-blur-sm transition active:scale-95 active:bg-[rgba(27,28,26,0.85)] touch-manipulation";
+	const stopClose = (event) => {
+		event.stopPropagation();
+	};
+	const handleNavClick = (event, action) => {
+		event.stopPropagation();
+		resetZoom();
+		action();
+	};
+	const zoomHint = locale === "id" ? "Cubit / ketuk 2x untuk zoom" : "Pinch / double-tap to zoom";
+	const swipeHint = locale === "id" ? "Geser untuk ganti foto" : "Swipe to change photo";
+	return createPortal(/* @__PURE__ */ jsxs("div", {
+		className: "fixed inset-0 z-[200] flex flex-col overscroll-none bg-[rgba(12,12,11,0.96)] backdrop-blur-md",
+		style: {
+			paddingTop: "env(safe-area-inset-top)",
+			paddingBottom: "env(safe-area-inset-bottom)"
+		},
+		role: "dialog",
+		"aria-modal": "true",
+		"aria-labelledby": labelId,
+		onClick: onClose,
+		children: [
+			/* @__PURE__ */ jsx("div", {
+				className: "flex h-11 shrink-0 items-center justify-end px-3 sm:h-16 sm:px-8",
+				children: /* @__PURE__ */ jsx("button", {
+					type: "button",
+					className: `${controlClass} h-10 w-10 text-2xl leading-none sm:h-11 sm:w-11`,
+					onClick: (event) => {
+						event.stopPropagation();
+						onClose();
+					},
+					"aria-label": "Close image",
+					children: "×"
+				})
+			}),
+			/* @__PURE__ */ jsxs("div", {
+				className: "relative mx-auto flex min-h-0 w-full max-w-[min(100vw,1400px)] flex-1 items-center justify-center px-1 sm:px-20",
+				children: [
+					hasMultiple ? /* @__PURE__ */ jsx("button", {
+						type: "button",
+						className: `${controlClass} absolute left-2 top-1/2 z-30 hidden h-12 w-12 -translate-y-1/2 text-xl sm:left-6 sm:flex`,
+						onClick: (event) => handleNavClick(event, showPrevious),
+						"aria-label": "Previous image",
+						children: "←"
+					}) : null,
+					/* @__PURE__ */ jsxs("div", {
+						ref: viewportRef,
+						className: "flex h-full w-full touch-none items-center justify-center overflow-hidden",
+						onClick: stopClose,
+						onDoubleClick: (event) => {
+							event.stopPropagation();
+							toggleDoubleTapZoom();
+						},
+						onTouchStart: (event) => {
+							event.stopPropagation();
+							onTouchStart(event);
+						},
+						onTouchMove: (event) => {
+							event.stopPropagation();
+							onTouchMove(event);
+						},
+						onTouchEnd: (event) => {
+							event.stopPropagation();
+							onTouchEnd(event);
+						},
+						children: [!isImageReady ? /* @__PURE__ */ jsx("div", {
+							className: "pointer-events-none absolute inset-0 flex items-center justify-center",
+							children: /* @__PURE__ */ jsx("div", { className: "pointer-events-auto h-9 w-9 animate-spin rounded-full border-2 border-[rgba(243,243,240,0.2)] border-t-[rgba(243,243,240,0.85)]" })
+						}) : null, /* @__PURE__ */ jsx("img", {
+							src: previewSrc,
+							alt: current.label,
+							draggable: false,
+							decoding: "async",
+							className: `max-h-[min(86dvh,92vh)] max-w-full select-none object-contain shadow-[0_24px_80px_rgba(0,0,0,0.45)] will-change-transform sm:max-h-[min(72vh,780px)] ${isImageReady ? "opacity-100" : "opacity-0"} ${isGesturing ? "" : "transition-transform duration-200 ease-out"}`,
+							style: { transform: `translate3d(${zoom.x}px, ${zoom.y}px, 0) scale(${zoom.scale})` }
+						})]
+					}),
+					hasMultiple ? /* @__PURE__ */ jsx("button", {
+						type: "button",
+						className: `${controlClass} absolute right-2 top-1/2 z-30 hidden h-12 w-12 -translate-y-1/2 text-xl sm:right-6 sm:flex`,
+						onClick: (event) => handleNavClick(event, showNext),
+						"aria-label": "Next image",
+						children: "→"
+					}) : null
+				]
+			}),
+			/* @__PURE__ */ jsxs("div", {
+				className: "shrink-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 text-center sm:px-4 sm:pb-5",
+				children: [
+					/* @__PURE__ */ jsxs("p", {
+						id: labelId,
+						className: "mx-auto mb-2 max-w-2xl px-1 font-mono text-[10px] uppercase leading-relaxed tracking-[0.08em] text-[rgba(243,243,240,0.7)] sm:mb-1 sm:text-[11px]",
+						children: [current.label, hasMultiple ? /* @__PURE__ */ jsx("span", {
+							className: "hidden sm:inline",
+							children: ` · ${index + 1} / ${images.length}`
+						}) : null]
+					}),
+					/* @__PURE__ */ jsx("p", {
+						className: "mb-3 font-mono text-[9px] uppercase tracking-[0.08em] text-[rgba(243,243,240,0.4)] sm:mb-2",
+						children: isZoomed ? locale === "id" ? "Geser untuk geser foto · Esc untuk reset zoom · ← → ganti foto" : "Drag to pan · Esc to reset zoom · ← → change photo" : `${zoomHint}${hasMultiple ? ` · ${swipeHint}` : ""}`
+					}),
+					isZoomed ? /* @__PURE__ */ jsx("button", {
+						type: "button",
+						className: `${controlClass} mx-auto mb-2 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.08em] sm:hidden`,
+						onClick: (event) => {
+							event.stopPropagation();
+							resetZoom();
+						},
+						children: locale === "id" ? "Reset zoom" : "Reset zoom"
+					}) : null,
+					hasMultiple && !isZoomed ? /* @__PURE__ */ jsxs("div", {
+						className: "flex items-center justify-between gap-3 sm:hidden",
+						children: [
+							/* @__PURE__ */ jsx("button", {
+								type: "button",
+								className: `${controlClass} h-12 w-12 shrink-0 text-lg`,
+								onClick: (event) => handleNavClick(event, showPrevious),
+								"aria-label": "Previous image",
+								children: "←"
+							}),
+							/* @__PURE__ */ jsx("div", {
+								className: "min-w-0 flex-1 text-center",
+								children: /* @__PURE__ */ jsxs("span", {
+									className: "font-mono text-[11px] uppercase tracking-[0.1em] text-[rgba(243,243,240,0.75)]",
+									children: [
+										index + 1,
+										" / ",
+										images.length
+									]
+								})
+							}),
+							/* @__PURE__ */ jsx("button", {
+								type: "button",
+								className: `${controlClass} h-12 w-12 shrink-0 text-lg`,
+								onClick: (event) => handleNavClick(event, showNext),
+								"aria-label": "Next image",
+								children: "→"
+							})
+						]
+					}) : null
+				]
+			})
+		]
+	}), document.body);
+}
+//#endregion
+//#region resources/js/Pages/Gallery/Index.jsx
+var Index_exports$1 = /* @__PURE__ */ __exportAll({ default: () => GalleryIndex });
+function GalleryIndex({ items, meta, labels }) {
+	const containerRef = useRef(null);
+	const [lightboxIndex, setLightboxIndex] = useState(null);
+	useScrollReveal(containerRef, [items.map((item) => item.id).join("|")]);
+	const lightboxImages = useMemo(() => items.map((item) => ({
+		url: item.url,
+		srcSet: item.srcSet,
+		fullUrl: item.fullUrl || item.url,
+		label: item.label
+	})), [items]);
+	return /* @__PURE__ */ jsxs("main", {
+		className: "px-5 pb-10 pt-36 md:px-10 md:pt-[170px]",
+		ref: containerRef,
+		children: [
+			/* @__PURE__ */ jsx(Seo, {
+				title: labels.pageTitle,
+				description: labels.pageDescription || (labels.heading && labels.headingAccent ? `${labels.heading} ${labels.headingAccent} — Elevasi Design & Build.` : void 0)
+			}),
+			/* @__PURE__ */ jsxs("div", {
+				className: "flex flex-wrap items-end justify-between gap-4 border-b border-[rgba(27,28,26,0.12)] pb-8",
+				"data-reveal": "0",
+				children: [/* @__PURE__ */ jsxs("h1", {
+					className: "m-0 max-w-[12ch] text-[clamp(56px,8vw,132px)] font-semibold uppercase leading-[0.95] tracking-[-0.035em]",
+					children: [
+						labels.heading,
+						" ",
+						/* @__PURE__ */ jsx("span", {
+							className: "serif-italic",
+							children: labels.headingAccent
+						})
+					]
+				}), /* @__PURE__ */ jsxs("span", {
+					className: "font-mono text-[13px] text-[rgba(27,28,26,0.5)]",
+					children: [
+						"( ",
+						String(meta.total).padStart(2, "0"),
+						" )"
+					]
+				})]
+			}),
+			/* @__PURE__ */ jsx("div", {
+				className: "grid grid-cols-1 gap-6 py-10 md:grid-cols-2 md:gap-[26px] md:py-12",
+				children: items.map((item, i) => /* @__PURE__ */ jsxs("div", {
+					className: "gallery-scroll-item group overflow-hidden rounded-[2px]",
+					"data-reveal": i % 2 * 90,
+					style: { gridColumn: i === 0 ? "1 / -1" : "auto" },
+					children: [item.url ? /* @__PURE__ */ jsx("button", {
+						type: "button",
+						className: "block w-full cursor-zoom-in touch-manipulation text-left active:opacity-90",
+						onClick: () => setLightboxIndex(i),
+						"aria-label": `View ${item.label}`,
+						children: /* @__PURE__ */ jsx(OptimizedImage, {
+							src: item.url,
+							srcSet: item.srcSet,
+							sizes: i === 0 ? "100vw" : "(min-width: 768px) 50vw, 100vw",
+							alt: item.label,
+							className: "img-zoom-on-hover aspect-[var(--ratio)] h-full w-full object-cover",
+							style: { "--ratio": i === 0 ? "16 / 8" : "4 / 3" },
+							loading: i < 2 ? "eager" : "lazy"
+						})
+					}) : /* @__PURE__ */ jsx(Placeholder, {
+						caption: item.label,
+						parallax: .06,
+						className: "aspect-[var(--ratio)] transition duration-500 group-hover:scale-[1.015]",
+						style: { "--ratio": i === 0 ? "16 / 8" : "4 / 3" }
+					}), item.label && /* @__PURE__ */ jsx("div", {
+						className: "px-0.5 pt-3 font-mono text-[11px] uppercase tracking-[0.06em] text-[rgba(27,28,26,0.5)]",
+						children: item.label
+					})]
+				}, item.id))
+			}),
+			items.length === 0 && /* @__PURE__ */ jsx("p", {
+				className: "py-20 text-center text-[rgba(27,28,26,0.5)]",
+				"data-reveal": "0",
+				children: labels.empty
+			}),
+			/* @__PURE__ */ jsx(ImageLightbox, {
+				images: lightboxImages,
+				index: lightboxIndex,
+				onClose: () => setLightboxIndex(null),
+				onNavigate: setLightboxIndex
+			})
+		]
+	});
+}
+GalleryIndex.layout = (page) => /* @__PURE__ */ jsx(SiteLayout, { children: page });
+//#endregion
 //#region resources/js/hooks/useParallax.js
 function shouldSkipParallax() {
 	if (typeof window === "undefined") return true;
@@ -1585,15 +2364,13 @@ function FeaturedWork({ featured, home }) {
 								srcSet: project.coverSrcSet,
 								sizes: "(min-width: 768px) 50vw, 100vw",
 								alt: project.caption || project.title,
-								className: "aspect-[var(--ratio)] img-zoom-on-hover h-full w-full object-cover",
-								style: { "--ratio": i % 3 === 0 ? "4 / 4.6" : "4 / 3" },
+								className: "aspect-[4/3] img-zoom-on-hover h-full w-full object-cover",
 								loading: "lazy"
 							})
 						}) : /* @__PURE__ */ jsx(Placeholder, {
 							caption: project.caption,
 							parallax: .07,
-							className: "aspect-[var(--ratio)] transition duration-500 group-hover:scale-[1.015]",
-							style: { "--ratio": i % 3 === 0 ? "4 / 4.6" : "4 / 3" }
+							className: "aspect-[4/3] transition duration-500 group-hover:scale-[1.015]"
 						}),
 						/* @__PURE__ */ jsxs("div", {
 							className: "flex items-baseline justify-between px-0.5 pb-0 pt-4",
@@ -2307,457 +3084,6 @@ function ProjectsIndex({ projects, filters, activeCategory, meta, labels }) {
 }
 ProjectsIndex.layout = (page) => /* @__PURE__ */ jsx(SiteLayout, { children: page });
 //#endregion
-//#region resources/js/Components/ImageLightbox.jsx
-var SWIPE_THRESHOLD = 48;
-var MIN_SCALE = 1;
-var MAX_SCALE = 4;
-var DOUBLE_TAP_MS = 300;
-var DOUBLE_TAP_ZOOM = 2.5;
-function resolvePreviewSrc(image) {
-	return image?.fullUrl || image?.url || null;
-}
-function clamp(value, min, max) {
-	return Math.min(max, Math.max(min, value));
-}
-function touchDistance(touches) {
-	const [first, second] = touches;
-	const dx = first.clientX - second.clientX;
-	const dy = first.clientY - second.clientY;
-	return Math.hypot(dx, dy);
-}
-function clampPan(scale, x, y, width, height) {
-	if (scale <= 1) return {
-		x: 0,
-		y: 0
-	};
-	const maxX = (scale - 1) * width / 2;
-	const maxY = (scale - 1) * height / 2;
-	return {
-		x: clamp(x, -maxX, maxX),
-		y: clamp(y, -maxY, maxY)
-	};
-}
-function ImageLightbox({ images, index, onClose, onNavigate }) {
-	const labelId = useId();
-	const scrollLockY = useRef(0);
-	const viewportRef = useRef(null);
-	const lastTapRef = useRef(0);
-	const gestureRef = useRef({
-		mode: null,
-		pinchStartDistance: 0,
-		pinchStartScale: 1,
-		panStartX: 0,
-		panStartY: 0,
-		panOriginX: 0,
-		panOriginY: 0,
-		swipeStartX: null
-	});
-	const [isMounted, setIsMounted] = useState(false);
-	const [isImageReady, setIsImageReady] = useState(false);
-	const [zoom, setZoom] = useState({
-		scale: 1,
-		x: 0,
-		y: 0
-	});
-	const [isGesturing, setIsGesturing] = useState(false);
-	const { locale } = usePage().props;
-	const isOpen = index !== null;
-	const current = isOpen ? images[index] : null;
-	const previewSrc = resolvePreviewSrc(current);
-	const isZoomed = zoom.scale > 1.01;
-	const showPrevious = useCallback(() => {
-		onNavigate((index - 1 + images.length) % images.length);
-	}, [
-		index,
-		images.length,
-		onNavigate
-	]);
-	const showNext = useCallback(() => {
-		onNavigate((index + 1) % images.length);
-	}, [
-		index,
-		images.length,
-		onNavigate
-	]);
-	const resetZoom = useCallback(() => {
-		setZoom({
-			scale: 1,
-			x: 0,
-			y: 0
-		});
-		gestureRef.current.mode = null;
-		gestureRef.current.swipeStartX = null;
-	}, []);
-	const applyZoom = useCallback((getNext) => {
-		setZoom((prev) => {
-			const viewport = viewportRef.current;
-			const width = viewport?.clientWidth ?? 0;
-			const height = viewport?.clientHeight ?? 0;
-			const raw = typeof getNext === "function" ? getNext(prev) : getNext;
-			const scale = clamp(raw.scale, MIN_SCALE, MAX_SCALE);
-			if (scale <= 1) return {
-				scale: 1,
-				x: 0,
-				y: 0
-			};
-			const pan = clampPan(scale, raw.x ?? prev.x, raw.y ?? prev.y, width, height);
-			return {
-				scale,
-				x: pan.x,
-				y: pan.y
-			};
-		});
-	}, []);
-	const toggleDoubleTapZoom = useCallback(() => {
-		setZoom((prev) => {
-			if (prev.scale > 1.01) return {
-				scale: 1,
-				x: 0,
-				y: 0
-			};
-			return {
-				scale: DOUBLE_TAP_ZOOM,
-				x: 0,
-				y: 0
-			};
-		});
-	}, []);
-	useEffect(() => {
-		setIsMounted(true);
-	}, []);
-	useEffect(() => {
-		if (!isOpen || !previewSrc) {
-			setIsImageReady(false);
-			return;
-		}
-		resetZoom();
-		setIsImageReady(false);
-		let cancelled = false;
-		const loader = new Image();
-		loader.decoding = "async";
-		loader.src = previewSrc;
-		if (loader.complete) setIsImageReady(true);
-		loader.onload = () => {
-			if (!cancelled) setIsImageReady(true);
-		};
-		loader.onerror = () => {
-			if (!cancelled) setIsImageReady(true);
-		};
-		return () => {
-			cancelled = true;
-		};
-	}, [
-		isOpen,
-		previewSrc,
-		resetZoom
-	]);
-	useEffect(() => {
-		if (!isOpen) return;
-		[(index - 1 + images.length) % images.length, (index + 1) % images.length].forEach((neighborIndex) => {
-			const src = resolvePreviewSrc(images[neighborIndex]);
-			if (!src) return;
-			const img = new Image();
-			img.decoding = "async";
-			img.src = src;
-		});
-	}, [
-		images,
-		index,
-		isOpen
-	]);
-	useEffect(() => {
-		if (!isOpen) return;
-		scrollLockY.current = window.scrollY;
-		const { style: bodyStyle } = document.body;
-		const { style: htmlStyle } = document.documentElement;
-		const previous = {
-			bodyPosition: bodyStyle.position,
-			bodyTop: bodyStyle.top,
-			bodyWidth: bodyStyle.width,
-			bodyOverflow: bodyStyle.overflow,
-			htmlOverflow: htmlStyle.overflow
-		};
-		bodyStyle.position = "fixed";
-		bodyStyle.top = `-${scrollLockY.current}px`;
-		bodyStyle.width = "100%";
-		bodyStyle.overflow = "hidden";
-		htmlStyle.overflow = "hidden";
-		const onKeyDown = (event) => {
-			if (event.key === "Escape") {
-				if (isZoomed) {
-					resetZoom();
-					return;
-				}
-				onClose();
-			} else if (!isZoomed && event.key === "ArrowLeft") showPrevious();
-			else if (!isZoomed && event.key === "ArrowRight") showNext();
-		};
-		window.addEventListener("keydown", onKeyDown);
-		return () => {
-			window.removeEventListener("keydown", onKeyDown);
-			bodyStyle.position = previous.bodyPosition;
-			bodyStyle.top = previous.bodyTop;
-			bodyStyle.width = previous.bodyWidth;
-			bodyStyle.overflow = previous.bodyOverflow;
-			htmlStyle.overflow = previous.htmlOverflow;
-			window.scrollTo(0, scrollLockY.current);
-		};
-	}, [
-		isOpen,
-		isZoomed,
-		onClose,
-		resetZoom,
-		showNext,
-		showPrevious
-	]);
-	useEffect(() => {
-		const viewport = viewportRef.current;
-		if (!isOpen || !viewport) return;
-		const onWheel = (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			const delta = -event.deltaY * .0025;
-			applyZoom((prev) => ({
-				scale: prev.scale + delta,
-				x: prev.x,
-				y: prev.y
-			}));
-		};
-		viewport.addEventListener("wheel", onWheel, { passive: false });
-		return () => {
-			viewport.removeEventListener("wheel", onWheel);
-		};
-	}, [applyZoom, isOpen]);
-	const onTouchStart = (event) => {
-		const touches = event.touches;
-		if (touches.length === 2) {
-			setIsGesturing(true);
-			gestureRef.current.mode = "pinch";
-			gestureRef.current.pinchStartDistance = touchDistance(touches);
-			gestureRef.current.pinchStartScale = zoom.scale;
-			gestureRef.current.swipeStartX = null;
-			return;
-		}
-		if (touches.length !== 1) return;
-		const touch = touches[0];
-		if (isZoomed) {
-			setIsGesturing(true);
-			gestureRef.current.mode = "pan";
-			gestureRef.current.panStartX = touch.clientX;
-			gestureRef.current.panStartY = touch.clientY;
-			gestureRef.current.panOriginX = zoom.x;
-			gestureRef.current.panOriginY = zoom.y;
-			gestureRef.current.swipeStartX = null;
-			return;
-		}
-		gestureRef.current.mode = "swipe";
-		gestureRef.current.swipeStartX = touch.clientX;
-	};
-	const onTouchMove = (event) => {
-		const touches = event.touches;
-		const gesture = gestureRef.current;
-		if (gesture.mode === "pinch" && touches.length === 2) {
-			event.preventDefault();
-			const distance = touchDistance(touches);
-			if (gesture.pinchStartDistance <= 0) return;
-			const nextScale = gesture.pinchStartScale * (distance / gesture.pinchStartDistance);
-			applyZoom((prev) => ({
-				scale: nextScale,
-				x: prev.x,
-				y: prev.y
-			}));
-			return;
-		}
-		if (gesture.mode === "pan" && touches.length === 1) {
-			event.preventDefault();
-			const touch = touches[0];
-			const deltaX = touch.clientX - gesture.panStartX;
-			const deltaY = touch.clientY - gesture.panStartY;
-			applyZoom((prev) => ({
-				scale: prev.scale,
-				x: gesture.panOriginX + deltaX,
-				y: gesture.panOriginY + deltaY
-			}));
-		}
-	};
-	const onTouchEnd = (event) => {
-		const gesture = gestureRef.current;
-		if (gesture.mode === "pinch" || gesture.mode === "pan") {
-			if (event.touches.length === 0) {
-				gesture.mode = null;
-				setIsGesturing(false);
-				setZoom((prev) => prev.scale < 1.05 ? {
-					scale: 1,
-					x: 0,
-					y: 0
-				} : prev);
-			}
-			return;
-		}
-		if (gesture.mode !== "swipe" || gesture.swipeStartX === null) return;
-		const touch = event.changedTouches[0];
-		const now = Date.now();
-		const deltaX = touch.clientX - gesture.swipeStartX;
-		gesture.swipeStartX = null;
-		gesture.mode = null;
-		if (now - lastTapRef.current < DOUBLE_TAP_MS && Math.abs(deltaX) < 12) {
-			lastTapRef.current = 0;
-			toggleDoubleTapZoom();
-			return;
-		}
-		lastTapRef.current = now;
-		if (images.length < 2 || Math.abs(deltaX) < SWIPE_THRESHOLD) return;
-		if (deltaX < 0) showNext();
-		else showPrevious();
-	};
-	if (!isMounted || !isOpen || !current || !previewSrc) return null;
-	const hasMultiple = images.length > 1;
-	const controlClass = "flex items-center justify-center rounded-full border border-[rgba(243,243,240,0.22)] bg-[rgba(27,28,26,0.62)] text-[rgb(243,243,240)] backdrop-blur-sm transition active:scale-95 active:bg-[rgba(27,28,26,0.85)] touch-manipulation";
-	const stopClose = (event) => {
-		event.stopPropagation();
-	};
-	const handleNavClick = (event, action) => {
-		event.stopPropagation();
-		resetZoom();
-		action();
-	};
-	const zoomHint = locale === "id" ? "Cubit / ketuk 2x untuk zoom" : "Pinch / double-tap to zoom";
-	const swipeHint = locale === "id" ? "Geser untuk ganti foto" : "Swipe to change photo";
-	return createPortal(/* @__PURE__ */ jsxs("div", {
-		className: "fixed inset-0 z-[200] flex flex-col overscroll-none bg-[rgba(12,12,11,0.96)] backdrop-blur-md",
-		style: {
-			paddingTop: "env(safe-area-inset-top)",
-			paddingBottom: "env(safe-area-inset-bottom)"
-		},
-		role: "dialog",
-		"aria-modal": "true",
-		"aria-labelledby": labelId,
-		onClick: onClose,
-		children: [
-			/* @__PURE__ */ jsx("div", {
-				className: "flex h-11 shrink-0 items-center justify-end px-3 sm:h-16 sm:px-8",
-				children: /* @__PURE__ */ jsx("button", {
-					type: "button",
-					className: `${controlClass} h-10 w-10 text-2xl leading-none sm:h-11 sm:w-11`,
-					onClick: (event) => {
-						event.stopPropagation();
-						onClose();
-					},
-					"aria-label": "Close image",
-					children: "×"
-				})
-			}),
-			/* @__PURE__ */ jsxs("div", {
-				className: "relative mx-auto flex min-h-0 w-full max-w-[min(100vw,1400px)] flex-1 items-center justify-center px-1 sm:px-20",
-				children: [
-					hasMultiple && !isZoomed ? /* @__PURE__ */ jsx("button", {
-						type: "button",
-						className: `${controlClass} absolute left-2 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 text-xl sm:left-6 sm:flex`,
-						onClick: (event) => handleNavClick(event, showPrevious),
-						"aria-label": "Previous image",
-						children: "←"
-					}) : null,
-					/* @__PURE__ */ jsxs("div", {
-						ref: viewportRef,
-						className: "flex h-full w-full touch-none items-center justify-center overflow-hidden",
-						onClick: stopClose,
-						onDoubleClick: (event) => {
-							event.stopPropagation();
-							toggleDoubleTapZoom();
-						},
-						onTouchStart: (event) => {
-							event.stopPropagation();
-							onTouchStart(event);
-						},
-						onTouchMove: (event) => {
-							event.stopPropagation();
-							onTouchMove(event);
-						},
-						onTouchEnd: (event) => {
-							event.stopPropagation();
-							onTouchEnd(event);
-						},
-						children: [!isImageReady ? /* @__PURE__ */ jsx("div", {
-							className: "pointer-events-none absolute inset-0 flex items-center justify-center",
-							children: /* @__PURE__ */ jsx("div", { className: "pointer-events-auto h-9 w-9 animate-spin rounded-full border-2 border-[rgba(243,243,240,0.2)] border-t-[rgba(243,243,240,0.85)]" })
-						}) : null, /* @__PURE__ */ jsx("img", {
-							src: previewSrc,
-							alt: current.label,
-							draggable: false,
-							decoding: "async",
-							className: `max-h-[min(86dvh,92vh)] max-w-full select-none object-contain shadow-[0_24px_80px_rgba(0,0,0,0.45)] will-change-transform sm:max-h-[min(72vh,780px)] ${isImageReady ? "opacity-100" : "opacity-0"} ${isGesturing ? "" : "transition-transform duration-200 ease-out"}`,
-							style: { transform: `translate3d(${zoom.x}px, ${zoom.y}px, 0) scale(${zoom.scale})` }
-						})]
-					}),
-					hasMultiple && !isZoomed ? /* @__PURE__ */ jsx("button", {
-						type: "button",
-						className: `${controlClass} absolute right-2 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 text-xl sm:right-6 sm:flex`,
-						onClick: (event) => handleNavClick(event, showNext),
-						"aria-label": "Next image",
-						children: "→"
-					}) : null
-				]
-			}),
-			/* @__PURE__ */ jsxs("div", {
-				className: "shrink-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 text-center sm:px-4 sm:pb-5",
-				children: [
-					/* @__PURE__ */ jsxs("p", {
-						id: labelId,
-						className: "mx-auto mb-2 max-w-2xl px-1 font-mono text-[10px] uppercase leading-relaxed tracking-[0.08em] text-[rgba(243,243,240,0.7)] sm:mb-1 sm:text-[11px]",
-						children: [current.label, hasMultiple ? /* @__PURE__ */ jsx("span", {
-							className: "hidden sm:inline",
-							children: ` · ${index + 1} / ${images.length}`
-						}) : null]
-					}),
-					/* @__PURE__ */ jsx("p", {
-						className: "mb-3 font-mono text-[9px] uppercase tracking-[0.08em] text-[rgba(243,243,240,0.4)] sm:mb-2",
-						children: isZoomed ? locale === "id" ? "Geser untuk geser foto · Esc untuk reset zoom" : "Drag to pan · Esc to reset zoom" : `${zoomHint}${hasMultiple ? ` · ${swipeHint}` : ""}`
-					}),
-					isZoomed ? /* @__PURE__ */ jsx("button", {
-						type: "button",
-						className: `${controlClass} mx-auto mb-2 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.08em] sm:hidden`,
-						onClick: (event) => {
-							event.stopPropagation();
-							resetZoom();
-						},
-						children: locale === "id" ? "Reset zoom" : "Reset zoom"
-					}) : null,
-					hasMultiple && !isZoomed ? /* @__PURE__ */ jsxs("div", {
-						className: "flex items-center justify-between gap-3 sm:hidden",
-						children: [
-							/* @__PURE__ */ jsx("button", {
-								type: "button",
-								className: `${controlClass} h-12 w-12 shrink-0 text-lg`,
-								onClick: (event) => handleNavClick(event, showPrevious),
-								"aria-label": "Previous image",
-								children: "←"
-							}),
-							/* @__PURE__ */ jsx("div", {
-								className: "min-w-0 flex-1 text-center",
-								children: /* @__PURE__ */ jsxs("span", {
-									className: "font-mono text-[11px] uppercase tracking-[0.1em] text-[rgba(243,243,240,0.75)]",
-									children: [
-										index + 1,
-										" / ",
-										images.length
-									]
-								})
-							}),
-							/* @__PURE__ */ jsx("button", {
-								type: "button",
-								className: `${controlClass} h-12 w-12 shrink-0 text-lg`,
-								onClick: (event) => handleNavClick(event, showNext),
-								"aria-label": "Next image",
-								children: "→"
-							})
-						]
-					}) : null
-				]
-			})
-		]
-	}), document.body);
-}
-//#endregion
 //#region resources/js/Pages/Projects/Show.jsx
 var Show_exports = /* @__PURE__ */ __exportAll({ default: () => ProjectShow });
 function ProjectShow({ project, gallery, next, labels }) {
@@ -2786,6 +3112,10 @@ function ProjectShow({ project, gallery, next, labels }) {
 		project.client ? {
 			label: labels.client,
 			value: project.client
+		} : null,
+		project.designBy ? {
+			label: labels.designBy,
+			value: project.designBy
 		} : null,
 		{
 			label: labels.location,
@@ -3162,6 +3492,9 @@ createServer((page) => createInertiaApp({
 	render: ReactDOMServer.renderToString,
 	resolve: (name) => {
 		return (/* @__PURE__ */ Object.assign({
+			"./Pages/Articles/Index.jsx": Index_exports$2,
+			"./Pages/Articles/Show.jsx": Show_exports$1,
+			"./Pages/Gallery/Index.jsx": Index_exports$1,
 			"./Pages/Home.jsx": Home_exports,
 			"./Pages/Kontak.jsx": Kontak_exports,
 			"./Pages/Layanan.jsx": Layanan_exports,

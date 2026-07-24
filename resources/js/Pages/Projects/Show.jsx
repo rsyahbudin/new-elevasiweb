@@ -35,6 +35,7 @@ export default function ProjectShow({ project, gallery, next, labels }) {
     const metaItems = [
         { label: labels.category, value: project.category },
         project.client ? { label: labels.client, value: project.client } : null,
+        project.designBy ? { label: labels.designBy, value: project.designBy } : null,
         { label: labels.location, value: project.location },
         { label: labels.yearCompleted, value: project.year },
         { label: labels.scope, value: project.scope },

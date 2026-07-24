@@ -51,6 +51,18 @@
     "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
   ],
+  "resources/js/Pages/Articles/Index.jsx": [
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
+    "/build/assets/elevasi-logo-CfvkopY_.gif"
+  ],
+  "resources/js/Pages/Articles/Show.jsx": [
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
+    "/build/assets/elevasi-logo-CfvkopY_.gif"
+  ],
+  "resources/js/Pages/Gallery/Index.jsx": [
+    "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
+    "/build/assets/elevasi-logo-CfvkopY_.gif"
+  ],
   "resources/js/Pages/Home.jsx": [
     "/build/assets/Logo-Elevasi-White-BKeJgjJT.png",
     "/build/assets/elevasi-logo-CfvkopY_.gif"
