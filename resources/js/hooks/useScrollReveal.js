@@ -45,20 +45,20 @@ export function useScrollReveal(containerRef, deps = []) {
                     const from = { opacity: 0 };
                     const to = {
                         opacity: 1,
-                        duration: 1.05,
+                        duration: 0.85,
                         delay,
-                        ease: 'power3.out',
+                        ease: 'power2.out',
                     };
 
                     if (variant === 'scale') {
-                        from.scale = 0.94;
+                        from.scale = 0.96;
                         to.scale = 1;
                     } else if (variant === 'clip') {
                         from.clipPath = 'inset(100% 0 0 0)';
                         to.clipPath = 'inset(0% 0 0 0)';
-                        to.duration = 1.2;
+                        to.duration = 1;
                     } else {
-                        from.y = 32;
+                        from.y = 20;
                         to.y = 0;
                     }
 
@@ -66,7 +66,7 @@ export function useScrollReveal(containerRef, deps = []) {
                         ...to,
                         scrollTrigger: {
                             trigger: el,
-                            start: 'top 88%',
+                            start: 'top 92%',
                             once: true,
                         },
                     });

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Articles\Concerns;
 
+use App\Support\ArticleBodyRenderer;
+
 trait PacksTranslatableFields
 {
     /** @var array<int, string> */
@@ -10,13 +12,20 @@ trait PacksTranslatableFields
     protected function packTranslatableFields(array $data): array
     {
         foreach (static::$translatableFields as $field) {
-            $id = trim((string) ($data["{$field}_id"] ?? ''));
-            $en = trim((string) ($data["{$field}_en"] ?? ''));
+            $id = $this->packFieldValue($data["{$field}_id"] ?? null, $field);
+            $en = $this->packFieldValue($data["{$field}_en"] ?? null, $field);
 
-            if ($en === '' && isset($this->record)) {
-                $existingEn = trim((string) ($this->record->getTranslation($field, 'en', false) ?? ''));
-                if ($existingEn !== '') {
-                    $en = $existingEn;
+            if ($field === 'body' ? ArticleBodyRenderer::isEmpty($en) : $en === '') {
+                if (isset($this->record)) {
+                    $existingEn = $this->record->getTranslation($field, 'en', false);
+
+                    if ($field === 'body') {
+                        if (! ArticleBodyRenderer::isEmpty($existingEn)) {
+                            $en = $existingEn;
+                        }
+                    } elseif (trim((string) $existingEn) !== '') {
+                        $en = trim((string) $existingEn);
+                    }
                 }
             }
 
@@ -34,11 +43,27 @@ trait PacksTranslatableFields
     {
         foreach (static::$translatableFields as $field) {
             $translations = $this->record->getTranslations($field);
-            $data["{$field}_id"] = $translations['id'] ?? '';
-            $data["{$field}_en"] = $translations['en'] ?? '';
+
+            if ($field === 'body') {
+                $data['body_id'] = ArticleBodyRenderer::forEditor($translations['id'] ?? null);
+                $data['body_en'] = ArticleBodyRenderer::forEditor($translations['en'] ?? null);
+            } else {
+                $data["{$field}_id"] = $translations['id'] ?? '';
+                $data["{$field}_en"] = $translations['en'] ?? '';
+            }
+
             unset($data[$field]);
         }
 
         return $data;
+    }
+
+    protected function packFieldValue(mixed $value, string $field): mixed
+    {
+        if ($field === 'body') {
+            return is_array($value) ? $value : trim((string) ($value ?? ''));
+        }
+
+        return trim((string) ($value ?? ''));
     }
 }

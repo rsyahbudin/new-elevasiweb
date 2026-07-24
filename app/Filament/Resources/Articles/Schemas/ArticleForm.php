@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Articles\Schemas;
 use App\Enums\ProjectStatus;
 use App\Support\CmsImageSpec;
 use App\Support\CmsValidation;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
@@ -22,6 +23,13 @@ class ArticleForm
     public static function configure(Schema $schema): Schema
     {
         $coverSpec = CmsImageSpec::preset('article_cover');
+        $bodyToolbar = [
+            ['bold', 'italic', 'underline'],
+            ['h2', 'h3'],
+            ['bulletList', 'orderedList'],
+            ['blockquote', 'link'],
+            ['undo', 'redo'],
+        ];
 
         return $schema
             ->components([
@@ -78,12 +86,13 @@ class ArticleForm
                                             ->required()
                                             ->validationMessages(CmsValidation::required('Ringkasan'))
                                             ->helperText('Tampil di daftar artikel & meta SEO.'),
-                                        Textarea::make('body_id')
+                                        RichEditor::make('body_id')
                                             ->label('Isi artikel')
-                                            ->rows(14)
                                             ->required()
                                             ->validationMessages(CmsValidation::required('Isi artikel'))
-                                            ->helperText('Pisahkan paragraf dengan baris kosong.'),
+                                            ->toolbarButtons($bodyToolbar)
+                                            ->helperText('Bold, italic, heading, bullet/numbered list, blockquote, dan link. Tampilan situs disesuaikan otomatis.')
+                                            ->columnSpanFull(),
                                     ]),
                                 Tab::make('English')
                                     ->icon(Heroicon::OutlinedGlobeAlt)
@@ -94,10 +103,11 @@ class ArticleForm
                                         Textarea::make('excerpt_en')
                                             ->label('Excerpt')
                                             ->rows(3),
-                                        Textarea::make('body_en')
+                                        RichEditor::make('body_en')
                                             ->label('Body')
-                                            ->rows(14)
-                                            ->helperText('Optional. Leave blank to use Indonesian content on /en.'),
+                                            ->toolbarButtons($bodyToolbar)
+                                            ->helperText('Optional. Leave blank to use Indonesian content on /en.')
+                                            ->columnSpanFull(),
                                     ]),
                             ])
                             ->persistTabInQueryString('article_lang')

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Filament\Pages\ManageSiteSettings;
 use App\Models\Article;
 use App\Models\SiteSetting;
+use App\Support\ArticleBodyRenderer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -57,14 +58,13 @@ class ArticleController extends Controller
 
         $labels = SiteSetting::translatedMerged('articles', ManageSiteSettings::articlesDefaults());
         $cover = $article->coverImageSources('medium');
-        $paragraphs = array_values(array_filter(preg_split('/\n\s*\n/', (string) $article->body) ?: []));
 
         return Inertia::render('Articles/Show', [
             'article' => [
                 'slug' => $article->slug,
                 'title' => $article->title,
                 'excerpt' => $article->excerpt,
-                'paragraphs' => $paragraphs,
+                'bodyHtml' => ArticleBodyRenderer::toHtml($article->body),
                 'publishedAt' => $article->published_at?->translatedFormat('d M Y'),
                 'coverImage' => $cover['src'] ?? null,
                 'coverSrcSet' => $cover['srcSet'] ?? null,

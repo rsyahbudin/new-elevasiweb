@@ -88,11 +88,66 @@
         contain: paint;
         contain-intrinsic-size: auto 320px;
     }
+
+    .article-body {
+        @apply text-[17px] leading-[1.75] text-[rgba(27,28,26,0.75)] [text-wrap:pretty] md:text-lg;
+    }
+
+    .article-body > :first-child {
+        @apply mt-0;
+    }
+
+    .article-body p {
+        @apply mb-6 last:mb-0;
+    }
+
+    .article-body h2 {
+        @apply mb-4 mt-10 text-[clamp(24px,3vw,32px)] font-semibold uppercase tracking-[-0.02em] text-ink first:mt-0;
+    }
+
+    .article-body h3 {
+        @apply mb-3 mt-8 text-[clamp(20px,2.4vw,24px)] font-semibold tracking-[-0.01em] text-ink first:mt-0;
+    }
+
+    .article-body ul {
+        @apply mb-6 list-disc space-y-2 pl-5;
+    }
+
+    .article-body ol {
+        @apply mb-6 list-decimal space-y-2 pl-5;
+    }
+
+    .article-body li {
+        @apply pl-1;
+    }
+
+    .article-body blockquote {
+        @apply my-8 border-l-2 border-[rgb(31,122,70)] py-1 pl-5 text-[rgba(27,28,26,0.68)];
+    }
+
+    .article-body blockquote p {
+        @apply mb-0 text-[1.08em];
+        font-family: 'Instrument Serif', serif;
+        font-style: italic;
+    }
+
+    .article-body a {
+        @apply text-ink underline decoration-[rgba(31,122,70,0.35)] underline-offset-[3px] transition hover:text-accent hover:decoration-accent;
+    }
+
+    .article-body strong {
+        @apply font-semibold text-ink;
+    }
+
+    .article-body em {
+        font-family: 'Instrument Serif', serif;
+        font-style: italic;
+    }
 }
 
 .js [data-reveal] {
     opacity: 0;
-    transform: translateY(32px);
+    transform: translateY(20px);
 }
 
 .js [data-reveal][data-reveal-variant='scale'] {

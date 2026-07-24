@@ -1383,26 +1383,26 @@ function useScrollReveal(containerRef, deps = []) {
 					const from = { opacity: 0 };
 					const to = {
 						opacity: 1,
-						duration: 1.05,
+						duration: .85,
 						delay,
-						ease: "power3.out"
+						ease: "power2.out"
 					};
 					if (variant === "scale") {
-						from.scale = .94;
+						from.scale = .96;
 						to.scale = 1;
 					} else if (variant === "clip") {
 						from.clipPath = "inset(100% 0 0 0)";
 						to.clipPath = "inset(0% 0 0 0)";
-						to.duration = 1.2;
+						to.duration = 1;
 					} else {
-						from.y = 32;
+						from.y = 20;
 						to.y = 0;
 					}
 					gsap.fromTo(el, from, {
 						...to,
 						scrollTrigger: {
 							trigger: el,
-							start: "top 88%",
+							start: "top 92%",
 							once: true
 						}
 					});
@@ -1542,7 +1542,7 @@ var Show_exports$1 = /* @__PURE__ */ __exportAll({ default: () => ArticleShow })
 function ArticleShow({ article, labels }) {
 	const containerRef = useRef(null);
 	useScrollReveal(containerRef);
-	const seoDescription = (article.excerpt || article.paragraphs?.[0] || "").replace(/\s+/g, " ").trim().slice(0, 160);
+	const seoDescription = (article.excerpt || "").replace(/\s+/g, " ").trim().slice(0, 160);
 	return /* @__PURE__ */ jsxs("main", {
 		className: "px-5 pb-10 pt-36 md:px-10 md:pt-[170px]",
 		ref: containerRef,
@@ -1600,20 +1600,16 @@ function ArticleShow({ article, labels }) {
 				className: "mx-auto max-w-[720px] pb-10 md:pb-16",
 				children: [article.excerpt && /* @__PURE__ */ jsx("p", {
 					className: "mb-8 text-[clamp(20px,2.5vw,28px)] leading-[1.4] tracking-[-0.02em] text-[rgba(27,28,26,0.8)] [text-wrap:balance] md:mb-10",
-					"data-reveal": "100",
+					"data-reveal": "80",
 					children: /* @__PURE__ */ jsx("span", {
 						className: "serif-italic",
 						children: article.excerpt
 					})
-				}), /* @__PURE__ */ jsx("div", {
-					className: "text-[17px] leading-[1.7] text-[rgba(27,28,26,0.75)] [text-wrap:pretty] md:text-lg",
-					"data-reveal": "160",
-					children: article.paragraphs.map((paragraph, i) => /* @__PURE__ */ jsx("p", {
-						className: "mb-6 last:mb-0",
-						"data-reveal": 160 + i * 60,
-						children: paragraph
-					}, i))
-				})]
+				}), article.bodyHtml ? /* @__PURE__ */ jsx("div", {
+					className: "article-body",
+					"data-reveal": "120",
+					dangerouslySetInnerHTML: { __html: article.bodyHtml }
+				}) : null]
 			})
 		]
 	});

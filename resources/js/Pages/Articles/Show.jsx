@@ -11,7 +11,7 @@ export default function ArticleShow({ article, labels }) {
 
     useScrollReveal(containerRef);
 
-    const seoDescription = (article.excerpt || article.paragraphs?.[0] || '')
+    const seoDescription = (article.excerpt || '')
         .replace(/\s+/g, ' ')
         .trim()
         .slice(0, 160);
@@ -72,19 +72,19 @@ export default function ArticleShow({ article, labels }) {
                 {article.excerpt && (
                     <p
                         className="mb-8 text-[clamp(20px,2.5vw,28px)] leading-[1.4] tracking-[-0.02em] text-[rgba(27,28,26,0.8)] [text-wrap:balance] md:mb-10"
-                        data-reveal="100"
+                        data-reveal="80"
                     >
                         <span className="serif-italic">{article.excerpt}</span>
                     </p>
                 )}
 
-                <div className="text-[17px] leading-[1.7] text-[rgba(27,28,26,0.75)] [text-wrap:pretty] md:text-lg" data-reveal="160">
-                    {article.paragraphs.map((paragraph, i) => (
-                        <p key={i} className="mb-6 last:mb-0" data-reveal={160 + i * 60}>
-                            {paragraph}
-                        </p>
-                    ))}
-                </div>
+                {article.bodyHtml ? (
+                    <div
+                        className="article-body"
+                        data-reveal="120"
+                        dangerouslySetInnerHTML={{ __html: article.bodyHtml }}
+                    />
+                ) : null}
             </div>
         </main>
     );
