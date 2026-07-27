@@ -959,7 +959,7 @@ function SiteLayout({ children }) {
 							children: /* @__PURE__ */ jsx(OptimizedImage, {
 								src: elevasi_logo_default,
 								alt: "Elevasi Design & Build",
-								className: "h-12 w-auto sm:h-[52px] md:h-14",
+								className: "h-12 w-auto sm:h-[52px] md:h-16 lg:h-[4.75rem]",
 								loading: "eager",
 								fetchPriority: "low"
 							})

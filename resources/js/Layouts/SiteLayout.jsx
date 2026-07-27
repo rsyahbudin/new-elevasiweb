@@ -70,7 +70,7 @@ export default function SiteLayout({ children }) {
                         <OptimizedImage
                             src={logo}
                             alt="Elevasi Design & Build"
-                            className="h-12 w-auto sm:h-[52px] md:h-14"
+                            className="h-12 w-auto sm:h-[52px] md:h-16 lg:h-[4.75rem]"
                             loading="eager"
                             fetchPriority="low"
                         />

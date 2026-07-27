@@ -41,7 +41,9 @@ class ProjectController extends Controller
             });
 
         $filters = Category::query()
+            ->whereHas('projects', fn ($query) => $query->published())
             ->withCount(['projects' => fn ($query) => $query->published()])
+            ->orderBy('slug')
             ->get()
             ->map(fn (Category $category) => [
                 'slug' => $category->slug,
