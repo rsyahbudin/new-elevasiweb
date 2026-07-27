@@ -3,6 +3,7 @@ import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { createLocaleAwareRoute } from './route';
+import { bindScrollResetOnNavigation } from './lib/scrollToTop';
 
 document.documentElement.classList.add('js');
 
@@ -17,6 +18,8 @@ createInertiaApp({
             () => router.page?.props?.locale ?? initialLocale,
             () => window.Ziggy,
         );
+
+        bindScrollResetOnNavigation();
 
         createRoot(el).render(<App {...props} />);
     },

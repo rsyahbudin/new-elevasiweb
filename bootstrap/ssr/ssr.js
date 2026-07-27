@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Head, Link, createInertiaApp, router, useForm, usePage } from "@inertiajs/react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { createPortal } from "react-dom";
@@ -808,43 +808,52 @@ function WhatsAppButton({ children, className = "", source, showArrow = true, di
 	});
 }
 //#endregion
+//#region resources/js/lib/scrollToTop.js
+var skipNextRouteScrollReset = false;
+var isInitialRoute = true;
+if (typeof window !== "undefined") window.addEventListener("popstate", () => {
+	skipNextRouteScrollReset = true;
+}, true);
+function scrollToTop() {
+	if (typeof window === "undefined") return;
+	window.scrollTo(0, 0);
+	document.documentElement.scrollTop = 0;
+	document.body.scrollTop = 0;
+}
+async function clearGsapScrollMemory() {
+	try {
+		const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+		ScrollTrigger.clearScrollMemory();
+		ScrollTrigger.refresh();
+	} catch {}
+}
+function performScrollReset() {
+	scrollToTop();
+	requestAnimationFrame(() => {
+		scrollToTop();
+		clearGsapScrollMemory().then(scrollToTop);
+	});
+	window.setTimeout(scrollToTop, 0);
+	window.setTimeout(scrollToTop, 100);
+	window.setTimeout(scrollToTop, 300);
+}
+function resetScrollOnRouteChange() {
+	if (isInitialRoute) {
+		isInitialRoute = false;
+		return;
+	}
+	if (skipNextRouteScrollReset) {
+		skipNextRouteScrollReset = false;
+		return;
+	}
+	performScrollReset();
+}
+//#endregion
 //#region resources/js/hooks/usePageTransition.js
-var exitHandlerBound = false;
-function shouldAnimateVisit(visit) {
-	if (!visit) return false;
-	if (visit.prefetch) return false;
-	if (Array.isArray(visit.only) && visit.only.length > 0) return false;
-	return true;
-}
-function bindExitTransition() {
-	if (exitHandlerBound || typeof window === "undefined") return;
-	exitHandlerBound = true;
-	router.on("before", (event) => {
-		if (prefersReducedMotion$1() || !shouldAnimateVisit(event.detail.visit)) return;
-		const page = document.getElementById("page-content");
-		if (!page) return;
-		event.pause();
-		loadGsap().then((gsap) => {
-			gsap.to(page, {
-				autoAlpha: 0,
-				y: -20,
-				duration: .42,
-				ease: "power2.in",
-				onComplete: () => event.resume()
-			});
-		});
-	});
-	router.on("finish", () => {
-		refreshScrollTriggers();
-	});
-}
 function usePageTransition() {
 	const pageRef = useRef(null);
 	const { url } = usePage();
 	const isFirstRender = useRef(true);
-	useEffect(() => {
-		bindExitTransition();
-	}, []);
 	useEffect(() => {
 		if (prefersReducedMotion$1()) return;
 		const page = pageRef.current;
@@ -862,6 +871,7 @@ function usePageTransition() {
 				refreshScrollTriggers();
 				return;
 			}
+			scrollToTop();
 			ctx = gsap.context(() => {
 				gsap.fromTo(page, {
 					autoAlpha: 0,
@@ -871,7 +881,10 @@ function usePageTransition() {
 					y: 0,
 					duration: .95,
 					ease: "power3.out",
-					onComplete: () => refreshScrollTriggers()
+					onComplete: () => {
+						scrollToTop();
+						refreshScrollTriggers();
+					}
 				});
 			}, page);
 		})();
@@ -915,7 +928,8 @@ function NavCta({ cms, className, onClick }) {
 	});
 }
 function SiteLayout({ children }) {
-	const { props } = usePage();
+	const page = usePage();
+	const { props } = page;
 	const { locale, altLocaleUrl, settings, cms, url } = props;
 	const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 	const pageRef = usePageTransition();
@@ -928,9 +942,12 @@ function SiteLayout({ children }) {
 	const homeUrl = locale === "id" ? "/id" : "/";
 	const goHome = () => {
 		closeMobileNav();
-		router.visit(homeUrl);
+		router.visit(homeUrl, { preserveScroll: false });
 	};
 	const navLinkClass = (active) => `text-xs font-medium uppercase tracking-[0.08em] transition ${active ? "text-[rgb(31,122,70)]" : "text-[rgb(27,28,26)] hover:text-[rgb(31,122,70)]"}`;
+	useLayoutEffect(() => {
+		resetScrollOnRouteChange();
+	}, [page.url]);
 	useEffect(() => {
 		setIsMobileNavOpen(false);
 	}, [url]);
@@ -969,21 +986,25 @@ function SiteLayout({ children }) {
 							children: [
 								/* @__PURE__ */ jsx(Link, {
 									href: route("projects.index"),
+									preserveScroll: false,
 									className: navLinkClass(isProjectsArea),
 									children: cms.nav.work
 								}),
 								cms.nav.showGallery && /* @__PURE__ */ jsx(Link, {
 									href: route("gallery.index"),
+									preserveScroll: false,
 									className: navLinkClass(isGalleryArea),
 									children: cms.nav.gallery
 								}),
 								cms.nav.showArticles && /* @__PURE__ */ jsx(Link, {
 									href: route("articles.index"),
+									preserveScroll: false,
 									className: navLinkClass(isArticlesArea),
 									children: cms.nav.articles
 								}),
 								/* @__PURE__ */ jsx(Link, {
 									href: route("tentang"),
+									preserveScroll: false,
 									className: navLinkClass(isStudioArea),
 									children: cms.nav.studio
 								})
@@ -1038,6 +1059,7 @@ function SiteLayout({ children }) {
 					children: [
 						/* @__PURE__ */ jsx(Link, {
 							href: route("projects.index"),
+							preserveScroll: false,
 							className: `border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${isProjectsArea ? "text-[rgb(31,122,70)]" : "text-[rgb(27,28,26)]"}`,
 							onClick: closeMobileNav,
 							children: cms.nav.work

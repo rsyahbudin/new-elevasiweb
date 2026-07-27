@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import GoogleAnalytics from '../Components/GoogleAnalytics';
 import SplashScreen from '../Components/SplashScreen';
@@ -6,6 +6,7 @@ import WhatsAppButton from '../Components/WhatsAppButton';
 import { usePageTransition } from '../hooks/usePageTransition';
 import { WhatsAppInquiryProvider } from '../contexts/WhatsAppInquiryContext';
 import OptimizedImage from '../Components/OptimizedImage';
+import { resetScrollOnRouteChange } from '../lib/scrollToTop';
 import logo from '../../images/elevasi-logo.gif';
 
 function NavCta({ cms, className, onClick }) {
@@ -22,7 +23,8 @@ function NavCta({ cms, className, onClick }) {
 }
 
 export default function SiteLayout({ children }) {
-    const { props } = usePage();
+    const page = usePage();
+    const { props } = page;
     const { locale, altLocaleUrl, settings, cms, url } = props;
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const pageRef = usePageTransition();
@@ -36,13 +38,17 @@ export default function SiteLayout({ children }) {
     const homeUrl = locale === 'id' ? '/id' : '/';
     const goHome = () => {
         closeMobileNav();
-        router.visit(homeUrl);
+        router.visit(homeUrl, { preserveScroll: false });
     };
 
     const navLinkClass = (active) =>
         `text-xs font-medium uppercase tracking-[0.08em] transition ${
             active ? 'text-[rgb(31,122,70)]' : 'text-[rgb(27,28,26)] hover:text-[rgb(31,122,70)]'
         }`;
+
+    useLayoutEffect(() => {
+        resetScrollOnRouteChange();
+    }, [page.url]);
 
     useEffect(() => {
         setIsMobileNavOpen(false);
@@ -77,20 +83,20 @@ export default function SiteLayout({ children }) {
                     </button>
 
                     <nav className="hidden flex-1 items-center justify-center gap-5 lg:gap-7 md:flex">
-                        <Link href={route('projects.index')} className={navLinkClass(isProjectsArea)}>
+                        <Link href={route('projects.index')} preserveScroll={false} className={navLinkClass(isProjectsArea)}>
                             {cms.nav.work}
                         </Link>
                         {cms.nav.showGallery && (
-                            <Link href={route('gallery.index')} className={navLinkClass(isGalleryArea)}>
+                            <Link href={route('gallery.index')} preserveScroll={false} className={navLinkClass(isGalleryArea)}>
                                 {cms.nav.gallery}
                             </Link>
                         )}
                         {cms.nav.showArticles && (
-                            <Link href={route('articles.index')} className={navLinkClass(isArticlesArea)}>
+                            <Link href={route('articles.index')} preserveScroll={false} className={navLinkClass(isArticlesArea)}>
                                 {cms.nav.articles}
                             </Link>
                         )}
-                        <Link href={route('tentang')} className={navLinkClass(isStudioArea)}>
+                        <Link href={route('tentang')} preserveScroll={false} className={navLinkClass(isStudioArea)}>
                             {cms.nav.studio}
                         </Link>
                     </nav>
@@ -141,6 +147,7 @@ export default function SiteLayout({ children }) {
                 <nav className="flex flex-1 flex-col justify-center gap-2">
                     <Link
                         href={route('projects.index')}
+                        preserveScroll={false}
                         className={`border-b border-[rgba(27,28,26,0.08)] py-5 text-[clamp(32px,9vw,48px)] font-semibold uppercase leading-none tracking-[-0.03em] ${
                             isProjectsArea ? 'text-[rgb(31,122,70)]' : 'text-[rgb(27,28,26)]'
                         }`}
