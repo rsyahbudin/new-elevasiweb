@@ -6,6 +6,8 @@ use App\Filament\Pages\ManageSiteSettings;
 use App\Models\Article;
 use App\Models\GalleryItem;
 use App\Models\SiteSetting;
+use App\Support\ContactSettings;
+use App\Support\ReferralOptions;
 use App\Support\StoredImageSources;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
@@ -33,7 +35,11 @@ class HandleInertiaRequests extends Middleware
         $navigation = SiteSetting::translatedMerged('navigation', ManageSiteSettings::navigationDefaults(), $locale);
         $footerRaw = SiteSetting::get('footer', ManageSiteSettings::footerDefaults());
         $footer = SiteSetting::translatedMerged('footer', ManageSiteSettings::footerDefaults(), $locale);
-        $whatsappNumber = preg_replace('/\D/', '', $contact['whatsapp_number'] ?? '');
+        $contactPersons = ContactSettings::contactPersons($locale);
+        $defaultPerson = $contactPersons[0] ?? null;
+        $whatsappNumber = $defaultPerson['whatsapp_number']
+            ?? preg_replace('/\D/', '', $contact['whatsapp_number'] ?? '');
+        $companyProfile = ContactSettings::companyProfile($locale);
         $footerCtaImagePath = is_array($footerRaw) ? ($footerRaw['cta_image'] ?? null) : null;
         $footerCtaSources = StoredImageSources::resolve(
             is_string($footerCtaImagePath) ? $footerCtaImagePath : null,
@@ -131,14 +137,34 @@ class HandleInertiaRequests extends Middleware
                 'inquiry' => [
                     'title' => $contact['inquiry_dialog_title'] ?? '',
                     'description' => $contact['inquiry_dialog_description'] ?? '',
+                    'personLabel' => $contact['inquiry_dialog_person_label'] ?? '',
                     'nameLabel' => $contact['inquiry_dialog_name_label'] ?? '',
                     'contactLabel' => $contact['inquiry_dialog_contact_label'] ?? '',
                     'contactPlaceholder' => $contact['inquiry_dialog_contact_placeholder'] ?? '',
                     'messageLabel' => $contact['inquiry_dialog_message_label'] ?? '',
                     'messagePlaceholder' => $contact['inquiry_dialog_message_placeholder'] ?? '',
+                    'referralLabel' => filled($contact['inquiry_dialog_referral_label'] ?? null)
+                        ? $contact['inquiry_dialog_referral_label']
+                        : __('inquiry.fallback.referral_label', [], $locale),
+                    'referralPlaceholder' => filled($contact['inquiry_dialog_referral_placeholder'] ?? null)
+                        ? $contact['inquiry_dialog_referral_placeholder']
+                        : __('inquiry.fallback.referral_placeholder', [], $locale),
+                    'referralDetailLabel' => filled($contact['inquiry_dialog_referral_detail_label'] ?? null)
+                        ? $contact['inquiry_dialog_referral_detail_label']
+                        : __('inquiry.fallback.referral_detail_label', [], $locale),
+                    'referralDetailPlaceholder' => $contact['inquiry_dialog_referral_detail_placeholder'] ?? '',
+                    'referralOptions' => ReferralOptions::all($locale),
                     'submit' => $contact['inquiry_dialog_submit_label'] ?? '',
                     'submitting' => $contact['inquiry_dialog_submitting_label'] ?? '',
                     'cancel' => $contact['inquiry_dialog_cancel_label'] ?? '',
+                    'contactPersons' => collect($contactPersons)
+                        ->map(fn (array $person) => [
+                            'index' => $person['index'],
+                            'name' => $person['name'],
+                            'role' => $person['role'],
+                        ])
+                        ->values()
+                        ->all(),
                 ],
                 'splash' => [
                     'location' => $hero['location'] ?? 'Jakarta, Indonesia',
@@ -153,6 +179,18 @@ class HandleInertiaRequests extends Middleware
                 'address' => $contact['address'] ?? null,
                 'instagramUrl' => $contact['instagram_url'] ?? null,
                 'gaMeasurementId' => $gaMeasurementId !== '' ? $gaMeasurementId : null,
+                'companyProfileUrl' => $companyProfile['url'],
+                'companyProfileLabel' => $companyProfile['label'],
+                'companyProfileFilename' => $companyProfile['filename'],
+                'contactPersons' => collect($contactPersons)
+                    ->map(fn (array $person) => [
+                        'index' => $person['index'],
+                        'name' => $person['name'],
+                        'role' => $person['role'],
+                        'whatsappDisplay' => '+'.$person['whatsapp_number'],
+                    ])
+                    ->values()
+                    ->all(),
             ],
         ];
     }

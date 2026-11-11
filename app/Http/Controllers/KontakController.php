@@ -8,6 +8,8 @@ use App\Filament\Pages\ManageSiteSettings;
 use App\Http\Requests\StoreInquiryRequest;
 use App\Models\Project;
 use App\Models\SiteSetting;
+use App\Support\ContactSettings;
+use App\Support\ReferralOptions;
 use App\Support\StoredImageSources;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -43,6 +45,9 @@ class KontakController extends Controller
                 ];
             });
 
+        $companyProfile = ContactSettings::companyProfile();
+        $contactPersons = ContactSettings::contactPersons();
+
         return Inertia::render('Kontak', [
             'content' => [
                 'pageTitle' => $contact['page_title'] ?? null,
@@ -56,6 +61,18 @@ class KontakController extends Controller
                 'processSteps' => $contact['process_steps'] ?? [],
                 'pageImage' => $pageImageSources['src'] ?? null,
                 'pageImageSrcSet' => $pageImageSources['srcSet'] ?? null,
+                'companyProfileUrl' => $companyProfile['url'],
+                'companyProfileLabel' => $companyProfile['label'],
+                'companyProfileFilename' => $companyProfile['filename'],
+                'contactPersons' => collect($contactPersons)
+                    ->map(fn (array $person) => [
+                        'index' => $person['index'],
+                        'name' => $person['name'],
+                        'role' => $person['role'],
+                        'whatsappDisplay' => '+'.$person['whatsapp_number'],
+                    ])
+                    ->values()
+                    ->all(),
                 'labels' => [
                     'responseTime' => $contact['section_response_time_label'] ?? null,
                     'serviceArea' => $contact['section_service_area_label'] ?? null,
@@ -65,6 +82,8 @@ class KontakController extends Controller
                     'followInstagram' => $contact['section_follow_instagram_label'] ?? null,
                     'address' => $contact['section_address_label'] ?? null,
                     'instagram' => $contact['section_instagram_label'] ?? null,
+                    'team' => $contact['section_team_label'] ?? null,
+                    'download' => $contact['section_download_label'] ?? null,
                 ],
             ],
             'recentProjects' => $recentProjects,
@@ -80,25 +99,32 @@ class KontakController extends Controller
             return back();
         }
 
-        $contact = SiteSetting::translatedMerged('contact', ManageSiteSettings::contactDefaults());
-        $whatsappNumber = preg_replace('/\D/', '', $contact['whatsapp_number'] ?? '');
+        $personIndex = $request->validated('contact_person');
+        $person = ContactSettings::resolvePerson(
+            is_numeric($personIndex) ? (int) $personIndex : null,
+        );
 
-        if ($whatsappNumber === '') {
+        if ($person === null) {
             return back()->withErrors([
                 'contact' => __('WhatsApp number is not configured.'),
             ]);
         }
 
+        $referralKey = $request->validated('referral_source');
+        $referralOption = is_string($referralKey) ? ReferralOptions::find($referralKey) : null;
+
         $inquiry = $submitInquiry->handle([
             'name' => $request->validated('name'),
             'contact' => $request->validated('contact'),
             'message' => $request->validated('message'),
+            'referral_source' => $referralOption['label'] ?? null,
+            'referral_detail' => $request->validated('referral_detail'),
             'source_page' => $request->validated('source_page') ?? url()->previous(),
             'ip_address' => $request->ip(),
         ]);
 
-        $message = $buildWhatsAppInquiryMessage->handle($inquiry);
-        $whatsappUrl = 'https://wa.me/'.$whatsappNumber.'?text='.rawurlencode($message);
+        $message = $buildWhatsAppInquiryMessage->handle($inquiry, app()->getLocale());
+        $whatsappUrl = 'https://wa.me/'.$person['whatsapp_number'].'?text='.rawurlencode($message);
 
         return Inertia::location($whatsappUrl);
     }

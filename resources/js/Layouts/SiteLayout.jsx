@@ -243,13 +243,22 @@ export default function SiteLayout({ children }) {
                                 <br />
                                 <span className="serif-italic">{cms.footer.titleLine2}</span>
                             </div>
-                            <div className="mt-10 flex justify-center md:mt-12">
-                                <WhatsAppButton
-                                    className="w-full max-w-sm rounded-full bg-[rgb(31,122,70)] px-8 py-4 text-sm font-semibold uppercase tracking-[0.06em] transition hover:bg-[rgb(243,243,240)] hover:text-[rgb(27,28,26)] sm:w-auto sm:max-w-none"
-                                    source="/footer"
-                                >
-                                    {cms.footer.whatsapp}
-                                </WhatsAppButton>
+                            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap md:mt-12">
+                                {(settings.contactPersons?.length > 0
+                                    ? settings.contactPersons
+                                    : [{ index: 0, name: cms.footer.whatsapp, role: '' }]
+                                ).map((person, i) => (
+                                    <WhatsAppButton
+                                        key={`footer-cp-${person.index}`}
+                                        className="w-full max-w-sm rounded-full bg-[rgb(31,122,70)] px-8 py-4 text-sm font-semibold uppercase tracking-[0.06em] transition hover:bg-[rgb(243,243,240)] hover:text-[rgb(27,28,26)] sm:w-auto sm:max-w-none"
+                                        source={`/footer-cp-${person.index}`}
+                                        contactPerson={person.index}
+                                    >
+                                        {settings.contactPersons?.length > 1
+                                            ? `WHATSAPP ${i + 1}`
+                                            : cms.footer.whatsapp}
+                                    </WhatsAppButton>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -263,13 +272,22 @@ export default function SiteLayout({ children }) {
                         {settings.instagramUrl && (
                             <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-[rgba(243,243,240,0.6)] transition hover:text-[rgb(243,243,240)]">{cms.footer.instagramLabel}</a>
                         )}
-                        <WhatsAppButton
-                            className="text-[rgba(243,243,240,0.6)] transition hover:text-[rgb(243,243,240)]"
-                            source="/footer-link"
-                            showArrow={false}
-                        >
-                            {cms.footer.whatsappLabel}
-                        </WhatsAppButton>
+                        {(settings.contactPersons?.length > 0
+                            ? settings.contactPersons
+                            : [{ index: 0, name: cms.footer.whatsappLabel }]
+                        ).map((person, i) => (
+                            <WhatsAppButton
+                                key={`footer-link-cp-${person.index}`}
+                                className="text-[rgba(243,243,240,0.6)] transition hover:text-[rgb(243,243,240)]"
+                                source={`/footer-link-cp-${person.index}`}
+                                contactPerson={person.index}
+                                showArrow={false}
+                            >
+                                {settings.contactPersons?.length > 1
+                                    ? `WHATSAPP ${i + 1}`
+                                    : cms.footer.whatsappLabel}
+                            </WhatsAppButton>
+                        ))}
                     </span>
                     <span>{cms.footer.copyright}</span>
                 </div>

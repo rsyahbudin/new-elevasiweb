@@ -7,6 +7,7 @@ use App\Models\SiteSetting;
 use App\Support\CmsImageSpec;
 use App\Support\CmsValidation;
 use BackedEnum;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -206,13 +207,13 @@ class ManageSiteSettings extends Page implements HasForms
                         Tab::make('Contact')
                             ->schema([
                                 Section::make('Kontak bisnis')
-                                    ->description('Data penting — nomor WhatsApp, alamat, Instagram.')
+                                    ->description('Data penting — alamat, Instagram, email.')
                                     ->columns(2)
                                     ->schema([
                                         TextInput::make('contact.whatsapp_number')
-                                            ->label('Nomor WhatsApp')
-                                            ->helperText('Format internasional tanpa +, contoh: 6281234567890')
-                                            ->rules(['required', 'regex:/^[0-9]{10,15}$/'])
+                                            ->label('Nomor WhatsApp cadangan')
+                                            ->helperText('Dipakai hanya jika daftar Contact Person di bawah kosong. Format internasional tanpa +, contoh: 6281234567890')
+                                            ->rules(['nullable', 'regex:/^[0-9]{10,15}$/'])
                                             ->validationMessages(CmsValidation::whatsappNumber()),
                                         TextInput::make('contact.instagram_url')->label('URL Instagram')->url()->validationMessages(CmsValidation::url()),
                                         TextInput::make('contact.email')->label('Email')->email()->validationMessages(CmsValidation::email()),
@@ -222,6 +223,55 @@ class ManageSiteSettings extends Page implements HasForms
                                         Textarea::make('contact.service_area.en')->label('Area layanan (EN)')->rows(2),
                                         Textarea::make('contact.response_time.id')->label('Catatan waktu respons (ID)')->rows(2),
                                         Textarea::make('contact.response_time.en')->label('Catatan waktu respons (EN)')->rows(2),
+                                    ]),
+                                Section::make('Contact Person (maks. 2)')
+                                    ->description('Tim yang menerima chat WhatsApp dari website. Pengunjung bisa memilih siapa yang dihubungi jika ada 2 orang.')
+                                    ->schema([
+                                        Repeater::make('contact.contact_persons')
+                                            ->label('Daftar Contact Person')
+                                            ->schema([
+                                                TextInput::make('name.id')->label('Nama (ID)')->required(),
+                                                TextInput::make('name.en')->label('Nama (EN)')->required(),
+                                                TextInput::make('role.id')->label('Jabatan (ID)'),
+                                                TextInput::make('role.en')->label('Jabatan (EN)'),
+                                                TextInput::make('whatsapp_number')
+                                                    ->label('Nomor WhatsApp')
+                                                    ->helperText('Format internasional tanpa +, contoh: 6281234567890')
+                                                    ->rules(['required', 'regex:/^[0-9]{10,15}$/'])
+                                                    ->validationMessages(CmsValidation::whatsappNumber())
+                                                    ->columnSpanFull(),
+                                            ])
+                                            ->columns(2)
+                                            ->defaultItems(2)
+                                            ->minItems(1)
+                                            ->maxItems(2)
+                                            ->reorderable()
+                                            ->addActionLabel('Tambah Contact Person')
+                                            ->columnSpanFull(),
+                                        TextInput::make('contact.inquiry_dialog_person_label.id')->label('Label pilihan CP di dialog (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_person_label.en')->label('Label pilihan CP di dialog (EN)'),
+                                    ]),
+                                Section::make('Company Profile PDF')
+                                    ->description('Upload PDF company profile. Tombol unduh muncul di halaman Kontak setelah file diunggah.')
+                                    ->columns(2)
+                                    ->schema([
+                                        FileUpload::make('contact.company_profile_file')
+                                            ->label('File PDF')
+                                            ->disk('public')
+                                            ->directory('site-settings/downloads')
+                                            ->visibility('public')
+                                            ->acceptedFileTypes(['application/pdf'])
+                                            ->maxSize(20480)
+                                            ->downloadable()
+                                            ->openable()
+                                            ->helperText('Maksimal 20 MB. Format PDF saja.')
+                                            ->columnSpanFull(),
+                                        TextInput::make('contact.company_profile_label.id')->label('Teks tombol unduh (ID)'),
+                                        TextInput::make('contact.company_profile_label.en')->label('Teks tombol unduh (EN)'),
+                                        TextInput::make('contact.section_team_label.id')->label('Label bagian tim (ID)'),
+                                        TextInput::make('contact.section_team_label.en')->label('Label bagian tim (EN)'),
+                                        TextInput::make('contact.section_download_label.id')->label('Label bagian unduh (ID)'),
+                                        TextInput::make('contact.section_download_label.en')->label('Label bagian unduh (EN)'),
                                     ]),
                                 Section::make('Halaman kontak')
                                     ->columns(2)
@@ -276,6 +326,38 @@ class ManageSiteSettings extends Page implements HasForms
                                         TextInput::make('contact.inquiry_dialog_submitting_label.en')->label('Teks loading (EN)'),
                                         TextInput::make('contact.inquiry_dialog_cancel_label.id')->label('Tombol batal (ID)'),
                                         TextInput::make('contact.inquiry_dialog_cancel_label.en')->label('Tombol batal (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_referral_label.id')->label('Label “tahu dari mana” (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_referral_label.en')->label('Label “tahu dari mana” (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_referral_placeholder.id')->label('Placeholder pilihan (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_referral_placeholder.en')->label('Placeholder pilihan (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_referral_detail_label.id')->label('Label detail tambahan (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_referral_detail_label.en')->label('Label detail tambahan (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_referral_detail_placeholder.id')->label('Placeholder detail (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_referral_detail_placeholder.en')->label('Placeholder detail (EN)'),
+                                        Repeater::make('contact.referral_options')
+                                            ->label('Pilihan “tahu kami dari mana”')
+                                            ->helperText('Centang “Minta detail” untuk opsi seperti Teman / Lainnya agar muncul field tambahan.')
+                                            ->schema([
+                                                TextInput::make('key')
+                                                    ->label('Kode unik')
+                                                    ->helperText('Contoh: instagram, google, friend, other — tanpa spasi')
+                                                    ->required()
+                                                    ->rules(['regex:/^[a-z0-9_-]+$/']),
+                                                Checkbox::make('requires_detail')
+                                                    ->label('Minta detail tambahan')
+                                                    ->helperText('Misal: nama teman, atau penjelasan “lainnya”'),
+                                                TextInput::make('label.id')->label('Teks pilihan (ID)')->required(),
+                                                TextInput::make('label.en')->label('Teks pilihan (EN)')->required(),
+                                                TextInput::make('detail_label.id')->label('Label detail khusus (ID)')->helperText('Opsional — kosong = pakai label default'),
+                                                TextInput::make('detail_label.en')->label('Label detail khusus (EN)'),
+                                                TextInput::make('detail_placeholder.id')->label('Placeholder detail khusus (ID)'),
+                                                TextInput::make('detail_placeholder.en')->label('Placeholder detail khusus (EN)'),
+                                            ])
+                                            ->columns(2)
+                                            ->default(self::referralOptionDefaults())
+                                            ->reorderable()
+                                            ->addActionLabel('Tambah pilihan')
+                                            ->columnSpanFull(),
                                         Textarea::make('contact.whatsapp_message.id')
                                             ->label('Pesan WA lama (ID)')
                                             ->helperText('Cadangan lama — tidak dipakai setelah dialog aktif.')
@@ -527,6 +609,10 @@ class ManageSiteSettings extends Page implements HasForms
             $data[$key][$field] = self::normalizeImagePath($data[$key][$field] ?? null);
         }
 
+        $data['contact']['company_profile_file'] = self::normalizeImagePath(
+            $data['contact']['company_profile_file'] ?? null,
+        );
+
         foreach ($imageFields as ['key' => $key, 'field' => $field]) {
             $defaults = match ($key) {
                 'hero' => self::heroDefaults(),
@@ -541,6 +627,15 @@ class ManageSiteSettings extends Page implements HasForms
             if ($old !== null && $old !== $new) {
                 $optimizer->purge($old);
             }
+        }
+
+        $oldProfile = self::normalizeImagePath(
+            SiteSetting::get('contact', self::contactDefaults())['company_profile_file'] ?? null,
+        );
+        $newProfile = $data['contact']['company_profile_file'] ?? null;
+
+        if ($oldProfile !== null && $oldProfile !== $newProfile) {
+            $optimizer->purge($oldProfile);
         }
 
         foreach (['hero', 'services', 'tentang', 'contact', 'navigation', 'footer', 'home', 'projects', 'gallery', 'articles', 'brand', 'analytics'] as $key) {
@@ -710,13 +805,22 @@ class ManageSiteSettings extends Page implements HasForms
             'section_follow_instagram_label' => ['id' => 'Ikuti di Instagram', 'en' => 'Follow on Instagram'],
             'section_address_label' => ['id' => 'Alamat', 'en' => 'Address'],
             'section_instagram_label' => ['id' => 'Instagram', 'en' => 'Instagram'],
+            'section_team_label' => ['id' => 'Hubungi tim', 'en' => 'Contact the team'],
+            'section_download_label' => ['id' => 'Company profile', 'en' => 'Company profile'],
             'whatsapp_number' => '6281234567890',
             'whatsapp_message' => ['id' => 'Halo Elevasi, saya ingin bertanya tentang proyek.', 'en' => 'Hi Elevasi, I would like to ask about a project.'],
+            'contact_persons' => self::contactPersonDefaults(),
+            'company_profile_file' => null,
+            'company_profile_label' => [
+                'id' => 'Unduh company profile',
+                'en' => 'Download company profile',
+            ],
             'inquiry_dialog_title' => ['id' => 'Mulai percakapan', 'en' => 'Start a conversation'],
             'inquiry_dialog_description' => [
                 'id' => 'Ceritakan sedikit tentang proyek Anda. Setelah ini Anda akan diarahkan ke WhatsApp dengan pesan yang sudah terisi.',
                 'en' => 'Tell us a little about your project. You will then be redirected to WhatsApp with your message ready to send.',
             ],
+            'inquiry_dialog_person_label' => ['id' => 'Hubungi', 'en' => 'Contact'],
             'inquiry_dialog_name_label' => ['id' => 'Nama', 'en' => 'Name'],
             'inquiry_dialog_contact_label' => ['id' => 'Nomor WhatsApp', 'en' => 'WhatsApp number'],
             'inquiry_dialog_contact_placeholder' => ['id' => '08xxxxxxxxxx', 'en' => '08xxxxxxxxxx'],
@@ -725,6 +829,14 @@ class ManageSiteSettings extends Page implements HasForms
                 'id' => 'Contoh: Saya ingin renovasi rumah 2 lantai di Jakarta Selatan, target mulai bulan depan.',
                 'en' => 'Example: I want to renovate a two-storey home in South Jakarta, aiming to start next month.',
             ],
+            'inquiry_dialog_referral_label' => ['id' => 'Tahu kami dari mana?', 'en' => 'How did you hear about us?'],
+            'inquiry_dialog_referral_placeholder' => ['id' => 'Pilih salah satu', 'en' => 'Select one'],
+            'inquiry_dialog_referral_detail_label' => ['id' => 'Ceritakan lebih detail', 'en' => 'Tell us more'],
+            'inquiry_dialog_referral_detail_placeholder' => [
+                'id' => 'Contoh: nama teman, atau sumber lainnya',
+                'en' => 'Example: friend\'s name, or another source',
+            ],
+            'referral_options' => self::referralOptionDefaults(),
             'inquiry_dialog_submit_label' => ['id' => 'Lanjut ke WhatsApp', 'en' => 'Continue to WhatsApp'],
             'inquiry_dialog_submitting_label' => ['id' => 'Menyimpan...', 'en' => 'Saving...'],
             'inquiry_dialog_cancel_label' => ['id' => 'Batal', 'en' => 'Cancel'],
@@ -761,6 +873,56 @@ class ManageSiteSettings extends Page implements HasForms
             ['title' => ['id' => 'Lokasi', 'en' => 'Location'], 'description' => ['id' => 'Alamat atau area proyek Anda.', 'en' => 'Your project address or area.']],
             ['title' => ['id' => 'Timeline', 'en' => 'Timeline'], 'description' => ['id' => 'Kapan ingin mulai dan target selesai.', 'en' => 'When you want to start and your target completion.']],
             ['title' => ['id' => 'Budget kasar', 'en' => 'Rough budget'], 'description' => ['id' => 'Kisaran investasi yang Anda pertimbangkan.', 'en' => 'The investment range you have in mind.']],
+        ];
+    }
+
+    public static function contactPersonDefaults(): array
+    {
+        return [
+            [
+                'name' => ['id' => 'Contact Person 1', 'en' => 'Contact Person 1'],
+                'role' => ['id' => 'Sales', 'en' => 'Sales'],
+                'whatsapp_number' => '6281234567890',
+            ],
+            [
+                'name' => ['id' => 'Contact Person 2', 'en' => 'Contact Person 2'],
+                'role' => ['id' => 'Project', 'en' => 'Project'],
+                'whatsapp_number' => '6281234567890',
+            ],
+        ];
+    }
+
+    public static function referralOptionDefaults(): array
+    {
+        return [
+            [
+                'key' => 'instagram',
+                'requires_detail' => false,
+                'label' => ['id' => 'Instagram', 'en' => 'Instagram'],
+                'detail_label' => ['id' => '', 'en' => ''],
+                'detail_placeholder' => ['id' => '', 'en' => ''],
+            ],
+            [
+                'key' => 'google',
+                'requires_detail' => false,
+                'label' => ['id' => 'Google', 'en' => 'Google'],
+                'detail_label' => ['id' => '', 'en' => ''],
+                'detail_placeholder' => ['id' => '', 'en' => ''],
+            ],
+            [
+                'key' => 'friend',
+                'requires_detail' => true,
+                'label' => ['id' => 'Teman / referensi', 'en' => 'Friend / referral'],
+                'detail_label' => ['id' => 'Nama teman', 'en' => 'Friend\'s name'],
+                'detail_placeholder' => ['id' => 'Siapa yang merekomendasikan?', 'en' => 'Who recommended us?'],
+            ],
+            [
+                'key' => 'other',
+                'requires_detail' => true,
+                'label' => ['id' => 'Lainnya', 'en' => 'Other'],
+                'detail_label' => ['id' => 'Sumber lainnya', 'en' => 'Other source'],
+                'detail_placeholder' => ['id' => 'Dari mana Anda tahu Elevasi?', 'en' => 'Where did you hear about Elevasi?'],
+            ],
         ];
     }
 

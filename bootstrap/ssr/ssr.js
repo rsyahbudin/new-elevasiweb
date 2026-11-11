@@ -436,22 +436,35 @@ function SplashScreen() {
 //#endregion
 //#region resources/js/Components/WhatsAppInquiryDialog.jsx
 var fieldClass = "w-full rounded-xl border border-[rgba(27,28,26,0.1)] bg-[rgba(255,255,255,0.88)] px-4 py-3.5 text-base outline-none transition-[border-color,box-shadow,background-color] duration-300 focus:border-[rgb(31,122,70)] focus:bg-white focus:shadow-[0_0_0_3px_rgba(31,122,70,0.12)]";
-function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
+function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = null, copy }) {
 	const titleId = useId();
 	const descriptionId = useId();
 	const firstFieldRef = useRef(null);
 	const backdropRef = useRef(null);
 	const panelRef = useRef(null);
 	const rootRef = useRef(null);
-	const { url } = usePage().props;
+	const { url, locale } = usePage().props;
+	const contactPersons = copy?.contactPersons ?? [];
+	const referralOptions = copy?.referralOptions ?? [];
+	const defaultPersonIndex = contactPersons[0]?.index ?? 0;
 	const [isRendered, setIsRendered] = useState(open);
+	const isId = locale === "id";
 	const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
 		name: "",
 		contact: "",
 		message: "",
 		company: "",
+		contact_person: defaultPersonIndex,
+		referral_source: "",
+		referral_detail: "",
 		source_page: sourcePage || url || "/"
 	});
+	const selectedReferral = referralOptions.find((option) => option.key === data.referral_source);
+	const showReferralDetail = Boolean(selectedReferral?.requires_detail);
+	const referralDetailLabel = selectedReferral?.detail_label || copy.referralDetailLabel || (isId ? "Ceritakan lebih detail" : "Tell us more");
+	const referralDetailPlaceholder = selectedReferral?.detail_placeholder || copy.referralDetailPlaceholder || "";
+	const referralLabel = copy.referralLabel || (isId ? "Tahu kami dari mana?" : "How did you hear about us?");
+	const referralPlaceholder = copy.referralPlaceholder || (isId ? "Pilih salah satu" : "Select one");
 	useEffect(() => {
 		if (open) setIsRendered(true);
 	}, [open]);
@@ -460,6 +473,16 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 	}, [
 		sourcePage,
 		url,
+		setData
+	]);
+	useEffect(() => {
+		if (!open || contactPersons.length === 0) return;
+		const preferred = preferredPerson !== null && preferredPerson !== void 0 ? contactPersons.find((person) => person.index === preferredPerson) : null;
+		setData("contact_person", preferred?.index ?? contactPersons[0].index);
+	}, [
+		open,
+		preferredPerson,
+		contactPersons,
 		setData
 	]);
 	useEffect(() => {
@@ -659,6 +682,40 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 						}), /* @__PURE__ */ jsxs("div", {
 							className: "space-y-4",
 							children: [
+								contactPersons.length > 1 && /* @__PURE__ */ jsxs("fieldset", {
+									"data-dialog-part": true,
+									className: "m-0 min-w-0 border-0 p-0",
+									children: [
+										/* @__PURE__ */ jsx("legend", {
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: copy.personLabel || "Contact"
+										}),
+										/* @__PURE__ */ jsx("div", {
+											className: "grid grid-cols-1 gap-2 sm:grid-cols-2",
+											children: contactPersons.map((person) => {
+												const selected = data.contact_person === person.index;
+												return /* @__PURE__ */ jsxs("label", {
+													className: `flex cursor-pointer flex-col rounded-xl border px-4 py-3 transition ${selected ? "border-[rgb(31,122,70)] bg-[rgba(31,122,70,0.06)] shadow-[0_0_0_3px_rgba(31,122,70,0.12)]" : "border-[rgba(27,28,26,0.1)] bg-[rgba(255,255,255,0.88)] hover:border-[rgba(27,28,26,0.2)]"}`,
+													children: [/* @__PURE__ */ jsx("input", {
+														type: "radio",
+														name: "contact_person",
+														value: person.index,
+														checked: selected,
+														onChange: () => setData("contact_person", person.index),
+														className: "sr-only"
+													}), /* @__PURE__ */ jsx("span", {
+														className: "text-sm font-semibold tracking-[-0.01em]",
+														children: person.name
+													})]
+												}, person.index);
+											})
+										}),
+										errors.contact_person && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.contact_person
+										})
+									]
+								}),
 								/* @__PURE__ */ jsxs("div", {
 									"data-dialog-part": true,
 									children: [
@@ -705,6 +762,61 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
 										errors.contact && /* @__PURE__ */ jsx("p", {
 											className: "mt-1.5 text-sm text-red-700",
 											children: errors.contact
+										})
+									]
+								}),
+								referralOptions.length > 0 && /* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-referral",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: referralLabel
+										}),
+										/* @__PURE__ */ jsxs("select", {
+											id: "inquiry-referral",
+											value: data.referral_source,
+											onChange: (event) => {
+												setData("referral_source", event.target.value);
+												setData("referral_detail", "");
+											},
+											className: `${fieldClass} appearance-none bg-[length:12px] bg-[right_1rem_center] bg-no-repeat pr-10`,
+											style: { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%231B1C1A' stroke-opacity='0.45' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")" },
+											required: true,
+											children: [/* @__PURE__ */ jsx("option", {
+												value: "",
+												children: referralPlaceholder
+											}), referralOptions.map((option) => /* @__PURE__ */ jsx("option", {
+												value: option.key,
+												children: option.label
+											}, option.key))]
+										}),
+										errors.referral_source && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.referral_source
+										})
+									]
+								}),
+								showReferralDetail && /* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-referral-detail",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: referralDetailLabel
+										}),
+										/* @__PURE__ */ jsx("input", {
+											id: "inquiry-referral-detail",
+											type: "text",
+											value: data.referral_detail,
+											onChange: (event) => setData("referral_detail", event.target.value),
+											className: fieldClass,
+											placeholder: referralDetailPlaceholder,
+											required: true
+										}),
+										errors.referral_detail && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.referral_detail
 										})
 									]
 								}),
@@ -763,13 +875,16 @@ var WhatsAppInquiryContext = createContext(null);
 function WhatsAppInquiryProvider({ children, copy, onOpen }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [sourcePage, setSourcePage] = useState("");
-	const openDialog = useCallback((source = "") => {
+	const [preferredPerson, setPreferredPerson] = useState(null);
+	const openDialog = useCallback((source = "", contactPerson = null) => {
 		onOpen?.();
 		setSourcePage(source || window.location.pathname);
+		setPreferredPerson(contactPerson);
 		setIsOpen(true);
 	}, [onOpen]);
 	const closeDialog = useCallback(() => {
 		setIsOpen(false);
+		setPreferredPerson(null);
 	}, []);
 	const value = useMemo(() => ({ openDialog }), [openDialog]);
 	return /* @__PURE__ */ jsxs(WhatsAppInquiryContext.Provider, {
@@ -778,6 +893,7 @@ function WhatsAppInquiryProvider({ children, copy, onOpen }) {
 			open: isOpen,
 			onClose: closeDialog,
 			sourcePage,
+			preferredPerson,
 			copy
 		})]
 	});
@@ -789,7 +905,7 @@ function useWhatsAppInquiry() {
 }
 //#endregion
 //#region resources/js/Components/WhatsAppButton.jsx
-function WhatsAppButton({ children, className = "", source, showArrow = true, disabled = false, onClick, ...props }) {
+function WhatsAppButton({ children, className = "", source, contactPerson = null, showArrow = true, disabled = false, onClick, ...props }) {
 	const { openDialog } = useWhatsAppInquiry();
 	return /* @__PURE__ */ jsxs("button", {
 		type: "button",
@@ -800,7 +916,7 @@ function WhatsAppButton({ children, className = "", source, showArrow = true, di
 				event_category: "engagement",
 				event_label: source || "unknown"
 			});
-			openDialog(source);
+			openDialog(source, contactPerson);
 			onClick?.(event);
 		},
 		...props,
@@ -1153,12 +1269,17 @@ function SiteLayout({ children }) {
 								]
 							}),
 							/* @__PURE__ */ jsx("div", {
-								className: "mt-10 flex justify-center md:mt-12",
-								children: /* @__PURE__ */ jsx(WhatsAppButton, {
+								className: "mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap md:mt-12",
+								children: (settings.contactPersons?.length > 0 ? settings.contactPersons : [{
+									index: 0,
+									name: cms.footer.whatsapp,
+									role: ""
+								}]).map((person, i) => /* @__PURE__ */ jsx(WhatsAppButton, {
 									className: "w-full max-w-sm rounded-full bg-[rgb(31,122,70)] px-8 py-4 text-sm font-semibold uppercase tracking-[0.06em] transition hover:bg-[rgb(243,243,240)] hover:text-[rgb(27,28,26)] sm:w-auto sm:max-w-none",
-									source: "/footer",
-									children: cms.footer.whatsapp
-								})
+									source: `/footer-cp-${person.index}`,
+									contactPerson: person.index,
+									children: settings.contactPersons?.length > 1 ? `WHATSAPP ${i + 1}` : cms.footer.whatsapp
+								}, `footer-cp-${person.index}`))
 							})
 						]
 					})]
@@ -1177,12 +1298,16 @@ function SiteLayout({ children }) {
 								rel: "noopener noreferrer",
 								className: "text-[rgba(243,243,240,0.6)] transition hover:text-[rgb(243,243,240)]",
 								children: cms.footer.instagramLabel
-							}), /* @__PURE__ */ jsx(WhatsAppButton, {
+							}), (settings.contactPersons?.length > 0 ? settings.contactPersons : [{
+								index: 0,
+								name: cms.footer.whatsappLabel
+							}]).map((person, i) => /* @__PURE__ */ jsx(WhatsAppButton, {
 								className: "text-[rgba(243,243,240,0.6)] transition hover:text-[rgb(243,243,240)]",
-								source: "/footer-link",
+								source: `/footer-link-cp-${person.index}`,
+								contactPerson: person.index,
 								showArrow: false,
-								children: cms.footer.whatsappLabel
-							})]
+								children: settings.contactPersons?.length > 1 ? `WHATSAPP ${i + 1}` : cms.footer.whatsappLabel
+							}, `footer-link-cp-${person.index}`))]
 						}),
 						/* @__PURE__ */ jsx("span", { children: cms.footer.copyright })
 					]
@@ -3378,12 +3503,16 @@ function StatItem({ value, label }) {
 	});
 }
 function Tentang({ content }) {
+	const { settings, locale } = usePage().props;
 	const containerRef = useRef(null);
 	useScrollReveal(containerRef);
 	const labels = content.labels ?? {};
 	const stats = content.stats ?? [];
 	const process = content.process ?? [];
 	const values = content.values ?? [];
+	const companyProfileUrl = settings.companyProfileUrl;
+	const companyProfileLabel = settings.companyProfileLabel || (locale === "id" ? "Unduh company profile" : "Download company profile");
+	const companyProfileFilename = settings.companyProfileFilename;
 	return /* @__PURE__ */ jsxs("main", {
 		className: "px-5 pb-16 pt-36 md:px-10 md:pb-24 md:pt-[170px]",
 		ref: containerRef,
@@ -3425,6 +3554,22 @@ function Tentang({ content }) {
 					"data-reveal": 100 + i * 60,
 					children: paragraph
 				}, i))
+			}),
+			companyProfileUrl && /* @__PURE__ */ jsx("div", {
+				className: "mt-10",
+				"data-reveal": "160",
+				children: /* @__PURE__ */ jsxs("a", {
+					href: companyProfileUrl,
+					download: companyProfileFilename || true,
+					target: "_blank",
+					rel: "noopener noreferrer",
+					onClick: () => trackEvent("file_download", {
+						event_category: "engagement",
+						event_label: "company_profile"
+					}),
+					className: "inline-flex w-full max-w-sm items-center justify-center gap-3 rounded-full border border-[rgba(27,28,26,0.3)] px-8 py-4 text-sm font-semibold uppercase tracking-[0.06em] transition hover:bg-[rgb(27,28,26)] hover:text-[rgb(243,243,240)] sm:w-auto sm:max-w-none",
+					children: [companyProfileLabel, " ↓"]
+				})
 			}),
 			stats.length > 0 && /* @__PURE__ */ jsx("section", {
 				className: "mt-16 md:mt-24",

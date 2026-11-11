@@ -28,8 +28,17 @@ class InquiriesTable
                     ->label('Pesan')
                     ->limit(50)
                     ->tooltip(fn ($record) => $record->message),
+                TextColumn::make('referral_source')
+                    ->label('Tahu dari')
+                    ->placeholder('—')
+                    ->toggleable(),
+                TextColumn::make('referral_detail')
+                    ->label('Detail sumber')
+                    ->placeholder('—')
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('source_page')
-                    ->label('Sumber')
+                    ->label('Halaman')
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')

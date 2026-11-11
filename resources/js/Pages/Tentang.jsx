@@ -1,7 +1,9 @@
 import { useRef } from 'react';
+import { usePage } from '@inertiajs/react';
 import SiteLayout from '../Layouts/SiteLayout';
 import ProcessSteps from '../Components/ProcessSteps';
 import Seo from '../Components/Seo';
+import { trackEvent } from '../lib/analytics';
 import { useCountUp } from '../hooks/useCountUp';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
@@ -38,6 +40,7 @@ function StatItem({ value, label }) {
 }
 
 export default function Tentang({ content }) {
+    const { settings, locale } = usePage().props;
     const containerRef = useRef(null);
 
     useScrollReveal(containerRef);
@@ -46,6 +49,10 @@ export default function Tentang({ content }) {
     const stats = content.stats ?? [];
     const process = content.process ?? [];
     const values = content.values ?? [];
+    const companyProfileUrl = settings.companyProfileUrl;
+    const companyProfileLabel = settings.companyProfileLabel
+        || (locale === 'id' ? 'Unduh company profile' : 'Download company profile');
+    const companyProfileFilename = settings.companyProfileFilename;
 
     return (
         <main className="px-5 pb-16 pt-36 md:px-10 md:pb-24 md:pt-[170px]" ref={containerRef}>
@@ -73,6 +80,26 @@ export default function Tentang({ content }) {
                     </p>
                 ))}
             </div>
+
+            {companyProfileUrl && (
+                <div className="mt-10" data-reveal="160">
+                    <a
+                        href={companyProfileUrl}
+                        download={companyProfileFilename || true}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() =>
+                            trackEvent('file_download', {
+                                event_category: 'engagement',
+                                event_label: 'company_profile',
+                            })
+                        }
+                        className="inline-flex w-full max-w-sm items-center justify-center gap-3 rounded-full border border-[rgba(27,28,26,0.3)] px-8 py-4 text-sm font-semibold uppercase tracking-[0.06em] transition hover:bg-[rgb(27,28,26)] hover:text-[rgb(243,243,240)] sm:w-auto sm:max-w-none"
+                    >
+                        {companyProfileLabel} ↓
+                    </a>
+                </div>
+            )}
 
             {stats.length > 0 && (
                 <section className="mt-16 md:mt-24" data-reveal="0">

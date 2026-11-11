@@ -5,6 +5,7 @@ export default function WhatsAppButton({
     children,
     className = '',
     source,
+    contactPerson = null,
     showArrow = true,
     disabled = false,
     onClick,
@@ -22,7 +23,7 @@ export default function WhatsAppButton({
                     event_category: 'engagement',
                     event_label: source || 'unknown',
                 });
-                openDialog(source);
+                openDialog(source, contactPerson);
                 onClick?.(event);
             }}
             {...props}

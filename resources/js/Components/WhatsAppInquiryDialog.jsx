@@ -6,23 +6,43 @@ import { trackEvent } from '../lib/analytics';
 const fieldClass =
     'w-full rounded-xl border border-[rgba(27,28,26,0.1)] bg-[rgba(255,255,255,0.88)] px-4 py-3.5 text-base outline-none transition-[border-color,box-shadow,background-color] duration-300 focus:border-[rgb(31,122,70)] focus:bg-white focus:shadow-[0_0_0_3px_rgba(31,122,70,0.12)]';
 
-export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy }) {
+export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = null, copy }) {
     const titleId = useId();
     const descriptionId = useId();
     const firstFieldRef = useRef(null);
     const backdropRef = useRef(null);
     const panelRef = useRef(null);
     const rootRef = useRef(null);
-    const { url } = usePage().props;
+    const { url, locale } = usePage().props;
+    const contactPersons = copy?.contactPersons ?? [];
+    const referralOptions = copy?.referralOptions ?? [];
+    const defaultPersonIndex = contactPersons[0]?.index ?? 0;
     const [isRendered, setIsRendered] = useState(open);
+    const isId = locale === 'id';
 
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         name: '',
         contact: '',
         message: '',
         company: '',
+        contact_person: defaultPersonIndex,
+        referral_source: '',
+        referral_detail: '',
         source_page: sourcePage || url || '/',
     });
+
+    const selectedReferral = referralOptions.find((option) => option.key === data.referral_source);
+    const showReferralDetail = Boolean(selectedReferral?.requires_detail);
+    const referralDetailLabel =
+        selectedReferral?.detail_label
+        || copy.referralDetailLabel
+        || (isId ? 'Ceritakan lebih detail' : 'Tell us more');
+    const referralDetailPlaceholder =
+        selectedReferral?.detail_placeholder || copy.referralDetailPlaceholder || '';
+    const referralLabel =
+        copy.referralLabel || (isId ? 'Tahu kami dari mana?' : 'How did you hear about us?');
+    const referralPlaceholder =
+        copy.referralPlaceholder || (isId ? 'Pilih salah satu' : 'Select one');
 
     useEffect(() => {
         if (open) {
@@ -33,6 +53,19 @@ export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy 
     useEffect(() => {
         setData('source_page', sourcePage || url || '/');
     }, [sourcePage, url, setData]);
+
+    useEffect(() => {
+        if (!open || contactPersons.length === 0) {
+            return;
+        }
+
+        const preferred =
+            preferredPerson !== null && preferredPerson !== undefined
+                ? contactPersons.find((person) => person.index === preferredPerson)
+                : null;
+
+        setData('contact_person', preferred?.index ?? contactPersons[0].index);
+    }, [open, preferredPerson, contactPersons, setData]);
 
     useEffect(() => {
         if (!isRendered || !open) {
@@ -258,6 +291,45 @@ export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy 
                         />
 
                         <div className="space-y-4">
+                            {contactPersons.length > 1 && (
+                                <fieldset data-dialog-part className="m-0 min-w-0 border-0 p-0">
+                                    <legend className="mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]">
+                                        {copy.personLabel || 'Contact'}
+                                    </legend>
+                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                        {contactPersons.map((person) => {
+                                            const selected = data.contact_person === person.index;
+
+                                            return (
+                                                <label
+                                                    key={person.index}
+                                                    className={`flex cursor-pointer flex-col rounded-xl border px-4 py-3 transition ${
+                                                        selected
+                                                            ? 'border-[rgb(31,122,70)] bg-[rgba(31,122,70,0.06)] shadow-[0_0_0_3px_rgba(31,122,70,0.12)]'
+                                                            : 'border-[rgba(27,28,26,0.1)] bg-[rgba(255,255,255,0.88)] hover:border-[rgba(27,28,26,0.2)]'
+                                                    }`}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="contact_person"
+                                                        value={person.index}
+                                                        checked={selected}
+                                                        onChange={() => setData('contact_person', person.index)}
+                                                        className="sr-only"
+                                                    />
+                                                    <span className="text-sm font-semibold tracking-[-0.01em]">
+                                                        {person.name}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    {errors.contact_person && (
+                                        <p className="mt-1.5 text-sm text-red-700">{errors.contact_person}</p>
+                                    )}
+                                </fieldset>
+                            )}
+
                             <div data-dialog-part>
                                 <label
                                     htmlFor="inquiry-name"
@@ -298,6 +370,66 @@ export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, copy 
                                 />
                                 {errors.contact && <p className="mt-1.5 text-sm text-red-700">{errors.contact}</p>}
                             </div>
+
+                            {referralOptions.length > 0 && (
+                                <div data-dialog-part>
+                                    <label
+                                        htmlFor="inquiry-referral"
+                                        className="mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]"
+                                    >
+                                        {referralLabel}
+                                    </label>
+                                    <select
+                                        id="inquiry-referral"
+                                        value={data.referral_source}
+                                        onChange={(event) => {
+                                            setData('referral_source', event.target.value);
+                                            setData('referral_detail', '');
+                                        }}
+                                        className={`${fieldClass} appearance-none bg-[length:12px] bg-[right_1rem_center] bg-no-repeat pr-10`}
+                                        style={{
+                                            backgroundImage:
+                                                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%231B1C1A' stroke-opacity='0.45' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+                                        }}
+                                        required
+                                    >
+                                        <option value="">
+                                            {referralPlaceholder}
+                                        </option>
+                                        {referralOptions.map((option) => (
+                                            <option key={option.key} value={option.key}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.referral_source && (
+                                        <p className="mt-1.5 text-sm text-red-700">{errors.referral_source}</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {showReferralDetail && (
+                                <div data-dialog-part>
+                                    <label
+                                        htmlFor="inquiry-referral-detail"
+                                        className="mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]"
+                                    >
+                                        {referralDetailLabel}
+                                    </label>
+                                    <input
+                                        id="inquiry-referral-detail"
+                                        type="text"
+                                        value={data.referral_detail}
+                                        onChange={(event) => setData('referral_detail', event.target.value)}
+                                        className={fieldClass}
+                                        placeholder={referralDetailPlaceholder}
+                                        required
+                                    />
+                                    {errors.referral_detail && (
+                                        <p className="mt-1.5 text-sm text-red-700">{errors.referral_detail}</p>
+                                    )}
+                                </div>
+                            )}
 
                             <div data-dialog-part>
                                 <label

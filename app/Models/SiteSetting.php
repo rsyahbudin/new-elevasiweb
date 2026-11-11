@@ -67,7 +67,20 @@ class SiteSetting extends Model
         }
 
         if (array_key_exists('id', $value) && array_key_exists('en', $value) && count($value) === 2) {
-            return (! empty($value[$locale]) ? $value[$locale] : null) ?? $value['en'] ?? $value['id'];
+            $candidates = [
+                $value[$locale] ?? null,
+                $locale === 'en' ? ($value['id'] ?? null) : ($value['en'] ?? null),
+                $value['id'] ?? null,
+                $value['en'] ?? null,
+            ];
+
+            foreach ($candidates as $candidate) {
+                if (is_string($candidate) && trim($candidate) !== '') {
+                    return $candidate;
+                }
+            }
+
+            return '';
         }
 
         return array_map(fn ($item) => static::resolveLocale($item, $locale), $value);
