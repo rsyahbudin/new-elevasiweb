@@ -28,6 +28,15 @@ class InquiriesTable
                     ->label('Pesan')
                     ->limit(50)
                     ->tooltip(fn ($record) => $record->message),
+                TextColumn::make('inquiry_purpose')
+                    ->label('Tujuan')
+                    ->placeholder('—')
+                    ->toggleable(),
+                TextColumn::make('inquiry_purpose_detail')
+                    ->label('Detail tujuan')
+                    ->placeholder('—')
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('referral_source')
                     ->label('Tahu dari')
                     ->placeholder('—')

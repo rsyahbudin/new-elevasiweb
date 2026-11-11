@@ -7,6 +7,7 @@ use App\Models\Article;
 use App\Models\GalleryItem;
 use App\Models\SiteSetting;
 use App\Support\ContactSettings;
+use App\Support\PurposeOptions;
 use App\Support\ReferralOptions;
 use App\Support\StoredImageSources;
 use Illuminate\Http\Request;
@@ -143,6 +144,17 @@ class HandleInertiaRequests extends Middleware
                     'contactPlaceholder' => $contact['inquiry_dialog_contact_placeholder'] ?? '',
                     'messageLabel' => $contact['inquiry_dialog_message_label'] ?? '',
                     'messagePlaceholder' => $contact['inquiry_dialog_message_placeholder'] ?? '',
+                    'purposeLabel' => filled($contact['inquiry_dialog_purpose_label'] ?? null)
+                        ? $contact['inquiry_dialog_purpose_label']
+                        : __('inquiry.fallback.purpose_label', [], $locale),
+                    'purposePlaceholder' => filled($contact['inquiry_dialog_purpose_placeholder'] ?? null)
+                        ? $contact['inquiry_dialog_purpose_placeholder']
+                        : __('inquiry.fallback.purpose_placeholder', [], $locale),
+                    'purposeDetailLabel' => filled($contact['inquiry_dialog_purpose_detail_label'] ?? null)
+                        ? $contact['inquiry_dialog_purpose_detail_label']
+                        : __('inquiry.fallback.purpose_detail_label', [], $locale),
+                    'purposeDetailPlaceholder' => $contact['inquiry_dialog_purpose_detail_placeholder'] ?? '',
+                    'purposeOptions' => PurposeOptions::all($locale),
                     'referralLabel' => filled($contact['inquiry_dialog_referral_label'] ?? null)
                         ? $contact['inquiry_dialog_referral_label']
                         : __('inquiry.fallback.referral_label', [], $locale),

@@ -10,6 +10,8 @@ class Inquiry extends Model
         'name',
         'contact',
         'message',
+        'inquiry_purpose',
+        'inquiry_purpose_detail',
         'referral_source',
         'referral_detail',
         'source_page',

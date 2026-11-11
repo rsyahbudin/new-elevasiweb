@@ -9,6 +9,7 @@ use App\Http\Requests\StoreInquiryRequest;
 use App\Models\Project;
 use App\Models\SiteSetting;
 use App\Support\ContactSettings;
+use App\Support\PurposeOptions;
 use App\Support\ReferralOptions;
 use App\Support\StoredImageSources;
 use Illuminate\Http\RedirectResponse;
@@ -110,6 +111,8 @@ class KontakController extends Controller
             ]);
         }
 
+        $purposeKey = $request->validated('inquiry_purpose');
+        $purposeOption = is_string($purposeKey) ? PurposeOptions::find($purposeKey) : null;
         $referralKey = $request->validated('referral_source');
         $referralOption = is_string($referralKey) ? ReferralOptions::find($referralKey) : null;
 
@@ -117,6 +120,8 @@ class KontakController extends Controller
             'name' => $request->validated('name'),
             'contact' => $request->validated('contact'),
             'message' => $request->validated('message'),
+            'inquiry_purpose' => $purposeOption['label'] ?? null,
+            'inquiry_purpose_detail' => $request->validated('inquiry_purpose_detail'),
             'referral_source' => $referralOption['label'] ?? null,
             'referral_detail' => $request->validated('referral_detail'),
             'source_page' => $request->validated('source_page') ?? url()->previous(),

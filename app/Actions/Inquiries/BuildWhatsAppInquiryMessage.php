@@ -16,6 +16,16 @@ class BuildWhatsAppInquiryMessage
             __('inquiry.whatsapp.contact', ['contact' => $inquiry->contact], $locale),
         ];
 
+        if (filled($inquiry->inquiry_purpose)) {
+            $purpose = (string) $inquiry->inquiry_purpose;
+
+            if (filled($inquiry->inquiry_purpose_detail)) {
+                $purpose .= " ({$inquiry->inquiry_purpose_detail})";
+            }
+
+            $lines[] = __('inquiry.whatsapp.purpose', ['purpose' => $purpose], $locale);
+        }
+
         if (filled($inquiry->referral_source)) {
             $source = (string) $inquiry->referral_source;
 

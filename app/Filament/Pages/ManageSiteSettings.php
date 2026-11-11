@@ -9,6 +9,7 @@ use App\Support\CmsValidation;
 use BackedEnum;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Component;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
@@ -332,6 +333,23 @@ class ManageSiteSettings extends Page implements HasForms
                                         TextInput::make('contact.inquiry_dialog_submitting_label.en')->label('Teks loading (EN)'),
                                         TextInput::make('contact.inquiry_dialog_cancel_label.id')->label('Tombol batal (ID)'),
                                         TextInput::make('contact.inquiry_dialog_cancel_label.en')->label('Tombol batal (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_label.id')->label('Label “tujuan chat” (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_label.en')->label('Label “tujuan chat” (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_placeholder.id')->label('Placeholder tujuan (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_placeholder.en')->label('Placeholder tujuan (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_detail_label.id')->label('Label detail tujuan (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_detail_label.en')->label('Label detail tujuan (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_detail_placeholder.id')->label('Placeholder detail tujuan (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_detail_placeholder.en')->label('Placeholder detail tujuan (EN)'),
+                                        Repeater::make('contact.purpose_options')
+                                            ->label('Pilihan tujuan chat')
+                                            ->helperText('Contoh: Renovasi, Bangun baru, Kerjasama. Centang “Minta detail” untuk opsi Lainnya.')
+                                            ->schema(self::selectOptionRepeaterSchema())
+                                            ->columns(2)
+                                            ->default(self::purposeOptionDefaults())
+                                            ->reorderable()
+                                            ->addActionLabel('Tambah tujuan')
+                                            ->columnSpanFull(),
                                         TextInput::make('contact.inquiry_dialog_referral_label.id')->label('Label “tahu dari mana” (ID)'),
                                         TextInput::make('contact.inquiry_dialog_referral_label.en')->label('Label “tahu dari mana” (EN)'),
                                         TextInput::make('contact.inquiry_dialog_referral_placeholder.id')->label('Placeholder pilihan (ID)'),
@@ -343,22 +361,7 @@ class ManageSiteSettings extends Page implements HasForms
                                         Repeater::make('contact.referral_options')
                                             ->label('Pilihan “tahu kami dari mana”')
                                             ->helperText('Centang “Minta detail” untuk opsi seperti Teman / Lainnya agar muncul field tambahan.')
-                                            ->schema([
-                                                TextInput::make('key')
-                                                    ->label('Kode unik')
-                                                    ->helperText('Contoh: instagram, google, friend, other — tanpa spasi')
-                                                    ->required()
-                                                    ->rules(['regex:/^[a-z0-9_-]+$/']),
-                                                Checkbox::make('requires_detail')
-                                                    ->label('Minta detail tambahan')
-                                                    ->helperText('Misal: nama teman, atau penjelasan “lainnya”'),
-                                                TextInput::make('label.id')->label('Teks pilihan (ID)')->required(),
-                                                TextInput::make('label.en')->label('Teks pilihan (EN)')->required(),
-                                                TextInput::make('detail_label.id')->label('Label detail khusus (ID)')->helperText('Opsional — kosong = pakai label default'),
-                                                TextInput::make('detail_label.en')->label('Label detail khusus (EN)'),
-                                                TextInput::make('detail_placeholder.id')->label('Placeholder detail khusus (ID)'),
-                                                TextInput::make('detail_placeholder.en')->label('Placeholder detail khusus (EN)'),
-                                            ])
+                                            ->schema(self::selectOptionRepeaterSchema())
                                             ->columns(2)
                                             ->default(self::referralOptionDefaults())
                                             ->reorderable()
@@ -835,6 +838,14 @@ class ManageSiteSettings extends Page implements HasForms
                 'id' => 'Contoh: Saya ingin renovasi rumah 2 lantai di Jakarta Selatan, target mulai bulan depan.',
                 'en' => 'Example: I want to renovate a two-storey home in South Jakarta, aiming to start next month.',
             ],
+            'inquiry_dialog_purpose_label' => ['id' => 'Tujuan chat', 'en' => 'What can we help with?'],
+            'inquiry_dialog_purpose_placeholder' => ['id' => 'Pilih tujuan', 'en' => 'Select a purpose'],
+            'inquiry_dialog_purpose_detail_label' => ['id' => 'Jelaskan tujuan Anda', 'en' => 'Tell us more about your goal'],
+            'inquiry_dialog_purpose_detail_placeholder' => [
+                'id' => 'Contoh: kerjasama brand, konsultasi singkat, dll.',
+                'en' => 'Example: brand partnership, quick consultation, etc.',
+            ],
+            'purpose_options' => self::purposeOptionDefaults(),
             'inquiry_dialog_referral_label' => ['id' => 'Tahu kami dari mana?', 'en' => 'How did you hear about us?'],
             'inquiry_dialog_referral_placeholder' => ['id' => 'Pilih salah satu', 'en' => 'Select one'],
             'inquiry_dialog_referral_detail_label' => ['id' => 'Ceritakan lebih detail', 'en' => 'Tell us more'],
@@ -894,6 +905,77 @@ class ManageSiteSettings extends Page implements HasForms
                 'name' => ['id' => 'Contact Person 2', 'en' => 'Contact Person 2'],
                 'role' => ['id' => 'Project', 'en' => 'Project'],
                 'whatsapp_number' => '6281234567890',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, Component>
+     */
+    public static function selectOptionRepeaterSchema(): array
+    {
+        return [
+            TextInput::make('key')
+                ->label('Kode unik')
+                ->helperText('Contoh: renovation, partnership, other — tanpa spasi')
+                ->required()
+                ->rules(['regex:/^[a-z0-9_-]+$/']),
+            Checkbox::make('requires_detail')
+                ->label('Minta detail tambahan')
+                ->helperText('Centang untuk opsi seperti Lainnya'),
+            TextInput::make('label.id')->label('Teks pilihan (ID)')->required(),
+            TextInput::make('label.en')->label('Teks pilihan (EN)')->required(),
+            TextInput::make('detail_label.id')->label('Label detail khusus (ID)')->helperText('Opsional — kosong = pakai label default'),
+            TextInput::make('detail_label.en')->label('Label detail khusus (EN)'),
+            TextInput::make('detail_placeholder.id')->label('Placeholder detail khusus (ID)'),
+            TextInput::make('detail_placeholder.en')->label('Placeholder detail khusus (EN)'),
+        ];
+    }
+
+    public static function purposeOptionDefaults(): array
+    {
+        return [
+            [
+                'key' => 'renovation',
+                'requires_detail' => false,
+                'label' => ['id' => 'Renovasi', 'en' => 'Renovation'],
+                'detail_label' => ['id' => '', 'en' => ''],
+                'detail_placeholder' => ['id' => '', 'en' => ''],
+            ],
+            [
+                'key' => 'new_build',
+                'requires_detail' => false,
+                'label' => ['id' => 'Bangun baru', 'en' => 'New build'],
+                'detail_label' => ['id' => '', 'en' => ''],
+                'detail_placeholder' => ['id' => '', 'en' => ''],
+            ],
+            [
+                'key' => 'interior',
+                'requires_detail' => false,
+                'label' => ['id' => 'Interior / furniture', 'en' => 'Interior / furniture'],
+                'detail_label' => ['id' => '', 'en' => ''],
+                'detail_placeholder' => ['id' => '', 'en' => ''],
+            ],
+            [
+                'key' => 'partnership',
+                'requires_detail' => false,
+                'label' => ['id' => 'Kerjasama', 'en' => 'Partnership'],
+                'detail_label' => ['id' => '', 'en' => ''],
+                'detail_placeholder' => ['id' => '', 'en' => ''],
+            ],
+            [
+                'key' => 'consultation',
+                'requires_detail' => false,
+                'label' => ['id' => 'Konsultasi', 'en' => 'Consultation'],
+                'detail_label' => ['id' => '', 'en' => ''],
+                'detail_placeholder' => ['id' => '', 'en' => ''],
+            ],
+            [
+                'key' => 'other',
+                'requires_detail' => true,
+                'label' => ['id' => 'Lainnya', 'en' => 'Other'],
+                'detail_label' => ['id' => 'Jelaskan tujuan Anda', 'en' => 'Tell us more about your goal'],
+                'detail_placeholder' => ['id' => 'Apa yang ingin Anda diskusikan?', 'en' => 'What would you like to discuss?'],
             ],
         ];
     }

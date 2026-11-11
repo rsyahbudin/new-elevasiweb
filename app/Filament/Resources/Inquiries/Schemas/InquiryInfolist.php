@@ -26,6 +26,12 @@ class InquiryInfolist
                             ->label('Pesan')
                             ->columnSpanFull()
                             ->prose(),
+                        TextEntry::make('inquiry_purpose')
+                            ->label('Tujuan')
+                            ->placeholder('—'),
+                        TextEntry::make('inquiry_purpose_detail')
+                            ->label('Detail tujuan')
+                            ->placeholder('—'),
                         TextEntry::make('referral_source')
                             ->label('Tahu dari')
                             ->placeholder('—'),

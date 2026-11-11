@@ -15,6 +15,7 @@ export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, prefe
     const rootRef = useRef(null);
     const { url, locale } = usePage().props;
     const contactPersons = copy?.contactPersons ?? [];
+    const purposeOptions = copy?.purposeOptions ?? [];
     const referralOptions = copy?.referralOptions ?? [];
     const defaultPersonIndex = contactPersons[0]?.index ?? 0;
     const [isRendered, setIsRendered] = useState(open);
@@ -26,10 +27,25 @@ export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, prefe
         message: '',
         company: '',
         contact_person: defaultPersonIndex,
+        inquiry_purpose: '',
+        inquiry_purpose_detail: '',
         referral_source: '',
         referral_detail: '',
         source_page: sourcePage || url || '/',
     });
+
+    const selectedPurpose = purposeOptions.find((option) => option.key === data.inquiry_purpose);
+    const showPurposeDetail = Boolean(selectedPurpose?.requires_detail);
+    const purposeDetailLabel =
+        selectedPurpose?.detail_label
+        || copy.purposeDetailLabel
+        || (isId ? 'Jelaskan tujuan Anda' : 'Tell us more about your goal');
+    const purposeDetailPlaceholder =
+        selectedPurpose?.detail_placeholder || copy.purposeDetailPlaceholder || '';
+    const purposeLabel =
+        copy.purposeLabel || (isId ? 'Tujuan chat' : 'What can we help with?');
+    const purposePlaceholder =
+        copy.purposePlaceholder || (isId ? 'Pilih tujuan' : 'Select a purpose');
 
     const selectedReferral = referralOptions.find((option) => option.key === data.referral_source);
     const showReferralDetail = Boolean(selectedReferral?.requires_detail);
@@ -370,6 +386,64 @@ export default function WhatsAppInquiryDialog({ open, onClose, sourcePage, prefe
                                 />
                                 {errors.contact && <p className="mt-1.5 text-sm text-red-700">{errors.contact}</p>}
                             </div>
+
+                            {purposeOptions.length > 0 && (
+                                <div data-dialog-part>
+                                    <label
+                                        htmlFor="inquiry-purpose"
+                                        className="mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]"
+                                    >
+                                        {purposeLabel}
+                                    </label>
+                                    <select
+                                        id="inquiry-purpose"
+                                        value={data.inquiry_purpose}
+                                        onChange={(event) => {
+                                            setData('inquiry_purpose', event.target.value);
+                                            setData('inquiry_purpose_detail', '');
+                                        }}
+                                        className={`${fieldClass} appearance-none bg-[length:12px] bg-[right_1rem_center] bg-no-repeat pr-10`}
+                                        style={{
+                                            backgroundImage:
+                                                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%231B1C1A' stroke-opacity='0.45' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+                                        }}
+                                        required
+                                    >
+                                        <option value="">{purposePlaceholder}</option>
+                                        {purposeOptions.map((option) => (
+                                            <option key={option.key} value={option.key}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.inquiry_purpose && (
+                                        <p className="mt-1.5 text-sm text-red-700">{errors.inquiry_purpose}</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {showPurposeDetail && (
+                                <div data-dialog-part>
+                                    <label
+                                        htmlFor="inquiry-purpose-detail"
+                                        className="mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]"
+                                    >
+                                        {purposeDetailLabel}
+                                    </label>
+                                    <input
+                                        id="inquiry-purpose-detail"
+                                        type="text"
+                                        value={data.inquiry_purpose_detail}
+                                        onChange={(event) => setData('inquiry_purpose_detail', event.target.value)}
+                                        className={fieldClass}
+                                        placeholder={purposeDetailPlaceholder}
+                                        required
+                                    />
+                                    {errors.inquiry_purpose_detail && (
+                                        <p className="mt-1.5 text-sm text-red-700">{errors.inquiry_purpose_detail}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {referralOptions.length > 0 && (
                                 <div data-dialog-part>

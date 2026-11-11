@@ -445,6 +445,7 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = nu
 	const rootRef = useRef(null);
 	const { url, locale } = usePage().props;
 	const contactPersons = copy?.contactPersons ?? [];
+	const purposeOptions = copy?.purposeOptions ?? [];
 	const referralOptions = copy?.referralOptions ?? [];
 	const defaultPersonIndex = contactPersons[0]?.index ?? 0;
 	const [isRendered, setIsRendered] = useState(open);
@@ -455,10 +456,18 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = nu
 		message: "",
 		company: "",
 		contact_person: defaultPersonIndex,
+		inquiry_purpose: "",
+		inquiry_purpose_detail: "",
 		referral_source: "",
 		referral_detail: "",
 		source_page: sourcePage || url || "/"
 	});
+	const selectedPurpose = purposeOptions.find((option) => option.key === data.inquiry_purpose);
+	const showPurposeDetail = Boolean(selectedPurpose?.requires_detail);
+	const purposeDetailLabel = selectedPurpose?.detail_label || copy.purposeDetailLabel || (isId ? "Jelaskan tujuan Anda" : "Tell us more about your goal");
+	const purposeDetailPlaceholder = selectedPurpose?.detail_placeholder || copy.purposeDetailPlaceholder || "";
+	const purposeLabel = copy.purposeLabel || (isId ? "Tujuan chat" : "What can we help with?");
+	const purposePlaceholder = copy.purposePlaceholder || (isId ? "Pilih tujuan" : "Select a purpose");
 	const selectedReferral = referralOptions.find((option) => option.key === data.referral_source);
 	const showReferralDetail = Boolean(selectedReferral?.requires_detail);
 	const referralDetailLabel = selectedReferral?.detail_label || copy.referralDetailLabel || (isId ? "Ceritakan lebih detail" : "Tell us more");
@@ -762,6 +771,61 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = nu
 										errors.contact && /* @__PURE__ */ jsx("p", {
 											className: "mt-1.5 text-sm text-red-700",
 											children: errors.contact
+										})
+									]
+								}),
+								purposeOptions.length > 0 && /* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-purpose",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: purposeLabel
+										}),
+										/* @__PURE__ */ jsxs("select", {
+											id: "inquiry-purpose",
+											value: data.inquiry_purpose,
+											onChange: (event) => {
+												setData("inquiry_purpose", event.target.value);
+												setData("inquiry_purpose_detail", "");
+											},
+											className: `${fieldClass} appearance-none bg-[length:12px] bg-[right_1rem_center] bg-no-repeat pr-10`,
+											style: { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%231B1C1A' stroke-opacity='0.45' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")" },
+											required: true,
+											children: [/* @__PURE__ */ jsx("option", {
+												value: "",
+												children: purposePlaceholder
+											}), purposeOptions.map((option) => /* @__PURE__ */ jsx("option", {
+												value: option.key,
+												children: option.label
+											}, option.key))]
+										}),
+										errors.inquiry_purpose && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.inquiry_purpose
+										})
+									]
+								}),
+								showPurposeDetail && /* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-purpose-detail",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: purposeDetailLabel
+										}),
+										/* @__PURE__ */ jsx("input", {
+											id: "inquiry-purpose-detail",
+											type: "text",
+											value: data.inquiry_purpose_detail,
+											onChange: (event) => setData("inquiry_purpose_detail", event.target.value),
+											className: fieldClass,
+											placeholder: purposeDetailPlaceholder,
+											required: true
+										}),
+										errors.inquiry_purpose_detail && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.inquiry_purpose_detail
 										})
 									]
 								}),
