@@ -26,6 +26,18 @@ class BuildWhatsAppInquiryMessage
             $lines[] = __('inquiry.whatsapp.purpose', ['purpose' => $purpose], $locale);
         }
 
+        if (filled($inquiry->project_location)) {
+            $lines[] = __('inquiry.whatsapp.location', ['location' => $inquiry->project_location], $locale);
+        }
+
+        if (filled($inquiry->has_drawings)) {
+            $lines[] = __('inquiry.whatsapp.has_drawings', ['value' => $inquiry->has_drawings], $locale);
+        }
+
+        if (filled($inquiry->target_budget)) {
+            $lines[] = __('inquiry.whatsapp.budget', ['budget' => $inquiry->target_budget], $locale);
+        }
+
         if (filled($inquiry->referral_source)) {
             $source = (string) $inquiry->referral_source;
 

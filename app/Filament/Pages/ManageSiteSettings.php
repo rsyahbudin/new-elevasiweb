@@ -333,23 +333,37 @@ class ManageSiteSettings extends Page implements HasForms
                                         TextInput::make('contact.inquiry_dialog_submitting_label.en')->label('Teks loading (EN)'),
                                         TextInput::make('contact.inquiry_dialog_cancel_label.id')->label('Tombol batal (ID)'),
                                         TextInput::make('contact.inquiry_dialog_cancel_label.en')->label('Tombol batal (EN)'),
-                                        TextInput::make('contact.inquiry_dialog_purpose_label.id')->label('Label “tujuan chat” (ID)'),
-                                        TextInput::make('contact.inquiry_dialog_purpose_label.en')->label('Label “tujuan chat” (EN)'),
-                                        TextInput::make('contact.inquiry_dialog_purpose_placeholder.id')->label('Placeholder tujuan (ID)'),
-                                        TextInput::make('contact.inquiry_dialog_purpose_placeholder.en')->label('Placeholder tujuan (EN)'),
-                                        TextInput::make('contact.inquiry_dialog_purpose_detail_label.id')->label('Label detail tujuan (ID)'),
-                                        TextInput::make('contact.inquiry_dialog_purpose_detail_label.en')->label('Label detail tujuan (EN)'),
-                                        TextInput::make('contact.inquiry_dialog_purpose_detail_placeholder.id')->label('Placeholder detail tujuan (ID)'),
-                                        TextInput::make('contact.inquiry_dialog_purpose_detail_placeholder.en')->label('Placeholder detail tujuan (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_label.id')->label('Label jenis pekerjaan / tujuan (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_label.en')->label('Label jenis pekerjaan / tujuan (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_placeholder.id')->label('Placeholder jenis pekerjaan (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_placeholder.en')->label('Placeholder jenis pekerjaan (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_detail_label.id')->label('Label detail (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_detail_label.en')->label('Label detail (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_detail_placeholder.id')->label('Placeholder detail (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_purpose_detail_placeholder.en')->label('Placeholder detail (EN)'),
                                         Repeater::make('contact.purpose_options')
-                                            ->label('Pilihan tujuan chat')
-                                            ->helperText('Contoh: Renovasi, Bangun baru, Kerjasama. Centang “Minta detail” untuk opsi Lainnya.')
+                                            ->label('Pilihan jenis pekerjaan / tujuan')
+                                            ->helperText('Contoh: Design arsitek/interior, Build, Design & build, Kerjasama. Centang “Minta detail” untuk opsi seperti Kerjasama / Lainnya.')
                                             ->schema(self::selectOptionRepeaterSchema())
                                             ->columns(2)
                                             ->default(self::purposeOptionDefaults())
                                             ->reorderable()
-                                            ->addActionLabel('Tambah tujuan')
+                                            ->addActionLabel('Tambah pilihan')
                                             ->columnSpanFull(),
+                                        TextInput::make('contact.inquiry_dialog_location_label.id')->label('Label lokasi proyek (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_location_label.en')->label('Label lokasi proyek (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_location_placeholder.id')->label('Placeholder lokasi (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_location_placeholder.en')->label('Placeholder lokasi (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_has_drawings_label.id')->label('Label “sudah punya gambar” (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_has_drawings_label.en')->label('Label “sudah punya gambar” (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_has_drawings_yes.id')->label('Opsi “Ada” (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_has_drawings_yes.en')->label('Opsi “Ada” (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_has_drawings_no.id')->label('Opsi “Tidak” (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_has_drawings_no.en')->label('Opsi “Tidak” (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_budget_label.id')->label('Label target budget (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_budget_label.en')->label('Label target budget (EN)'),
+                                        TextInput::make('contact.inquiry_dialog_budget_placeholder.id')->label('Placeholder budget (ID)'),
+                                        TextInput::make('contact.inquiry_dialog_budget_placeholder.en')->label('Placeholder budget (EN)'),
                                         TextInput::make('contact.inquiry_dialog_referral_label.id')->label('Label “tahu dari mana” (ID)'),
                                         TextInput::make('contact.inquiry_dialog_referral_label.en')->label('Label “tahu dari mana” (EN)'),
                                         TextInput::make('contact.inquiry_dialog_referral_placeholder.id')->label('Placeholder pilihan (ID)'),
@@ -838,14 +852,27 @@ class ManageSiteSettings extends Page implements HasForms
                 'id' => 'Contoh: Saya ingin renovasi rumah 2 lantai di Jakarta Selatan, target mulai bulan depan.',
                 'en' => 'Example: I want to renovate a two-storey home in South Jakarta, aiming to start next month.',
             ],
-            'inquiry_dialog_purpose_label' => ['id' => 'Tujuan chat', 'en' => 'What can we help with?'],
-            'inquiry_dialog_purpose_placeholder' => ['id' => 'Pilih tujuan', 'en' => 'Select a purpose'],
-            'inquiry_dialog_purpose_detail_label' => ['id' => 'Jelaskan tujuan Anda', 'en' => 'Tell us more about your goal'],
+            'inquiry_dialog_purpose_label' => ['id' => 'Jenis pekerjaan yang dibutuhkan', 'en' => 'Type of work needed'],
+            'inquiry_dialog_purpose_placeholder' => ['id' => 'Pilih jenis pekerjaan', 'en' => 'Select work type'],
+            'inquiry_dialog_purpose_detail_label' => ['id' => 'Jelaskan jenis pekerjaan', 'en' => 'Describe the work type'],
             'inquiry_dialog_purpose_detail_placeholder' => [
-                'id' => 'Contoh: kerjasama brand, konsultasi singkat, dll.',
-                'en' => 'Example: brand partnership, quick consultation, etc.',
+                'id' => 'Contoh: landscape, furniture custom, dll.',
+                'en' => 'Example: landscape, custom furniture, etc.',
             ],
             'purpose_options' => self::purposeOptionDefaults(),
+            'inquiry_dialog_location_label' => ['id' => 'Lokasi yang mau dikerjakan', 'en' => 'Project location'],
+            'inquiry_dialog_location_placeholder' => [
+                'id' => 'Contoh: Jakarta Selatan, BSD, Bandung',
+                'en' => 'Example: South Jakarta, BSD, Bandung',
+            ],
+            'inquiry_dialog_has_drawings_label' => ['id' => 'Sudah memiliki gambar', 'en' => 'Do you already have drawings?'],
+            'inquiry_dialog_has_drawings_yes' => ['id' => 'Ada', 'en' => 'Yes'],
+            'inquiry_dialog_has_drawings_no' => ['id' => 'Tidak', 'en' => 'No'],
+            'inquiry_dialog_budget_label' => ['id' => 'Target budget', 'en' => 'Target budget'],
+            'inquiry_dialog_budget_placeholder' => [
+                'id' => 'Contoh: 500 juta — 1 M, atau kisaran Anda',
+                'en' => 'Example: 500 million — 1B, or your range',
+            ],
             'inquiry_dialog_referral_label' => ['id' => 'Tahu kami dari mana?', 'en' => 'How did you hear about us?'],
             'inquiry_dialog_referral_placeholder' => ['id' => 'Pilih salah satu', 'en' => 'Select one'],
             'inquiry_dialog_referral_detail_label' => ['id' => 'Ceritakan lebih detail', 'en' => 'Tell us more'],
@@ -936,46 +963,42 @@ class ManageSiteSettings extends Page implements HasForms
     {
         return [
             [
-                'key' => 'renovation',
+                'key' => 'design_architecture_interior',
                 'requires_detail' => false,
-                'label' => ['id' => 'Renovasi', 'en' => 'Renovation'],
+                'label' => ['id' => 'Design arsitek / interior', 'en' => 'Architecture / interior design'],
                 'detail_label' => ['id' => '', 'en' => ''],
                 'detail_placeholder' => ['id' => '', 'en' => ''],
             ],
             [
-                'key' => 'new_build',
+                'key' => 'build',
                 'requires_detail' => false,
-                'label' => ['id' => 'Bangun baru', 'en' => 'New build'],
+                'label' => ['id' => 'Build', 'en' => 'Build'],
                 'detail_label' => ['id' => '', 'en' => ''],
                 'detail_placeholder' => ['id' => '', 'en' => ''],
             ],
             [
-                'key' => 'interior',
+                'key' => 'design_and_build',
                 'requires_detail' => false,
-                'label' => ['id' => 'Interior / furniture', 'en' => 'Interior / furniture'],
+                'label' => ['id' => 'Design & build', 'en' => 'Design & build'],
                 'detail_label' => ['id' => '', 'en' => ''],
                 'detail_placeholder' => ['id' => '', 'en' => ''],
             ],
             [
                 'key' => 'partnership',
-                'requires_detail' => false,
+                'requires_detail' => true,
                 'label' => ['id' => 'Kerjasama', 'en' => 'Partnership'],
-                'detail_label' => ['id' => '', 'en' => ''],
-                'detail_placeholder' => ['id' => '', 'en' => ''],
-            ],
-            [
-                'key' => 'consultation',
-                'requires_detail' => false,
-                'label' => ['id' => 'Konsultasi', 'en' => 'Consultation'],
-                'detail_label' => ['id' => '', 'en' => ''],
-                'detail_placeholder' => ['id' => '', 'en' => ''],
+                'detail_label' => ['id' => 'Ceritakan singkat kerjasama Anda', 'en' => 'Briefly describe the partnership'],
+                'detail_placeholder' => [
+                    'id' => 'Contoh: tawaran produk, kolaborasi brand, supplier, dll.',
+                    'en' => 'Example: product offer, brand collab, supplier, etc.',
+                ],
             ],
             [
                 'key' => 'other',
                 'requires_detail' => true,
                 'label' => ['id' => 'Lainnya', 'en' => 'Other'],
-                'detail_label' => ['id' => 'Jelaskan tujuan Anda', 'en' => 'Tell us more about your goal'],
-                'detail_placeholder' => ['id' => 'Apa yang ingin Anda diskusikan?', 'en' => 'What would you like to discuss?'],
+                'detail_label' => ['id' => 'Jelaskan jenis pekerjaan', 'en' => 'Describe the work type'],
+                'detail_placeholder' => ['id' => 'Apa jenis pekerjaan yang Anda butuhkan?', 'en' => 'What type of work do you need?'],
             ],
         ];
     }

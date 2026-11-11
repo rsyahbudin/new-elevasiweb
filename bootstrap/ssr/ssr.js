@@ -450,6 +450,8 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = nu
 	const defaultPersonIndex = contactPersons[0]?.index ?? 0;
 	const [isRendered, setIsRendered] = useState(open);
 	const isId = locale === "id";
+	const selectChevronStyle = { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%231B1C1A' stroke-opacity='0.45' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")" };
+	const selectClass = `${fieldClass} appearance-none bg-[length:12px] bg-[right_1rem_center] bg-no-repeat pr-10`;
 	const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
 		name: "",
 		contact: "",
@@ -458,16 +460,26 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = nu
 		contact_person: defaultPersonIndex,
 		inquiry_purpose: "",
 		inquiry_purpose_detail: "",
+		project_location: "",
+		has_drawings: "",
+		target_budget: "",
 		referral_source: "",
 		referral_detail: "",
 		source_page: sourcePage || url || "/"
 	});
 	const selectedPurpose = purposeOptions.find((option) => option.key === data.inquiry_purpose);
 	const showPurposeDetail = Boolean(selectedPurpose?.requires_detail);
-	const purposeDetailLabel = selectedPurpose?.detail_label || copy.purposeDetailLabel || (isId ? "Jelaskan tujuan Anda" : "Tell us more about your goal");
+	const purposeDetailLabel = selectedPurpose?.detail_label || copy.purposeDetailLabel || (isId ? "Jelaskan jenis pekerjaan" : "Describe the work type");
 	const purposeDetailPlaceholder = selectedPurpose?.detail_placeholder || copy.purposeDetailPlaceholder || "";
-	const purposeLabel = copy.purposeLabel || (isId ? "Tujuan chat" : "What can we help with?");
-	const purposePlaceholder = copy.purposePlaceholder || (isId ? "Pilih tujuan" : "Select a purpose");
+	const purposeLabel = copy.purposeLabel || (isId ? "Jenis pekerjaan yang dibutuhkan" : "Type of work needed");
+	const purposePlaceholder = copy.purposePlaceholder || (isId ? "Pilih jenis pekerjaan" : "Select work type");
+	const locationLabel = copy.locationLabel || (isId ? "Lokasi yang mau dikerjakan" : "Project location");
+	const locationPlaceholder = copy.locationPlaceholder || "";
+	const hasDrawingsLabel = copy.hasDrawingsLabel || (isId ? "Sudah memiliki gambar" : "Do you already have drawings?");
+	const hasDrawingsYes = copy.hasDrawingsYes || (isId ? "Ada" : "Yes");
+	const hasDrawingsNo = copy.hasDrawingsNo || (isId ? "Tidak" : "No");
+	const budgetLabel = copy.budgetLabel || (isId ? "Target budget" : "Target budget");
+	const budgetPlaceholder = copy.budgetPlaceholder || "";
 	const selectedReferral = referralOptions.find((option) => option.key === data.referral_source);
 	const showReferralDetail = Boolean(selectedReferral?.requires_detail);
 	const referralDetailLabel = selectedReferral?.detail_label || copy.referralDetailLabel || (isId ? "Ceritakan lebih detail" : "Tell us more");
@@ -789,8 +801,8 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = nu
 												setData("inquiry_purpose", event.target.value);
 												setData("inquiry_purpose_detail", "");
 											},
-											className: `${fieldClass} appearance-none bg-[length:12px] bg-[right_1rem_center] bg-no-repeat pr-10`,
-											style: { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%231B1C1A' stroke-opacity='0.45' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")" },
+											className: selectClass,
+											style: selectChevronStyle,
 											required: true,
 											children: [/* @__PURE__ */ jsx("option", {
 												value: "",
@@ -829,6 +841,88 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = nu
 										})
 									]
 								}),
+								/* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-location",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: locationLabel
+										}),
+										/* @__PURE__ */ jsx("input", {
+											id: "inquiry-location",
+											type: "text",
+											value: data.project_location,
+											onChange: (event) => setData("project_location", event.target.value),
+											className: fieldClass,
+											placeholder: locationPlaceholder,
+											required: true
+										}),
+										errors.project_location && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.project_location
+										})
+									]
+								}),
+								/* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-has-drawings",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: hasDrawingsLabel
+										}),
+										/* @__PURE__ */ jsxs("select", {
+											id: "inquiry-has-drawings",
+											value: data.has_drawings,
+											onChange: (event) => setData("has_drawings", event.target.value),
+											className: selectClass,
+											style: selectChevronStyle,
+											required: true,
+											children: [
+												/* @__PURE__ */ jsx("option", {
+													value: "",
+													children: isId ? "Pilih" : "Select"
+												}),
+												/* @__PURE__ */ jsx("option", {
+													value: "yes",
+													children: hasDrawingsYes
+												}),
+												/* @__PURE__ */ jsx("option", {
+													value: "no",
+													children: hasDrawingsNo
+												})
+											]
+										}),
+										errors.has_drawings && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.has_drawings
+										})
+									]
+								}),
+								/* @__PURE__ */ jsxs("div", {
+									"data-dialog-part": true,
+									children: [
+										/* @__PURE__ */ jsx("label", {
+											htmlFor: "inquiry-budget",
+											className: "mb-2 block font-mono text-[10px] uppercase tracking-[0.1em] text-[rgba(27,28,26,0.45)]",
+											children: budgetLabel
+										}),
+										/* @__PURE__ */ jsx("input", {
+											id: "inquiry-budget",
+											type: "text",
+											value: data.target_budget,
+											onChange: (event) => setData("target_budget", event.target.value),
+											className: fieldClass,
+											placeholder: budgetPlaceholder,
+											required: true
+										}),
+										errors.target_budget && /* @__PURE__ */ jsx("p", {
+											className: "mt-1.5 text-sm text-red-700",
+											children: errors.target_budget
+										})
+									]
+								}),
 								referralOptions.length > 0 && /* @__PURE__ */ jsxs("div", {
 									"data-dialog-part": true,
 									children: [
@@ -844,8 +938,8 @@ function WhatsAppInquiryDialog({ open, onClose, sourcePage, preferredPerson = nu
 												setData("referral_source", event.target.value);
 												setData("referral_detail", "");
 											},
-											className: `${fieldClass} appearance-none bg-[length:12px] bg-[right_1rem_center] bg-no-repeat pr-10`,
-											style: { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%231B1C1A' stroke-opacity='0.45' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")" },
+											className: selectClass,
+											style: selectChevronStyle,
 											required: true,
 											children: [/* @__PURE__ */ jsx("option", {
 												value: "",

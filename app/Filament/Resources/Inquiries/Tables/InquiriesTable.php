@@ -29,13 +29,20 @@ class InquiriesTable
                     ->limit(50)
                     ->tooltip(fn ($record) => $record->message),
                 TextColumn::make('inquiry_purpose')
-                    ->label('Tujuan')
+                    ->label('Jenis pekerjaan')
                     ->placeholder('—')
                     ->toggleable(),
-                TextColumn::make('inquiry_purpose_detail')
-                    ->label('Detail tujuan')
+                TextColumn::make('project_location')
+                    ->label('Lokasi')
                     ->placeholder('—')
-                    ->limit(30)
+                    ->toggleable(),
+                TextColumn::make('target_budget')
+                    ->label('Budget')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('has_drawings')
+                    ->label('Gambar')
+                    ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('referral_source')
                     ->label('Tahu dari')

@@ -155,6 +155,23 @@ class HandleInertiaRequests extends Middleware
                         : __('inquiry.fallback.purpose_detail_label', [], $locale),
                     'purposeDetailPlaceholder' => $contact['inquiry_dialog_purpose_detail_placeholder'] ?? '',
                     'purposeOptions' => PurposeOptions::all($locale),
+                    'locationLabel' => filled($contact['inquiry_dialog_location_label'] ?? null)
+                        ? $contact['inquiry_dialog_location_label']
+                        : __('inquiry.fallback.location_label', [], $locale),
+                    'locationPlaceholder' => $contact['inquiry_dialog_location_placeholder'] ?? '',
+                    'hasDrawingsLabel' => filled($contact['inquiry_dialog_has_drawings_label'] ?? null)
+                        ? $contact['inquiry_dialog_has_drawings_label']
+                        : __('inquiry.fallback.has_drawings_label', [], $locale),
+                    'hasDrawingsYes' => filled($contact['inquiry_dialog_has_drawings_yes'] ?? null)
+                        ? $contact['inquiry_dialog_has_drawings_yes']
+                        : __('inquiry.fallback.has_drawings_yes', [], $locale),
+                    'hasDrawingsNo' => filled($contact['inquiry_dialog_has_drawings_no'] ?? null)
+                        ? $contact['inquiry_dialog_has_drawings_no']
+                        : __('inquiry.fallback.has_drawings_no', [], $locale),
+                    'budgetLabel' => filled($contact['inquiry_dialog_budget_label'] ?? null)
+                        ? $contact['inquiry_dialog_budget_label']
+                        : __('inquiry.fallback.budget_label', [], $locale),
+                    'budgetPlaceholder' => $contact['inquiry_dialog_budget_placeholder'] ?? '',
                     'referralLabel' => filled($contact['inquiry_dialog_referral_label'] ?? null)
                         ? $contact['inquiry_dialog_referral_label']
                         : __('inquiry.fallback.referral_label', [], $locale),

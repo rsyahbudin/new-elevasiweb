@@ -115,6 +115,13 @@ class KontakController extends Controller
         $purposeOption = is_string($purposeKey) ? PurposeOptions::find($purposeKey) : null;
         $referralKey = $request->validated('referral_source');
         $referralOption = is_string($referralKey) ? ReferralOptions::find($referralKey) : null;
+        $hasDrawings = $request->validated('has_drawings');
+        $contact = SiteSetting::translatedMerged('contact', ManageSiteSettings::contactDefaults());
+        $hasDrawingsLabel = match ($hasDrawings) {
+            'yes' => $contact['inquiry_dialog_has_drawings_yes'] ?? __('inquiry.fallback.has_drawings_yes'),
+            'no' => $contact['inquiry_dialog_has_drawings_no'] ?? __('inquiry.fallback.has_drawings_no'),
+            default => null,
+        };
 
         $inquiry = $submitInquiry->handle([
             'name' => $request->validated('name'),
@@ -122,6 +129,9 @@ class KontakController extends Controller
             'message' => $request->validated('message'),
             'inquiry_purpose' => $purposeOption['label'] ?? null,
             'inquiry_purpose_detail' => $request->validated('inquiry_purpose_detail'),
+            'project_location' => $request->validated('project_location'),
+            'has_drawings' => $hasDrawingsLabel,
+            'target_budget' => $request->validated('target_budget'),
             'referral_source' => $referralOption['label'] ?? null,
             'referral_detail' => $request->validated('referral_detail'),
             'source_page' => $request->validated('source_page') ?? url()->previous(),

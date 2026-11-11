@@ -27,10 +27,19 @@ class InquiryInfolist
                             ->columnSpanFull()
                             ->prose(),
                         TextEntry::make('inquiry_purpose')
-                            ->label('Tujuan')
+                            ->label('Jenis pekerjaan')
                             ->placeholder('—'),
                         TextEntry::make('inquiry_purpose_detail')
-                            ->label('Detail tujuan')
+                            ->label('Detail jenis pekerjaan')
+                            ->placeholder('—'),
+                        TextEntry::make('project_location')
+                            ->label('Lokasi')
+                            ->placeholder('—'),
+                        TextEntry::make('has_drawings')
+                            ->label('Sudah punya gambar')
+                            ->placeholder('—'),
+                        TextEntry::make('target_budget')
+                            ->label('Target budget')
                             ->placeholder('—'),
                         TextEntry::make('referral_source')
                             ->label('Tahu dari')
