@@ -252,7 +252,7 @@ class ManageSiteSettings extends Page implements HasForms
                                         TextInput::make('contact.inquiry_dialog_person_label.en')->label('Label pilihan CP di dialog (EN)'),
                                     ]),
                                 Section::make('Company Profile PDF')
-                                    ->description('Upload PDF company profile. Tombol unduh muncul di halaman Kontak setelah file diunggah.')
+                                    ->description('Upload PDF, lalu klik “Simpan pengaturan” di bawah. Tombol unduh muncul di halaman /tentang.')
                                     ->columns(2)
                                     ->schema([
                                         FileUpload::make('contact.company_profile_file')
@@ -260,11 +260,17 @@ class ManageSiteSettings extends Page implements HasForms
                                             ->disk('public')
                                             ->directory('site-settings/downloads')
                                             ->visibility('public')
-                                            ->acceptedFileTypes(['application/pdf'])
+                                            ->acceptedFileTypes([
+                                                'application/pdf',
+                                                'application/x-pdf',
+                                            ])
+                                            ->rules(['nullable', 'mimes:pdf', 'max:20480'])
                                             ->maxSize(20480)
+                                            ->maxFiles(1)
+                                            ->previewable(false)
                                             ->downloadable()
                                             ->openable()
-                                            ->helperText('Maksimal 20 MB. Format PDF saja.')
+                                            ->helperText('Format PDF, maksimal 20 MB. Setelah file muncul di sini, wajib klik tombol Simpan pengaturan.')
                                             ->columnSpanFull(),
                                         TextInput::make('contact.company_profile_label.id')->label('Teks tombol unduh (ID)'),
                                         TextInput::make('contact.company_profile_label.en')->label('Teks tombol unduh (EN)'),
